@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Gaff/pgp.help.svg?branch=master)](https://travis-ci.org/Gaff/pgp.help)
+[![Build Status](https://travis-ci.org/pgp-help/pgp.help.svg?branch=master)](https://travis-ci.org/pgp-help/pgp.help)
 
 
 # What is PGP?
