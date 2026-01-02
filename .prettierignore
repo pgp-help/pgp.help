@@ -12,6 +12,4 @@ pnpm-lock.yaml
 package-lock.json
 yarn.lock
 
-# Github Actions
-.github/workflows
 
