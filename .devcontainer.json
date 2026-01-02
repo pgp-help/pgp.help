@@ -1,0 +1,9 @@
+{
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+	"forwardPorts": [5173, 4173],
+	"customizations": {
+		"vscode": {
+			"extensions": ["svelte.svelte-vscode"]
+		}
+	}
+}
