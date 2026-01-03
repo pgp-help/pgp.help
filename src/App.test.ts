@@ -11,7 +11,7 @@ describe('App', () => {
 		// Generate a real test key pair
 		const { publicKey } = await openpgp.generateKey({
 			type: 'ecc',
-			curve: 'curve25519',
+			curve: 'ed25519' as any, //Squash type error
 			userIDs: [{ name: 'Test User', email: 'test@example.com' }]
 		});
 		validPublicKey = publicKey;
@@ -38,7 +38,7 @@ describe('App', () => {
 
 		// Wait for the async encryption to complete
 		await vi.waitFor(() => {
-			const output = outputTextarea.value;
+			const output = (outputTextarea as HTMLTextAreaElement).value;
 			expect(output).toContain('-----BEGIN PGP MESSAGE-----');
 			expect(output).toContain('-----END PGP MESSAGE-----');
 		});
