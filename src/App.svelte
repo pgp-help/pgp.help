@@ -1,47 +1,73 @@
 <script>
-	import svelteLogo from './assets/svelte.svg';
-	import viteLogo from '/vite.svg';
-	import Counter from './lib/Counter.svelte';
+import { encryptMessage } from './lib/pgp.js';
+
+  let key = $state('');
+  let message = $state('');
+  let output = $state('');
+  let isEncrypting = $state(false);
+
+  $effect(() => {
+    const k = key;
+    const m = message;
+
+    if (!k || !m) {
+      output = '';
+      return;
+    }
+
+    isEncrypting = true;
+    encryptMessage(k, m).then(result => {
+        if (key === k && message === m) {
+            output = result;
+            isEncrypting = false;
+        }
+    });
+  });
 </script>
 
-<main>
-	<div>
-		<a href="https://vite.dev" target="_blank" rel="noreferrer">
-			<img src={viteLogo} class="logo" alt="Vite Logo" />
-		</a>
-		<a href="https://svelte.dev" target="_blank" rel="noreferrer">
-			<img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
-		</a>
-	</div>
-	<h1>Vite + Svelte</h1>
+<main class="container">
+  <hgroup>
+    <h1>PGP Help</h1>
+    <p>Simple client-side encryption.</p>
+  </hgroup>
 
-	<div class="card">
-		<Counter />
-	</div>
+  <div class="grid">
+    <div>
+      <label for="key">
+        Public Key
+        <textarea 
+          id="key" 
+          bind:value={key} 
+          placeholder="Paste Public Key (Armored)..."
+          rows="10"
+        ></textarea>
+      </label>
+    </div>
 
-	<p>
-		Check out <a href="https://github.com/sveltejs/kit#readme" target="_blank" rel="noreferrer"
-			>SvelteKit</a
-		>, the official Svelte app framework powered by Vite!
-	</p>
+    <div>
+      <label for="message">
+        Message
+        <textarea 
+          id="message" 
+          bind:value={message} 
+          placeholder="Type your secret message..."
+          rows="10"
+        ></textarea>
+      </label>
+    </div>
+  </div>
 
-	<p class="read-the-docs">Click on the Vite and Svelte logos to learn more</p>
+  <hr />
+
+  <label for="output">
+    Encrypted Message
+    <textarea 
+      id="output" 
+      value={output} 
+      readonly 
+      placeholder="Encrypted output will appear here..."
+      rows="10"
+      aria-busy={isEncrypting}
+    ></textarea>
+  </label>
 </main>
-
-<style>
-	.logo {
-		height: 6em;
-		padding: 1.5em;
-		will-change: filter;
-		transition: filter 300ms;
-	}
-	.logo:hover {
-		filter: drop-shadow(0 0 2em #646cffaa);
-	}
-	.logo.svelte:hover {
-		filter: drop-shadow(0 0 2em #ff3e00aa);
-	}
-	.read-the-docs {
-		color: #888;
-	}
-</style>

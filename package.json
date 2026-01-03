@@ -29,5 +29,9 @@
 	},
 	"overrides": {
 		"vite": "npm:rolldown-vite@7.2.5"
+	},
+	"dependencies": {
+		"@picocss/pico": "^2.1.1",
+		"openpgp": "^6.3.0"
 	}
 }
