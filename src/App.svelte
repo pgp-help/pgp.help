@@ -1,6 +1,7 @@
 <script>
 	import { encryptMessage } from './lib/pgp.js';
 	import Layout from './Layout.svelte';
+	import CopyableTextarea from './lib/CopyableTextarea.svelte';
 
 	let key = $state('');
 	let message = $state('');
@@ -27,18 +28,26 @@
 </script>
 
 <Layout>
+	<h1 class="text-2xl font-bold mb-6">PGP Help</h1>
 	<form class="space-y-6">
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Public Key</legend>
-			<textarea class="textarea-code" bind:value={key} placeholder="Paste Public Key (Armored)..."
-			></textarea>
+			<CopyableTextarea
+				bind:value={key}
+				placeholder="Paste Public Key (Armored)..."
+				label="Public Key"
+			/>
 		</fieldset>
 
 		<div class="divider"></div>
 
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Message</legend>
-			<textarea class="textarea-code" bind:value={message} placeholder="Type your secret message..."
+			<textarea
+				class="textarea textarea-code"
+				bind:value={message}
+				placeholder="Type your secret message..."
+				aria-label="Message"
 			></textarea>
 		</fieldset>
 	</form>
@@ -52,12 +61,11 @@
 				<span class="loading loading-spinner loading-sm ml-2"></span>
 			{/if}
 		</legend>
-		<textarea
-			class="textarea-code bg-base-300 text-base-content/60"
+		<CopyableTextarea
 			value={output}
-			readonly
+			readonly={true}
 			placeholder="Encrypted output will appear here..."
-			aria-busy={isEncrypting}
-		></textarea>
+			label="Encrypted Message"
+		/>
 	</fieldset>
 </Layout>

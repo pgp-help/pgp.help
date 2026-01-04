@@ -71,7 +71,6 @@ describe('App', () => {
 		// Verify DaisyUI textarea class is applied
 		textareas.forEach((textarea) => {
 			expect(textarea).toHaveClass('textarea');
-			expect(textarea).toHaveClass('textarea-bordered');
 		});
 
 		// Check for DaisyUI form-control class

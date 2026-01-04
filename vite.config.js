@@ -12,6 +12,6 @@ export default defineConfig({
 		// while still providing sufficient DOM simulation for most Svelte tests.
 		environment: 'happy-dom',
 		globals: true,
-		setupFiles: './src/setupTests.js'
+		setupFiles: './src/setupTests.ts'
 	}
 });
