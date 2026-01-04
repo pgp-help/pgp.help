@@ -43,12 +43,12 @@
 
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Message</legend>
-			<textarea
-				class="textarea textarea-code"
+			<CopyableTextarea
 				bind:value={message}
 				placeholder="Type your secret message..."
-				aria-label="Message"
-			></textarea>
+				label="Message"
+				selectAllOnFocus={false}
+			/>
 		</fieldset>
 	</form>
 

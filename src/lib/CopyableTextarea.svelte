@@ -69,6 +69,14 @@
 		// Select all text when the textarea gains focus - a QoL improvement
 		if (textareaElement) {
 			textareaElement.select();
+			// Use setTimeout to override browser's default scroll-to-selection behavior
+			// 10ms delay is usually enough to beat the browser's native scroll-to-cursor
+			setTimeout(() => {
+				if (textareaElement) {
+					textareaElement.setSelectionRange(0, textareaElement.value.length, 'backward');
+					textareaElement.scrollTop = 0;
+				}
+			}, 10);
 		}
 	}
 
