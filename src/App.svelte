@@ -27,54 +27,41 @@
 </script>
 
 <Layout>
-	<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-		<div class="form-control">
-			<label class="label" for="key">
-				<span class="label-text font-semibold">Public Key</span>
-			</label>
+	<form class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+		<fieldset class="fieldset">
+			<legend class="fieldset-legend">Public Key</legend>
 			<textarea
-				id="key"
+				class="textarea textarea-bordered w-full h-64"
 				bind:value={key}
 				placeholder="Paste Public Key (Armored)..."
-				rows="10"
-				class="textarea textarea-bordered textarea-lg font-mono text-sm"
 			></textarea>
-		</div>
+		</fieldset>
 
-		<div class="form-control">
-			<label class="label" for="message">
-				<span class="label-text font-semibold">Message</span>
-			</label>
+		<fieldset class="fieldset">
+			<legend class="fieldset-legend">Message</legend>
 			<textarea
-				id="message"
+				class="textarea textarea-bordered w-full h-64"
 				bind:value={message}
 				placeholder="Type your secret message..."
-				rows="10"
-				class="textarea textarea-bordered textarea-lg"
 			></textarea>
-		</div>
-	</div>
+		</fieldset>
+	</form>
 
-	<div class="divider my-8"></div>
+	<div class="divider"></div>
 
-	<div class="form-control">
-		<label class="label" for="output">
-			<span class="label-text font-semibold">Encrypted Message</span>
-		</label>
+	<fieldset class="fieldset">
+		<legend class="fieldset-legend">
+			Encrypted Message
+			{#if isEncrypting}
+				<span class="loading loading-spinner loading-sm ml-2"></span>
+			{/if}
+		</legend>
 		<textarea
-			id="output"
+			class="textarea textarea-bordered w-full h-64"
 			value={output}
 			readonly
 			placeholder="Encrypted output will appear here..."
-			rows="10"
 			aria-busy={isEncrypting}
-			class="textarea textarea-bordered textarea-lg font-mono text-sm"
 		></textarea>
-		{#if isEncrypting}
-			<div class="mt-4 flex items-center gap-2">
-				<span class="loading loading-spinner loading-sm"></span>
-				<span class="text-sm text-base-content/70">Encrypting...</span>
-			</div>
-		{/if}
-	</div>
+	</fieldset>
 </Layout>

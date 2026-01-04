@@ -1,34 +1,35 @@
-<div class="min-h-screen flex flex-col bg-base-100">
-	<header class="bg-base-200 border-b border-base-300 shadow-sm">
-		<div class="container mx-auto px-4 py-6">
-			<div class="flex justify-between items-start">
-				<div>
-					<h1 class="text-4xl font-bold text-base-content">PGP Help</h1>
-					<p class="text-base-content/70 mt-2">Simple client-side encryption.</p>
-				</div>
-				<nav>
-					<a href="https://pgp.help" target="_blank" rel="noopener" class="link link-primary">
-						Help
-					</a>
-				</nav>
-			</div>
+<div class="min-h-screen flex flex-col">
+	<div class="navbar bg-base-200">
+		<div class="navbar-start">
+			<a class="btn btn-ghost text-xl" href="/">PGP Help</a>
 		</div>
-	</header>
+		<div class="navbar-center hidden sm:flex">
+			<p class="text-sm text-base-content/70">Simple client-side encryption</p>
+		</div>
+		<div class="navbar-end">
+			<a class="btn btn-ghost btn-sm" href="https://pgp.help" target="_blank" rel="noopener">
+				Help
+			</a>
+		</div>
+	</div>
 
-	<main class="flex-1 container mx-auto px-4 py-8">
+	<main class="flex-1 container mx-auto max-w-6xl py-8">
 		<slot />
 	</main>
 
-	<footer class="bg-base-200 border-t border-base-300 mt-12">
-		<div class="container mx-auto px-4 py-6 text-center text-base-content/70">
+	<footer class="footer footer-center bg-base-200 p-4">
+		<aside>
 			<p>
-				View source on <a
+				View source on
+				<a
+					class="link link-hover link-primary"
 					href="https://github.com/yourusername/pgp-svelte-wsl"
 					target="_blank"
 					rel="noopener"
-					class="link link-primary">GitHub</a
 				>
+					GitHub
+				</a>
 			</p>
-		</div>
+		</aside>
 	</footer>
 </div>
