@@ -21,3 +21,11 @@
  *   - Handles padding intelligently
  * This is better than custom utilities because it's battle-tested and responsive.
  */
+
+/* 
+ * Custom utility for code/monospace textareas.
+ * Combines common textarea styling for PGP keys and encrypted messages.
+ */
+@utility textarea-code {
+	@apply textarea w-full h-64 font-mono text-sm;
+}

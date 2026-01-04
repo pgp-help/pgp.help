@@ -27,22 +27,18 @@
 </script>
 
 <Layout>
-	<form class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+	<form class="space-y-6">
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Public Key</legend>
-			<textarea
-				class="textarea textarea-bordered w-full h-64"
-				bind:value={key}
-				placeholder="Paste Public Key (Armored)..."
+			<textarea class="textarea-code" bind:value={key} placeholder="Paste Public Key (Armored)..."
 			></textarea>
 		</fieldset>
 
+		<div class="divider"></div>
+
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Message</legend>
-			<textarea
-				class="textarea textarea-bordered w-full h-64"
-				bind:value={message}
-				placeholder="Type your secret message..."
+			<textarea class="textarea-code" bind:value={message} placeholder="Type your secret message..."
 			></textarea>
 		</fieldset>
 	</form>
@@ -57,10 +53,9 @@
 			{/if}
 		</legend>
 		<textarea
-			class="textarea textarea-bordered w-full h-64"
+			class="textarea-code bg-base-300 text-base-content/60"
 			value={output}
 			readonly
-			disabled
 			placeholder="Encrypted output will appear here..."
 			aria-busy={isEncrypting}
 		></textarea>
