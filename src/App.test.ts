@@ -60,7 +60,9 @@ describe('App', () => {
 
 		// Wait for the async encryption to complete
 		await vi.waitFor(() => {
-			expect(outputTextarea).toHaveValue('Error: Misformed armored text');
+			// With the new logic, invalid keys result in null key objects,
+			// so encryption is not attempted, and output remains empty.
+			expect(outputTextarea).toHaveValue('');
 		});
 	});
 

@@ -5,6 +5,7 @@
 
 	let {
 		value = $bindable(''),
+		cleanedKey = $bindable(''),
 		key = $bindable<Key | null>(null),
 		label = '',
 		placeholder = 'Paste PGP Key (Armored)...'
@@ -16,6 +17,7 @@
 		const k = value;
 		if (!k) {
 			key = null;
+			cleanedKey = '';
 			expirationTime = null;
 			return;
 		}
@@ -24,10 +26,12 @@
 			if (value === k) {
 				if (details) {
 					key = details;
+					cleanedKey = details.armor();
 					//For whatever reason, expirationTime is a promise. So fetch that too.
 					expirationTime = (await details.getExpirationTime()) as Date | null;
 				} else {
 					key = null;
+					cleanedKey = '';
 					expirationTime = null;
 				}
 			}
@@ -36,6 +40,7 @@
 
 	function clearKey() {
 		value = '';
+		cleanedKey = '';
 		key = null;
 		expirationTime = null;
 	}
@@ -50,7 +55,12 @@
 	let properties = $derived.by(() => {
 		if (!key) return [];
 
-		const algorithmInfo = key.getAlgorithmInfo ? key.getAlgorithmInfo() : null;
+		const created = formatDate(key.getCreationTime());
+		const expires = expirationTime ? formatDate(expirationTime) : null;
+		const validity =
+			expires && expires !== 'Never'
+				? `${created} (expires: ${expires})`
+				: `${created} (never expires)`;
 
 		return [
 			{
@@ -65,73 +75,61 @@
 			},
 			{
 				label: 'Created',
-				value: formatDate(key.getCreationTime()),
-				tooltip: 'When this key was generated'
+				value: validity,
+				tooltip: 'Key creation and expiration dates'
 			},
 			{
-				label: 'Expires',
-				value: formatDate(expirationTime),
-				tooltip: 'When this key will no longer be valid'
-			},
-			...(algorithmInfo
-				? [
-						{
-							label: 'Type',
-							value: `${algorithmInfo.algorithm.toUpperCase()} ${algorithmInfo.bits ? `(${algorithmInfo.bits} bit)` : ''}`,
-							tooltip: 'The cryptographic algorithm and key size'
-						}
-					]
-				: [])
+				label: 'Type',
+				value: `${key.getAlgorithmInfo().algorithm.toUpperCase()} ${key.getAlgorithmInfo().bits ? `(${key.getAlgorithmInfo().bits} bit)` : ''}`,
+				tooltip: 'The cryptographic algorithm and key size'
+			}
 		];
 	});
 </script>
 
 {#if key}
-	<div class="card bg-base-200 shadow-md border border-base-300 relative group">
-		<div class="card-body p-4">
-			<div class="flex justify-between items-start">
-				<div class="w-full">
-					<div class="flex items-center gap-2 mb-1">
-						<h4 class="font-bold text-lg">{key.getUserIDs()[0] || 'Unknown User'}</h4>
-						<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
-							{key.isPrivate() ? 'Private Key' : 'Public Key'}
-						</span>
-					</div>
-
-					{#each properties as prop (prop.label)}
-						<div class="text-xs font-mono opacity-70 flex items-start gap-1">
-							<div class="tooltip tooltip-right" data-tip={prop.tooltip}>
-								<span class="cursor-help border-b border-dotted border-base-content/50"
-									>{prop.label}</span
-								>:
-							</div>
-							<span class="break-all">{prop.value}</span>
-						</div>
-					{/each}
-
-					{#if key.getUserIDs().length > 1}
-						<div class="mt-2 text-xs opacity-60">
-							+{key.getUserIDs().length - 1} other ID(s)
-						</div>
-					{/if}
-
-					<details class="collapse collapse-arrow mt-4 p-0">
-						<summary class="collapse-title text-xs font-medium min-h-0 py-2 pl-0">
-							Show Armored Key
-						</summary>
-						<div class="collapse-content px-0 pt-2">
-							<CopyableTextarea {value} readonly={true} rows={6} label="" placeholder="" />
-						</div>
-					</details>
+	<div class="card bg-base-200 border selectable">
+		<div class="card-body">
+			<div>
+				<!-- to force card-body to treat this as a single item -->
+				<div class="flex items-center gap-2 mb-1">
+					<h4 class="font-bold text-lg">{key.getUserIDs()[0] || 'Unknown User'}</h4>
+					<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
+						{key.isPrivate() ? 'Private Key' : 'Public Key'}
+					</span>
 				</div>
-				<button
-					class="btn btn-sm btn-circle btn-ghost absolute top-2 right-2"
-					onclick={clearKey}
-					aria-label="Remove key"
-				>
-					✕
-				</button>
+
+				{#each properties as prop (prop.label)}
+					<div class="text-xs font-mono opacity-70 flex items-start gap-1">
+						<div class="tooltip" data-tip={prop.tooltip}>
+							<span class="cursor-help">{prop.label}</span>:
+						</div>
+						<span class="break-all">{prop.value}</span>
+					</div>
+				{/each}
+
+				{#if key.getUserIDs().length > 1}
+					<div class="mt-2 text-xs opacity-60">
+						+{key.getUserIDs().length - 1} other ID(s)
+					</div>
+				{/if}
+
+				<details class="collapse collapse-arrow mt-4 p-0">
+					<summary class="collapse-title text-xs font-medium min-h-0 py-2 pl-0">
+						Show Armored Key
+					</summary>
+					<div class="collapse-content px-0 pt-2">
+						<CopyableTextarea value={cleanedKey} readonly={true} label="" />
+					</div>
+				</details>
 			</div>
+			<button
+				class="btn btn-sm btn-ghost absolute top-2 right-2"
+				onclick={clearKey}
+				aria-label="Remove key"
+			>
+				✕
+			</button>
 		</div>
 	</div>
 {:else}

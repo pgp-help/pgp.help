@@ -20,7 +20,9 @@ describe('PGPKey Component', () => {
 		isPrivate: () => false,
 		getCreationTime: () => new Date('2023-01-01'),
 		getExpirationTime: async () => null,
-		getAlgorithmInfo: () => ({ algorithm: 'rsa', bits: 4096 })
+		getAlgorithmInfo: () => ({ algorithm: 'rsa', bits: 4096 }),
+		armor: () =>
+			'-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n...cleaned...\n-----END PGP PUBLIC KEY BLOCK-----'
 	};
 
 	it('renders CopyableTextarea when value is empty', () => {
