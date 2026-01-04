@@ -27,32 +27,40 @@
 </script>
 
 <Layout>
-	<div class="grid">
-		<div>
-			<label for="key">
-				Public Key
-				<textarea id="key" bind:value={key} placeholder="Paste Public Key (Armored)..." rows="10"
-				></textarea>
+	<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+		<div class="form-control">
+			<label class="label" for="key">
+				<span class="label-text font-semibold">Public Key</span>
 			</label>
+			<textarea
+				id="key"
+				bind:value={key}
+				placeholder="Paste Public Key (Armored)..."
+				rows="10"
+				class="textarea textarea-bordered textarea-lg font-mono text-sm"
+			></textarea>
 		</div>
 
-		<div>
-			<label for="message">
-				Message
-				<textarea
-					id="message"
-					bind:value={message}
-					placeholder="Type your secret message..."
-					rows="10"
-				></textarea>
+		<div class="form-control">
+			<label class="label" for="message">
+				<span class="label-text font-semibold">Message</span>
 			</label>
+			<textarea
+				id="message"
+				bind:value={message}
+				placeholder="Type your secret message..."
+				rows="10"
+				class="textarea textarea-bordered textarea-lg"
+			></textarea>
 		</div>
 	</div>
 
-	<hr />
+	<div class="divider my-8"></div>
 
-	<label for="output">
-		Encrypted Message
+	<div class="form-control">
+		<label class="label" for="output">
+			<span class="label-text font-semibold">Encrypted Message</span>
+		</label>
 		<textarea
 			id="output"
 			value={output}
@@ -60,6 +68,13 @@
 			placeholder="Encrypted output will appear here..."
 			rows="10"
 			aria-busy={isEncrypting}
+			class="textarea textarea-bordered textarea-lg font-mono text-sm"
 		></textarea>
-	</label>
+		{#if isEncrypting}
+			<div class="mt-4 flex items-center gap-2">
+				<span class="loading loading-spinner loading-sm"></span>
+				<span class="text-sm text-base-content/70">Encrypting...</span>
+			</div>
+		{/if}
+	</div>
 </Layout>
