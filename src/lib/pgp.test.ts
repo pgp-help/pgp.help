@@ -11,6 +11,7 @@ describe('PGP Functions', () => {
 		// Generate a test key pair
 		const { privateKey: privKeyArmored, publicKey: pubKey } = await openpgp.generateKey({
 			type: 'ecc',
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			curve: 'ed25519' as any, //Squash type error
 			userIDs: [{ name: 'Test User', email: 'test@example.com' }],
 			passphrase: 'testpassphrase'

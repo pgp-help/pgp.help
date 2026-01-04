@@ -2,6 +2,7 @@
 	import { encryptMessage } from './lib/pgp.js';
 	import Layout from './Layout.svelte';
 	import CopyableTextarea from './lib/CopyableTextarea.svelte';
+	import PGPKey from './lib/PGPKey.svelte';
 
 	let key = $state('');
 	let message = $state('');
@@ -28,15 +29,10 @@
 </script>
 
 <Layout>
-	<h1 class="text-2xl font-bold mb-6">PGP Help</h1>
 	<form class="space-y-6">
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Public Key</legend>
-			<CopyableTextarea
-				bind:value={key}
-				placeholder="Paste Public Key (Armored)..."
-				label="Public Key"
-			/>
+			<PGPKey bind:value={key} placeholder="Paste Public Key (Armored)..." label="Public Key" />
 		</fieldset>
 
 		<div class="divider"></div>

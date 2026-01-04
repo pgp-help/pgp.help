@@ -11,6 +11,7 @@ describe('App', () => {
 		// Generate a real test key pair
 		const { publicKey } = await openpgp.generateKey({
 			type: 'ecc',
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			curve: 'ed25519' as any, //Squash type error
 			userIDs: [{ name: 'Test User', email: 'test@example.com' }]
 		});

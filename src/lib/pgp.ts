@@ -104,3 +104,18 @@ export async function verifySignature(
 		return false;
 	}
 }
+
+/**
+ * Parses a PGP key and returns the OpenPGP Key object.
+ * Returns null if the key is invalid.
+ */
+export async function getKeyDetails(armoredKey: string): Promise<openpgp.Key | null> {
+	if (!armoredKey) return null;
+
+	try {
+		return await openpgp.readKey({ armoredKey });
+	} catch {
+		// Key parsing failed
+		return null;
+	}
+}
