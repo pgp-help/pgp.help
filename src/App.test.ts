@@ -1,5 +1,5 @@
 /// <reference types="vitest/globals" />
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, fireEvent } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import * as openpgp from 'openpgp';
 import App from './App.svelte';
@@ -33,7 +33,9 @@ describe('App', () => {
 		const messageTextarea = screen.getByLabelText(/^Message/i);
 		const outputTextarea = screen.getByLabelText(/Encrypted Message/i);
 
-		await user.type(keyTextarea, validPublicKey);
+		// Use fireEvent for the key to simulate a paste/instant update and avoid
+		// thousands of intermediate renders/effects with partial keys
+		await fireEvent.input(keyTextarea, { target: { value: validPublicKey } });
 		await user.type(messageTextarea, 'Hello World');
 
 		// Wait for the async encryption to complete
