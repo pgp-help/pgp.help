@@ -5,34 +5,30 @@
 
 	let {
 		value = $bindable(''),
+		key = $bindable<Key | null>(null),
 		label = '',
-		placeholder = '',
-		readonly = false,
-		rows = 10,
-		showButtons = true,
-		selectAllOnFocus = true
+		placeholder = 'Paste PGP Key (Armored)...'
 	} = $props();
 
-	let key = $state<Key | null>(null);
-	let creationTime = $state<Date | null>(null);
 	let expirationTime = $state<Date | null>(null);
-	let algorithmInfo = $state<{ algorithm: string; bits: number } | null>(null);
 
 	$effect(() => {
 		const k = value;
 		if (!k) {
 			key = null;
+			expirationTime = null;
 			return;
 		}
 
 		getKeyDetails(k).then(async (details) => {
 			if (value === k) {
-				key = details;
-				if (key) {
-					creationTime = key.getCreationTime();
-					expirationTime = (await key.getExpirationTime()) as Date | null;
-					// @ts-expect-error - getAlgorithmInfo types might be missing in some versions but exists at runtime
-					algorithmInfo = key.getAlgorithmInfo ? key.getAlgorithmInfo() : null;
+				if (details) {
+					key = details;
+					//For whatever reason, expirationTime is a promise. So fetch that too.
+					expirationTime = (await details.getExpirationTime()) as Date | null;
+				} else {
+					key = null;
+					expirationTime = null;
 				}
 			}
 		});
@@ -41,6 +37,7 @@
 	function clearKey() {
 		value = '';
 		key = null;
+		expirationTime = null;
 	}
 
 	function formatDate(date: Date | null) {
@@ -50,41 +47,43 @@
 		return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 	}
 
-	let properties = $derived(
-		key
-			? [
-					{
-						label: 'ID',
-						value: key.getKeyID().toHex(),
-						tooltip: 'The short 8-character identifier for this key'
-					},
-					{
-						label: 'FP',
-						value: key.getFingerprint(),
-						tooltip: 'The full unique fingerprint of the key'
-					},
-					{
-						label: 'Created',
-						value: formatDate(creationTime),
-						tooltip: 'When this key was generated'
-					},
-					{
-						label: 'Expires',
-						value: formatDate(expirationTime),
-						tooltip: 'When this key will no longer be valid'
-					},
-					...(algorithmInfo
-						? [
-								{
-									label: 'Type',
-									value: `${algorithmInfo.algorithm.toUpperCase()} ${algorithmInfo.bits ? `(${algorithmInfo.bits} bit)` : ''}`,
-									tooltip: 'The cryptographic algorithm and key size'
-								}
-							]
-						: [])
-				]
-			: []
-	);
+	let properties = $derived.by(() => {
+		if (!key) return [];
+
+		const algorithmInfo = key.getAlgorithmInfo ? key.getAlgorithmInfo() : null;
+
+		return [
+			{
+				label: 'ID',
+				value: key.getKeyID().toHex(),
+				tooltip: 'The short 8-character identifier for this key'
+			},
+			{
+				label: 'FP',
+				value: key.getFingerprint(),
+				tooltip: 'The full unique fingerprint of the key'
+			},
+			{
+				label: 'Created',
+				value: formatDate(key.getCreationTime()),
+				tooltip: 'When this key was generated'
+			},
+			{
+				label: 'Expires',
+				value: formatDate(expirationTime),
+				tooltip: 'When this key will no longer be valid'
+			},
+			...(algorithmInfo
+				? [
+						{
+							label: 'Type',
+							value: `${algorithmInfo.algorithm.toUpperCase()} ${algorithmInfo.bits ? `(${algorithmInfo.bits} bit)` : ''}`,
+							tooltip: 'The cryptographic algorithm and key size'
+						}
+					]
+				: [])
+		];
+	});
 </script>
 
 {#if key}
@@ -140,9 +139,8 @@
 		bind:value
 		{label}
 		{placeholder}
-		{readonly}
-		{rows}
-		{showButtons}
-		{selectAllOnFocus}
+		readonly={false}
+		showButtons={true}
+		selectAllOnFocus={false}
 	/>
 {/if}

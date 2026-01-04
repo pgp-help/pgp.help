@@ -26,12 +26,11 @@ describe('PGPKey Component', () => {
 	it('renders CopyableTextarea when value is empty', () => {
 		const { getByPlaceholderText } = render(PGPKey, {
 			props: {
-				value: '',
-				placeholder: 'Enter key here'
+				value: ''
 			}
 		});
 
-		expect(getByPlaceholderText('Enter key here')).toBeTruthy();
+		expect(getByPlaceholderText('Paste PGP Key (Armored)...')).toBeTruthy();
 	});
 
 	it('renders key details widget when valid key is provided', async () => {
@@ -40,8 +39,7 @@ describe('PGPKey Component', () => {
 
 		const { getByText, queryByPlaceholderText } = render(PGPKey, {
 			props: {
-				value: 'valid-armored-key',
-				placeholder: 'Enter key here'
+				value: 'valid-armored-key'
 			}
 		});
 
@@ -56,7 +54,7 @@ describe('PGPKey Component', () => {
 		expect(getByText('RSA (4096 bit)')).toBeTruthy();
 
 		// Input should be hidden
-		expect(queryByPlaceholderText('Enter key here')).toBeNull();
+		expect(queryByPlaceholderText('Paste PGP Key (Armored)...')).toBeNull();
 	});
 
 	it('clears the key when remove button is clicked', async () => {
@@ -65,8 +63,7 @@ describe('PGPKey Component', () => {
 
 		const { getByLabelText, getByPlaceholderText } = render(PGPKey, {
 			props: {
-				value: 'valid-armored-key',
-				placeholder: 'Enter key here'
+				value: 'valid-armored-key'
 			}
 		});
 
@@ -78,10 +75,10 @@ describe('PGPKey Component', () => {
 		await fireEvent.click(removeBtn);
 
 		// Should revert to input mode
-		expect(getByPlaceholderText('Enter key here')).toBeTruthy();
+		expect(getByPlaceholderText('Paste PGP Key (Armored)...')).toBeTruthy();
 
 		// Value should be cleared (checking via prop binding requires component interaction check or checking the input value)
-		const input = getByPlaceholderText('Enter key here') as HTMLTextAreaElement;
+		const input = getByPlaceholderText('Paste PGP Key (Armored)...') as HTMLTextAreaElement;
 		expect(input.value).toBe('');
 	});
 });

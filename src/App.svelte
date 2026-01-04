@@ -32,7 +32,7 @@
 	<form class="space-y-6">
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Public Key</legend>
-			<PGPKey bind:value={key} placeholder="Paste Public Key (Armored)..." label="Public Key" />
+			<PGPKey bind:value={key} label="Public Key" />
 		</fieldset>
 
 		<div class="divider"></div>

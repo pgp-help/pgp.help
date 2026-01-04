@@ -21,7 +21,7 @@ describe('App', () => {
 	it('renders the core interface', () => {
 		render(App);
 		// Check Header
-		expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('PGP Help');
+		expect(screen.getByRole('link', { name: 'PGP Help' })).toBeInTheDocument();
 		expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/Encrypted Message/i)).toBeInTheDocument();
 	});
@@ -75,10 +75,6 @@ describe('App', () => {
 		textareas.forEach((textarea) => {
 			expect(textarea).toHaveClass('textarea');
 		});
-
-		// Check for DaisyUI form-control class
-		const labels = screen.getAllByRole('heading', { level: 1 });
-		expect(labels.length).toBeGreaterThan(0);
 	});
 
 	it('verifies Tailwind CSS is loaded', () => {
