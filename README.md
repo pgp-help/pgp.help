@@ -14,17 +14,20 @@ A simple, client-side PGP encryption web app built with Svelte and Vite. Encrypt
 ## Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/yourusername/pgp-svelte-wsl.git
    cd pgp-svelte-wsl
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Start the development server:
+
    ```bash
    npm run dev
    ```
@@ -77,6 +80,7 @@ src/
 ## Testing
 
 Run tests with:
+
 ```bash
 npm test
 ```

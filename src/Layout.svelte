@@ -12,6 +12,12 @@
 	<slot />
 
 	<footer>
-		<p>View source on <a href="https://github.com/yourusername/pgp-svelte-wsl" target="_blank" rel="noopener">GitHub</a></p>
+		<p>
+			View source on <a
+				href="https://github.com/yourusername/pgp-svelte-wsl"
+				target="_blank"
+				rel="noopener">GitHub</a
+			>
+		</p>
 	</footer>
 </main>
