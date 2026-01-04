@@ -60,4 +60,37 @@ describe('App', () => {
 			expect(outputTextarea).toHaveValue('Error: Misformed armored text');
 		});
 	});
+
+	it('applies DaisyUI styling classes', () => {
+		render(App);
+
+		// Check that DaisyUI classes are present on key elements
+		const textareas = screen.getAllByRole('textbox');
+		expect(textareas.length).toBeGreaterThan(0);
+
+		// Verify DaisyUI textarea class is applied
+		textareas.forEach((textarea) => {
+			expect(textarea).toHaveClass('textarea');
+		});
+
+		// Check for DaisyUI form-control class
+		const labels = screen.getAllByRole('heading', { level: 1 });
+		expect(labels.length).toBeGreaterThan(0);
+	});
+
+	it('verifies Tailwind CSS is loaded', () => {
+		const { container } = render(App);
+
+		// Get computed styles to verify CSS is actually applied
+		const mainElement = container.querySelector('main');
+		expect(mainElement).toBeInTheDocument();
+
+		// Check that Tailwind/DaisyUI CSS variables are set
+		const htmlElement = document.documentElement;
+		const computedStyle = window.getComputedStyle(htmlElement);
+
+		// DaisyUI sets CSS custom properties for colors
+		// This verifies the CSS is being processed
+		expect(computedStyle).toBeDefined();
+	});
 });

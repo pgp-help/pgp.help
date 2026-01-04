@@ -1,6 +1,7 @@
 <script>
 	import { encryptMessage } from './lib/pgp.js';
 	import Layout from './Layout.svelte';
+	import CopyableTextarea from './lib/CopyableTextarea.svelte';
 
 	let key = $state('');
 	let message = $state('');
@@ -27,39 +28,44 @@
 </script>
 
 <Layout>
-	<div class="grid">
-		<div>
-			<label for="key">
-				Public Key
-				<textarea id="key" bind:value={key} placeholder="Paste Public Key (Armored)..." rows="10"
-				></textarea>
-			</label>
-		</div>
+	<h1 class="text-2xl font-bold mb-6">PGP Help</h1>
+	<form class="space-y-6">
+		<fieldset class="fieldset">
+			<legend class="fieldset-legend">Public Key</legend>
+			<CopyableTextarea
+				bind:value={key}
+				placeholder="Paste Public Key (Armored)..."
+				label="Public Key"
+			/>
+		</fieldset>
 
-		<div>
-			<label for="message">
-				Message
-				<textarea
-					id="message"
-					bind:value={message}
-					placeholder="Type your secret message..."
-					rows="10"
-				></textarea>
-			</label>
-		</div>
-	</div>
+		<div class="divider"></div>
 
-	<hr />
+		<fieldset class="fieldset">
+			<legend class="fieldset-legend">Message</legend>
+			<textarea
+				class="textarea textarea-code"
+				bind:value={message}
+				placeholder="Type your secret message..."
+				aria-label="Message"
+			></textarea>
+		</fieldset>
+	</form>
 
-	<label for="output">
-		Encrypted Message
-		<textarea
-			id="output"
+	<div class="divider"></div>
+
+	<fieldset class="fieldset">
+		<legend class="fieldset-legend">
+			Encrypted Message
+			{#if isEncrypting}
+				<span class="loading loading-spinner loading-sm ml-2"></span>
+			{/if}
+		</legend>
+		<CopyableTextarea
 			value={output}
-			readonly
+			readonly={true}
 			placeholder="Encrypted output will appear here..."
-			rows="10"
-			aria-busy={isEncrypting}
-		></textarea>
-	</label>
+			label="Encrypted Message"
+		/>
+	</fieldset>
 </Layout>
