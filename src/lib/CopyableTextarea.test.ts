@@ -5,7 +5,8 @@ import CopyableTextarea from './CopyableTextarea.svelte';
 describe('CopyableTextarea', () => {
 	// Mock navigator.clipboard
 	const mockClipboard = {
-		writeText: vi.fn()
+		writeText: vi.fn(),
+		readText: vi.fn()
 	};
 	Object.defineProperty(navigator, 'clipboard', {
 		value: mockClipboard,
@@ -16,7 +17,7 @@ describe('CopyableTextarea', () => {
 		const { getByRole } = render(CopyableTextarea, {
 			props: {
 				value: 'Test content',
-				showCopyButton: true
+				showButtons: true
 			}
 		});
 
@@ -30,7 +31,7 @@ describe('CopyableTextarea', () => {
 		const { getByLabelText, getByText } = render(CopyableTextarea, {
 			props: {
 				value: 'Copy me',
-				showCopyButton: true
+				showButtons: true
 			}
 		});
 
@@ -44,11 +45,34 @@ describe('CopyableTextarea', () => {
 		expect(toastElement).toBeTruthy();
 	});
 
+	it('pastes text from clipboard when paste button is clicked', async () => {
+		mockClipboard.readText.mockResolvedValue('Pasted content');
+
+		const { getByLabelText, getByText, getByRole } = render(CopyableTextarea, {
+			props: {
+				value: '',
+				showButtons: true
+			}
+		});
+
+		const pasteButton = getByLabelText('Paste from clipboard');
+		await fireEvent.click(pasteButton);
+
+		expect(mockClipboard.readText).toHaveBeenCalled();
+
+		const textarea = getByRole('textbox');
+		expect(textarea).toHaveValue('Pasted content');
+
+		// Check toast appears
+		const toastElement = getByText('Pasted!');
+		expect(toastElement).toBeTruthy();
+	});
+
 	it('selects all text when textarea is focused', async () => {
 		const { getByRole } = render(CopyableTextarea, {
 			props: {
 				value: 'Select all text',
-				showCopyButton: true
+				showButtons: true
 			}
 		});
 
@@ -67,7 +91,7 @@ describe('CopyableTextarea', () => {
 		const { getByLabelText } = render(CopyableTextarea, {
 			props: {
 				value: 'Test copy',
-				showCopyButton: true
+				showButtons: true
 			}
 		});
 
