@@ -60,6 +60,7 @@
 			class="textarea textarea-bordered w-full h-64"
 			value={output}
 			readonly
+			disabled
 			placeholder="Encrypted output will appear here..."
 			aria-busy={isEncrypting}
 		></textarea>

@@ -4,7 +4,7 @@
 			<a class="btn btn-ghost text-xl" href="/">PGP Help</a>
 		</div>
 		<div class="navbar-center hidden sm:flex">
-			<p class="text-sm text-base-content/70">Simple client-side encryption</p>
+			<p class="text-sm opacity-80">Simple client-side encryption</p>
 		</div>
 		<div class="navbar-end">
 			<a class="btn btn-ghost btn-sm" href="https://pgp.help" target="_blank" rel="noopener">
