@@ -1,5 +1,6 @@
 <script>
 	import { encryptMessage } from './lib/pgp.js';
+	import Layout from './Layout.svelte';
 
 	let key = $state('');
 	let message = $state('');
@@ -25,12 +26,7 @@
 	});
 </script>
 
-<main class="container">
-	<hgroup>
-		<h1>PGP Help</h1>
-		<p>Simple client-side encryption.</p>
-	</hgroup>
-
+<Layout>
 	<div class="grid">
 		<div>
 			<label for="key">
@@ -66,4 +62,4 @@
 			aria-busy={isEncrypting}
 		></textarea>
 	</label>
-</main>
+</Layout>

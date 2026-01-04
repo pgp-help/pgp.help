@@ -1,0 +1,6 @@
+# This hook runs before every commit.
+# It triggers lint-staged, which runs linters/formatters
+# only on the files you're about to commit.
+# If there are errors that can't be auto-fixed, the commit is blocked.
+
+npx lint-staged

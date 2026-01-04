@@ -1,43 +1,110 @@
-# Svelte + Vite
+# PGP Svelte
 
-This template should help get you started developing with Svelte in Vite.
+A simple, client-side PGP encryption web app built with Svelte and Vite. Encrypt messages using public keys directly in your browser—no server required, ensuring privacy and security.
 
-## Recommended IDE Setup
+## Features
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+- **Client-Side Encryption**: All PGP operations happen locally using OpenPGP.js.
+- **Simple Interface**: Clean, responsive UI inspired by pgp.help, with a header, footer, and easy-to-use form.
+- **Real-Time Encryption**: Encrypt messages as you type, with live updates.
+- **Custom Styling**: Uses Pico CSS with custom overrides for a professional look, including Inter font and a trust-inspired color scheme.
+- **Testing**: Comprehensive unit tests with Vitest and Testing Library.
+- **Modern Stack**: Built with Svelte 5 (runes), Vite, and TypeScript support.
 
-## Need an official Svelte framework?
+## Installation
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+1. Clone the repository:
 
-## Technical considerations
+   ```bash
+   git clone https://github.com/yourusername/pgp-svelte-wsl.git
+   cd pgp-svelte-wsl
+   ```
 
-**Why use this over SvelteKit?**
+2. Install dependencies:
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
+   ```bash
+   npm install
+   ```
 
-This template contains as little as possible to get started with Vite + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
+3. Start the development server:
 
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
+   ```bash
+   npm run dev
+   ```
 
-**Why include `.vscode/extensions.json`?**
+   Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
+## Usage
 
-**Why enable `checkJs` in the JS template?**
+1. **Paste a Public Key**: Enter an armored PGP public key in the "Public Key" field.
+2. **Type Your Message**: Input the secret message in the "Message" field.
+3. **View Encrypted Output**: The encrypted message appears automatically in the "Encrypted Message" textarea.
+4. **Help & Source**: Use the "Help" link in the header for guidance, or view the source on GitHub via the footer.
 
-It is likely that most cases of changing variable types in runtime are likely to be accidental, rather than deliberate. This provides advanced typechecking out of the box. Should you like to take advantage of the dynamically-typed nature of JavaScript, it is trivial to change the configuration.
+All encryption is performed client-side—your data never leaves your device.
 
-**Why is HMR not preserving my local component state?**
+## Development
 
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/sveltejs/svelte-hmr/tree/master/packages/svelte-hmr#preservation-of-local-state).
+### Scripts
 
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
+- `npm run dev`: Start the development server with hot reloading.
+- `npm run build`: Build the app for production.
+- `npm run preview`: Preview the production build locally.
+- `npm run test`: Run unit tests with Vitest.
+- `npm run lint`: Lint the code with ESLint.
+- `npm run format`: Format code with Prettier.
 
-```js
-// store.js
-// An extremely simple external store
-import { writable } from 'svelte/store';
-export default writable(0);
+### Project Structure
+
 ```
+src/
+├── App.svelte          # Main app component (content)
+├── Layout.svelte       # Layout component (header/footer)
+├── app.css             # Custom styles and Pico overrides
+├── lib/
+│   ├── pgp.ts          # PGP encryption logic
+│   └── pgp.test.ts     # PGP tests
+├── main.js             # App entry point
+└── setupTests.js       # Test setup
+```
+
+### Technologies
+
+- **Svelte 5**: Reactive UI framework with runes.
+- **Vite**: Fast build tool and dev server.
+- **Pico CSS**: Minimal CSS framework with custom theming.
+- **OpenPGP.js**: JavaScript implementation of PGP.
+- **Vitest**: Unit testing framework.
+- **ESLint + Prettier**: Code quality and formatting.
+
+## Testing
+
+Run tests with:
+
+```bash
+npm test
+```
+
+Tests cover PGP functions (encryption, signing/verification) and UI behavior (form rendering, error handling).
+
+## Contributing
+
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/your-feature`.
+3. Commit changes: `git commit -m 'Add your feature'`.
+4. Push to the branch: `git push origin feature/your-feature`.
+5. Open a pull request.
+
+Please ensure tests pass and code is linted before submitting.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+## Links
+
+- [pgp.help](https://pgp.help) - Inspiration for the UI and functionality.
+- [OpenPGP.js](https://openpgpjs.org/) - Underlying PGP library.
+- [Pico CSS](https://picocss.com/) - CSS framework used.
+- [Svelte](https://svelte.dev/) - UI framework.
+- [Vite](https://vitejs.dev/) - Build tool.

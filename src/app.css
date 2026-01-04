@@ -1,4 +1,26 @@
 /* Custom styles to override Pico if necessary */
+:root {
+	--pico-font-family: 'Inter', sans-serif;
+	--pico-primary: #25ebe1;
+	--pico-background-color: #f8f9fa;
+	--pico-color: #212529;
+}
+
+header {
+	background-color: var(--pico-primary-background);
+	padding: 1rem;
+	border-bottom: 1px solid var(--pico-border-color);
+	margin-bottom: 1rem;
+}
+
+footer {
+	background-color: var(--pico-muted-background);
+	padding: 1rem;
+	border-top: 1px solid var(--pico-border-color);
+	margin-top: 1rem;
+	text-align: center;
+}
+
 main {
 	padding: 1rem;
 }
