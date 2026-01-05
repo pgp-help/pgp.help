@@ -32,3 +32,11 @@
 		@apply bg-base-300 text-base-content/70;
 	}
 }
+
+/* Show all tooltips in the group when hovering over any button */
+.group:hover .tooltip::before,
+.group:hover .tooltip::after {
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
+}
