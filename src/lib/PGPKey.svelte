@@ -119,7 +119,7 @@
 						Show Armored Key
 					</summary>
 					<div class="collapse-content px-0 pt-2">
-						<CopyableTextarea value={cleanedKey} readonly={true} label="" />
+						<CopyableTextarea value={cleanedKey} fixed label="" />
 					</div>
 				</details>
 			</div>

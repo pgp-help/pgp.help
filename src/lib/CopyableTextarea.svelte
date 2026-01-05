@@ -8,20 +8,24 @@
 	export let placeholder = '';
 	export let label = '';
 	export let id = '';
-	export let rows = 10;
 	export let showButtons = true;
 	export let selectAllOnFocus = true;
+	export let fixed = false;
+	let className = '';
+	export { className as class };
 
 	let textareaElement;
-	let showToast = false;
-	let toastMessage = 'Copied!';
+	let copyTooltip = 'Copy';
 
-	function triggerToast(message = 'Copied!') {
-		toastMessage = message;
-		showToast = true;
-		setTimeout(() => {
-			showToast = false;
-		}, 2000);
+	$: if (fixed && textareaElement && value !== undefined) {
+		// Use setTimeout to ensure the DOM has updated with the new value
+		setTimeout(adjustHeight, 0);
+	}
+
+	function adjustHeight() {
+		if (!textareaElement) return;
+		textareaElement.style.height = 'auto';
+		textareaElement.style.height = textareaElement.scrollHeight + 'px';
 	}
 
 	async function copyToClipboard(event) {
@@ -31,41 +35,18 @@
 
 		try {
 			await navigator.clipboard.writeText(value);
-			triggerToast('Copied!');
+			copyTooltip = 'Copied!';
+			setTimeout(() => {
+				copyTooltip = 'Copy';
+			}, 2000);
 		} catch (err) {
 			console.error('Failed to copy text: ', err);
 		}
 	}
 
-	async function pasteFromClipboard(event) {
-		event.preventDefault();
-		event.stopPropagation();
-
-		// Focus the textarea first. This is often required for clipboard operations
-		// and provides better UX (cursor lands in the box).
-		if (textareaElement) {
-			textareaElement.focus();
-		}
-
-		try {
-			// This might trigger a browser permission prompt or "Paste" bubble.
-			// This is a browser security feature we cannot bypass.
-			const text = await navigator.clipboard.readText();
-			value = text;
-			triggerToast('Pasted!');
-		} catch (err) {
-			console.error('Failed to paste text: ', err);
-			// Fallback message for browsers that block programmatic paste (e.g. Firefox)
-			triggerToast('Use Ctrl+V to paste');
-		}
-	}
-
-	function handleCopy() {
-		triggerToast('Copied!');
-	}
-
 	function handleFocus() {
 		if (!selectAllOnFocus) return;
+
 		// Select all text when the textarea gains focus - a QoL improvement
 		if (textareaElement) {
 			textareaElement.select();
@@ -104,76 +85,45 @@
 	}
 </script>
 
-<div class="relative w-full">
+<div class="relative {fixed ? 'max-w-prose' : 'w-full'}">
 	<textarea
 		{id}
 		bind:this={textareaElement}
 		bind:value
-		{readonly}
+		readonly={readonly || fixed}
 		{placeholder}
-		{rows}
-		class="textarea textarea-code w-full"
+		class="textarea textarea-code w-full {fixed ? 'resize-none' : ''} {className}"
+		style={fixed ? 'height: auto; overflow-y: hidden;' : ''}
 		aria-label={label}
 		on:focus={handleFocus}
 		on:mousedown={handleMouseDown}
 		on:mouseup={handleMouseUp}
-		on:copy={handleCopy}
 	></textarea>
-
 	{#if showButtons}
 		<div class="absolute top-2 right-2 z-10 flex">
-			{#if !readonly}
+			<div class="tooltip tooltip-left" data-tip={copyTooltip}>
 				<button
 					type="button"
 					class="btn btn-ghost btn-sm"
-					on:click={pasteFromClipboard}
-					aria-label="Paste from clipboard"
-					title="Paste from clipboard"
+					on:click={copyToClipboard}
+					aria-label="Copy to clipboard"
+					title="Copy to clipboard"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
-						class="h-5 w-5"
-						viewBox="0 0 24 24"
 						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
 						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						class="w-4 h-4"
 					>
-						<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
-						></path>
-						<rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.875.63-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
+						/>
 					</svg>
 				</button>
-			{/if}
-			<button
-				type="button"
-				class="btn btn-ghost btn-sm"
-				on:click={copyToClipboard}
-				aria-label="Copy to clipboard"
-				title="Copy to clipboard"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-					<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-				</svg>
-			</button>
-		</div>
-	{/if}
-
-	{#if showToast}
-		<div class="absolute bottom-4 right-4 z-20">
-			<div class="alert alert-success shadow-lg py-1 px-3 text-sm">
-				<span>{toastMessage}</span>
 			</div>
 		</div>
 	{/if}
