@@ -17,6 +17,8 @@
 	let textareaElement;
 	let copyTooltip = 'Copy';
 
+	$: cols = fixed && value ? Math.max(...value.split('\n').map((l) => l.length)) + 0 : undefined;
+
 	$: if (fixed && textareaElement && value !== undefined) {
 		// Use setTimeout to ensure the DOM has updated with the new value
 		setTimeout(adjustHeight, 0);
@@ -85,11 +87,12 @@
 	}
 </script>
 
-<div class="relative {fixed ? 'max-w-prose' : 'w-full'}">
+<div class="relative {fixed ? 'w-fit' : 'w-full'}">
 	<textarea
 		{id}
 		bind:this={textareaElement}
 		bind:value
+		{cols}
 		readonly={readonly || fixed}
 		{placeholder}
 		class="textarea textarea-code w-full {fixed ? 'resize-none' : ''} {className}"

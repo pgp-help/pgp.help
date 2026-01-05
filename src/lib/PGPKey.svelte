@@ -114,12 +114,10 @@
 					</div>
 				{/if}
 
-				<details class="collapse collapse-arrow mt-4 p-0">
-					<summary class="collapse-title text-xs font-medium min-h-0 py-2 pl-0">
-						Show Armored Key
-					</summary>
+				<details class="collapse collapse-arrow w-fit">
+					<summary class="collapse-title text-xs font-medium py-2 pl-0"> Show Armored Key </summary>
 					<div class="collapse-content px-0 pt-2">
-						<CopyableTextarea value={cleanedKey} fixed label="" />
+						<CopyableTextarea value={cleanedKey} class="text-xs" fixed />
 					</div>
 				</details>
 			</div>
