@@ -4,6 +4,7 @@
 	// making it easier for users to copy the content manually if needed.
 
 	import FeedbackButton from './FeedbackButton.svelte';
+	import { onMount, onDestroy } from 'svelte';
 
 	export let value = '';
 	export let readonly = false;
@@ -17,18 +18,33 @@
 	export { className as class };
 
 	let textareaElement;
+	let resizeObserver;
 
 	$: cols = fixed && value ? Math.max(...value.split('\n').map((l) => l.length)) + 0 : undefined;
 
-	$: if (fixed && textareaElement && value !== undefined) {
-		// Use setTimeout to ensure the DOM has updated with the new value
-		setTimeout(adjustHeight, 0);
-	}
+	onMount(() => {
+		if (fixed && textareaElement) {
+			// Need to find the right hook to calculate the size after Svelte has rendered the value
+			// Feel this is overkill, but at least it works.
+			// I'm told that `field-sizing: content` would be ideal here, but it's not widely supported yet.
+			resizeObserver = new ResizeObserver(() => {
+				adjustHeight();
+			});
+			resizeObserver.observe(textareaElement);
+		}
+	});
+
+	onDestroy(() => {
+		if (resizeObserver) {
+			resizeObserver.disconnect();
+		}
+	});
 
 	function adjustHeight() {
 		if (!textareaElement) return;
 		textareaElement.style.height = 'auto';
 		textareaElement.style.height = textareaElement.scrollHeight + 'px';
+		console.log('Height adjustment: scrollHeight =', textareaElement.style.height, 'px');
 	}
 
 	async function copyToClipboard() {
