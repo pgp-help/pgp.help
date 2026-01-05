@@ -2,14 +2,16 @@
 	import { encryptMessage } from './lib/pgp.js';
 	import Layout from './Layout.svelte';
 	import CopyableTextarea from './lib/CopyableTextarea.svelte';
+	import PGPKey from './lib/PGPKey.svelte';
 
-	let key = $state('');
+	let keyInput = $state('');
+	let keyObject = $state(null);
 	let message = $state('');
 	let output = $state('');
 	let isEncrypting = $state(false);
 
 	$effect(() => {
-		const k = key;
+		const k = keyObject;
 		const m = message;
 
 		if (!k || !m) {
@@ -19,7 +21,7 @@
 
 		isEncrypting = true;
 		encryptMessage(k, m).then((result) => {
-			if (key === k && message === m) {
+			if (keyObject === k && message === m) {
 				output = result;
 				isEncrypting = false;
 			}
@@ -28,15 +30,10 @@
 </script>
 
 <Layout>
-	<h1 class="text-2xl font-bold mb-6">PGP Help</h1>
 	<form class="space-y-6">
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">Public Key</legend>
-			<CopyableTextarea
-				bind:value={key}
-				placeholder="Paste Public Key (Armored)..."
-				label="Public Key"
-			/>
+			<PGPKey bind:value={keyInput} bind:key={keyObject} label="Public Key" />
 		</fieldset>
 
 		<div class="divider"></div>

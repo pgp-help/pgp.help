@@ -27,7 +27,7 @@
  * Combines common textarea styling for PGP keys and encrypted messages.
  */
 @utility textarea-code {
-	@apply textarea w-full h-64 font-mono text-sm;
+	@apply font-mono text-sm;
 	&:read-only {
 		@apply bg-base-300 text-base-content/70;
 	}

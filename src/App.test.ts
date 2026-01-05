@@ -11,6 +11,7 @@ describe('App', () => {
 		// Generate a real test key pair
 		const { publicKey } = await openpgp.generateKey({
 			type: 'ecc',
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			curve: 'ed25519' as any, //Squash type error
 			userIDs: [{ name: 'Test User', email: 'test@example.com' }]
 		});
@@ -20,7 +21,7 @@ describe('App', () => {
 	it('renders the core interface', () => {
 		render(App);
 		// Check Header
-		expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('PGP Help');
+		expect(screen.getByRole('link', { name: 'PGP Help' })).toBeInTheDocument();
 		expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/Encrypted Message/i)).toBeInTheDocument();
 	});
@@ -59,7 +60,9 @@ describe('App', () => {
 
 		// Wait for the async encryption to complete
 		await vi.waitFor(() => {
-			expect(outputTextarea).toHaveValue('Error: Misformed armored text');
+			// With the new logic, invalid keys result in null key objects,
+			// so encryption is not attempted, and output remains empty.
+			expect(outputTextarea).toHaveValue('');
 		});
 	});
 
@@ -74,10 +77,6 @@ describe('App', () => {
 		textareas.forEach((textarea) => {
 			expect(textarea).toHaveClass('textarea');
 		});
-
-		// Check for DaisyUI form-control class
-		const labels = screen.getAllByRole('heading', { level: 1 });
-		expect(labels.length).toBeGreaterThan(0);
 	});
 
 	it('verifies Tailwind CSS is loaded', () => {

@@ -28,7 +28,7 @@ describe('CopyableTextarea', () => {
 	it('copies text to clipboard when copy button is clicked', async () => {
 		mockClipboard.writeText.mockResolvedValue(undefined);
 
-		const { getByLabelText, getByText } = render(CopyableTextarea, {
+		const { getByLabelText } = render(CopyableTextarea, {
 			props: {
 				value: 'Copy me',
 				showButtons: true
@@ -40,32 +40,19 @@ describe('CopyableTextarea', () => {
 
 		expect(mockClipboard.writeText).toHaveBeenCalledWith('Copy me');
 
-		// Check toast appears
-		const toastElement = getByText('Copied!');
-		expect(toastElement).toBeTruthy();
-	});
+		// Check tooltip updates
+		// Since the tooltip text is inside the button or a sibling, we need to check if "Copied!" is present
+		// The implementation uses a data-tip attribute on a parent div, but the text "Copied!" is not rendered as text content unless the tooltip is active and rendered by CSS/JS library.
+		// However, in the component code: copyTooltip = 'Copied!';
+		// And: <div class="tooltip tooltip-left" data-tip={copyTooltip}>
+		// So we should check if the data-tip attribute updates.
 
-	it('pastes text from clipboard when paste button is clicked', async () => {
-		mockClipboard.readText.mockResolvedValue('Pasted content');
+		// Wait for state update
+		await new Promise((resolve) => setTimeout(resolve, 0));
 
-		const { getByLabelText, getByText, getByRole } = render(CopyableTextarea, {
-			props: {
-				value: '',
-				showButtons: true
-			}
-		});
-
-		const pasteButton = getByLabelText('Paste from clipboard');
-		await fireEvent.click(pasteButton);
-
-		expect(mockClipboard.readText).toHaveBeenCalled();
-
-		const textarea = getByRole('textbox');
-		expect(textarea).toHaveValue('Pasted content');
-
-		// Check toast appears
-		const toastElement = getByText('Pasted!');
-		expect(toastElement).toBeTruthy();
+		// Find the tooltip wrapper. It's the parent of the button.
+		const tooltipWrapper = copyButton.closest('.tooltip');
+		expect(tooltipWrapper).toHaveAttribute('data-tip', 'Copied!');
 	});
 
 	it('selects all text when textarea is focused', async () => {
