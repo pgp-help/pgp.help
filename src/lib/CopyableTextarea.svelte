@@ -3,8 +3,9 @@
 	// It also includes logic to auto-select all text when the textarea is focused,
 	// making it easier for users to copy the content manually if needed.
 
-	import FeedbackButton from './FeedbackButton.svelte';
 	import { onMount, onDestroy } from 'svelte';
+	import MiniActionGroup from './MiniActionGroup.svelte';
+	import MiniActionButton from './MiniActionButton.svelte';
 
 	export let value = '';
 	export let readonly = false;
@@ -128,16 +129,10 @@
 			<span class="label-text-alt text-error">{error}</span>
 		</div>
 	{/if}
-	{#if showButtons}
-		<div class="absolute top-2 right-2 z-10 flex flex-col gap-2 group">
+	{#if showButtons && value}
+		<MiniActionGroup>
 			<!-- Main Copy Button -->
-			<FeedbackButton
-				title="Copy"
-				successTitle="Copied!"
-				action={copyToClipboard}
-				class="btn-ghost btn-sm"
-				tooltipClass="group-hover:tooltip-open"
-			>
+			<MiniActionButton label="Copy" feedback="Copied!" onclick={copyToClipboard}>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					fill="none"
@@ -152,34 +147,31 @@
 						d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.875.63-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
 					/>
 				</svg>
-			</FeedbackButton>
+			</MiniActionButton>
 
 			<!-- Markdown Copy Button (Hidden by default, shown on group hover) -->
-			<div class="hidden group-hover:block animate-fade-in">
-				<FeedbackButton
-					title="Copy (Markdown)"
-					successTitle="Copied!"
-					action={copyToClipboardMarkdown}
-					class="btn-ghost btn-sm"
-					tooltipClass="group-hover:tooltip-open"
+			<MiniActionButton
+				label="Copy (Markdown)"
+				feedback="Copied!"
+				onclick={copyToClipboardMarkdown}
+				secondary
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="1.5"
+					stroke="currentColor"
+					class="w-4 h-4"
 				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-						stroke="currentColor"
-						class="w-4 h-4"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z M7 8v8 M17 8v8 M7 8l5 5 5-5"
-						/>
-					</svg>
-				</FeedbackButton>
-			</div>
-		</div>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z M7 8v8 M17 8v8 M7 8l5 5 5-5"
+					/>
+				</svg>
+			</MiniActionButton>
+		</MiniActionGroup>
 	{/if}
 </div>
 

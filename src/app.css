@@ -33,6 +33,14 @@
 	}
 }
 
+/* 
+ * Standardized floating action button.
+ * Used in MiniActionButton.svelte
+ */
+@utility btn-mini {
+	@apply btn btn-sm btn-circle btn-ghost;
+}
+
 /* Show all tooltips in the group when hovering over any button */
 .group:hover .tooltip::before,
 .group:hover .tooltip::after {
