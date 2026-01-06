@@ -50,7 +50,7 @@
 </script>
 
 <div
-	class="tooltip {tooltipDir} {secondary ? 'hidden group-hover:block animate-fade-in' : ''}"
+	class="tooltip {tooltipDir} {secondary ? 'tooltip-open tooltip-lean' : ''}"
 	data-tip={currentTitle}
 >
 	<button

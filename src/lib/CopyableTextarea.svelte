@@ -4,10 +4,10 @@
 	// making it easier for users to copy the content manually if needed.
 
 	import { onMount, onDestroy } from 'svelte';
-	import MiniActionGroup from './MiniActionGroup.svelte';
 	import MiniActionButton from './MiniActionButton.svelte';
 	import CopyIcon from './icons/CopyIcon.svelte';
 	import MarkdownIcon from './icons/MarkdownIcon.svelte';
+	import ShareIcon from './icons/ShareIcon.svelte';
 
 	export let value = '';
 	export let readonly = false;
@@ -132,22 +132,27 @@
 		</div>
 	{/if}
 	{#if showButtons && value}
-		<MiniActionGroup>
-			<!-- Main Copy Button -->
-			<MiniActionButton label="Copy" feedback="Copied!" onclick={copyToClipboard}>
-				<CopyIcon />
-			</MiniActionButton>
+		<div class="fab fab-down absolute">
+			<!-- a focusable div with tabindex is necessary to work on all browsers. role="button" is necessary for accessibility -->
+			<div tabindex="0" role="button" class="btn btn-mini" title="Share"><ShareIcon /></div>
 
-			<!-- Markdown Copy Button (Hidden by default, shown on group hover) -->
-			<MiniActionButton
-				label="Copy (Markdown)"
-				feedback="Copied!"
-				onclick={copyToClipboardMarkdown}
-				secondary
-			>
-				<MarkdownIcon />
-			</MiniActionButton>
-		</MiniActionGroup>
+			<!-- buttons that show up when FAB is open -->
+			<div>
+				<MiniActionButton secondary label="Copy" feedback="Copied!" onclick={copyToClipboard}>
+					<CopyIcon />
+				</MiniActionButton>
+			</div>
+			<div>
+				<MiniActionButton
+					secondary
+					label="Copy (Markdown)"
+					feedback="Copied!"
+					onclick={copyToClipboardMarkdown}
+				>
+					<MarkdownIcon />
+				</MiniActionButton>
+			</div>
+		</div>
 	{/if}
 </div>
 

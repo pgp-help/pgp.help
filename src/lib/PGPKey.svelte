@@ -3,10 +3,6 @@
 	import type { Key } from 'openpgp';
 	import CopyableTextarea from './CopyableTextarea.svelte';
 	import MiniActionButton from './MiniActionButton.svelte';
-	import MiniActionGroup from './MiniActionGroup.svelte';
-	import LinkIcon from './icons/LinkIcon.svelte';
-	import CopyIcon from './icons/CopyIcon.svelte';
-	import MarkdownIcon from './icons/MarkdownIcon.svelte';
 
 	let {
 		value = $bindable(''),
@@ -118,20 +114,20 @@
 		return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 	}
 
-	function shareKey() {
-		if (!publicKey) return;
-		const url = `${window.location.origin}/?key=${encodeURIComponent(publicKey.armor())}`;
-		navigator.clipboard.writeText(url);
-	}
+	// function shareKey() {
+	// 	if (!publicKey) return;
+	// 	const url = `${window.location.origin}/?key=${encodeURIComponent(publicKey.armor())}`;
+	// 	navigator.clipboard.writeText(url);
+	// }
 
-	async function copyKey(text: string, markdown = false) {
-		const valueToCopy = markdown ? '```\n' + text + '\n```' : text;
-		try {
-			await navigator.clipboard.writeText(valueToCopy);
-		} catch (err) {
-			console.error('Failed to copy text: ', err);
-		}
-	}
+	// async function copyKey(text: string, markdown = false) {
+	// 	const valueToCopy = markdown ? '```\n' + text + '\n```' : text;
+	// 	try {
+	// 		await navigator.clipboard.writeText(valueToCopy);
+	// 	} catch (err) {
+	// 		console.error('Failed to copy text: ', err);
+	// 	}
+	// }
 
 	let properties = $derived.by(() => {
 		if (!key) return [];
@@ -284,7 +280,6 @@
 					</div>
 					<div class="divider my-2"></div>
 				{/if}
-
 				<div class="mt-4 flex flex-col gap-2">
 					<div class="relative">
 						<details class="collapse collapse-arrow border border-base-300 bg-base-100">
@@ -296,47 +291,10 @@
 									value={publicKey.armor()}
 									class="text-xs"
 									fixed
-									showButtons={false}
+									showButtons={true}
 								/>
 							</div>
 						</details>
-						<MiniActionGroup class="absolute top-3 right-12 flex flex-col gap-2 z-10">
-							<MiniActionButton
-								label="Copy"
-								feedback="Copied!"
-								onclick={(e) => {
-									e.stopPropagation();
-									copyKey(publicKey.armor());
-								}}
-								tooltipDir="tooltip-left"
-							>
-								<CopyIcon />
-							</MiniActionButton>
-							<MiniActionButton
-								label="Copy as Markdown"
-								feedback="Copied!"
-								secondary={true}
-								onclick={(e) => {
-									e.stopPropagation();
-									copyKey(publicKey.armor(), true);
-								}}
-								tooltipDir="tooltip-left"
-							>
-								<MarkdownIcon />
-							</MiniActionButton>
-							<MiniActionButton
-								label="Share as Link"
-								feedback="Copied!"
-								secondary={true}
-								onclick={(e) => {
-									e.stopPropagation();
-									shareKey();
-								}}
-								tooltipDir="tooltip-left"
-							>
-								<LinkIcon />
-							</MiniActionButton>
-						</MiniActionGroup>
 					</div>
 
 					{#if key.isPrivate()}
