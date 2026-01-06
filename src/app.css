@@ -33,6 +33,117 @@
 	}
 }
 
+/* 
+ * Standardized floating action button.
+ * Used in MiniActionButton.svelte
+ */
+@utility btn-mini {
+	@apply btn btn-sm btn-circle;
+}
+
+/* Make FAB expand downward instead of upward */
+@utility fab-down {
+	top: 1rem;
+	bottom: unset;
+	flex-direction: column;
+
+	& .fab-close,
+	& .fab-main-action {
+		top: 0;
+		bottom: unset;
+	}
+
+	/* Flower layout adjustments for downward expansion */
+	&.fab-flower {
+		/* 3 buttons - single button at bottom-left */
+		&:has(:nth-child(3)) {
+			> :nth-child(3) {
+				--degree: 225deg; /* Bottom-left diagonal */
+			}
+		}
+
+		/* 4 buttons - spread across left and bottom */
+		&:has(:nth-child(4)) {
+			> :nth-child(3) {
+				--degree: 195deg; /* Left-bottom */
+			}
+			> :nth-child(4) {
+				--degree: 255deg; /* Bottom-right */
+			}
+		}
+
+		/* 5 buttons - quarter circle from left to bottom */
+		&:has(:nth-child(5)) {
+			> :nth-child(3) {
+				--degree: 180deg;
+			} /* Straight left */
+			> :nth-child(4) {
+				--degree: 225deg;
+			} /* Bottom-left diagonal */
+			> :nth-child(5) {
+				--degree: 270deg;
+			} /* Straight down */
+		}
+
+		/* 6 buttons - full quarter circle */
+		&:has(:nth-child(6)) {
+			> :nth-child(3) {
+				--degree: 180deg;
+			} /* Left */
+			> :nth-child(4) {
+				--degree: 210deg;
+			} /* Left-bottom */
+			> :nth-child(5) {
+				--degree: 240deg;
+			} /* Bottom-left */
+			> :nth-child(6) {
+				--degree: 270deg;
+			} /* Bottom */
+		}
+	}
+}
+
+@utility tooltip-lean {
+	--hover-offset: 0px;
+
+	&:hover {
+		--hover-offset: 3px;
+	}
+
+	/* Just add a small translation on top of existing positioning */
+	&.tooltip-left {
+		& > .tooltip-content,
+		&[data-tip]:before,
+		&:after {
+			translate: var(--hover-offset) 0;
+		}
+	}
+
+	&.tooltip-right {
+		& > .tooltip-content,
+		&[data-tip]:before,
+		&:after {
+			translate: calc(-1 * var(--hover-offset)) 0;
+		}
+	}
+
+	&.tooltip-top {
+		& > .tooltip-content,
+		&[data-tip]:before,
+		&:after {
+			translate: 0 var(--hover-offset);
+		}
+	}
+
+	&:not(.tooltip-top):not(.tooltip-left):not(.tooltip-right) {
+		& > .tooltip-content,
+		&[data-tip]:before,
+		&:after {
+			translate: 0 calc(-1 * var(--hover-offset));
+		}
+	}
+}
+
 /* Show all tooltips in the group when hovering over any button */
 .group:hover .tooltip::before,
 .group:hover .tooltip::after {

@@ -3,6 +3,7 @@
 	import CopyableTextarea from '../lib/CopyableTextarea.svelte';
 	import PGPKey from '../lib/PGPKey.svelte';
 	import type { Key } from 'openpgp';
+	import CopyButtons from '../lib/CopyButtons.svelte';
 
 	let keyObject = $state<Key | null>(null);
 	let keyValue = $state('');
@@ -74,6 +75,10 @@
 	});
 </script>
 
+{#snippet copyButtonsSnippet()}
+	<CopyButtons value={message} />
+{/snippet}
+
 <form class="space-y-6">
 	<fieldset class="fieldset">
 		<legend class="fieldset-legend">
@@ -103,9 +108,14 @@
 			label={mode === 'Decrypt' ? 'Encrypted Message' : 'Message'}
 			selectAllOnFocus={false}
 			{error}
+			buttons={copyButtonsSnippet}
 		/>
 	</fieldset>
 </form>
+
+{#snippet outputButtonsSnippet()}
+	<CopyButtons value={output} />
+{/snippet}
 
 <fieldset class="fieldset">
 	<legend class="fieldset-legend">
@@ -118,5 +128,6 @@
 			? 'Decrypted output will appear here...'
 			: 'Encrypted output will appear here...'}
 		label={mode === 'Decrypt' ? 'Decrypted Message' : 'Encrypted Message'}
+		buttons={outputButtonsSnippet}
 	/>
 </fieldset>

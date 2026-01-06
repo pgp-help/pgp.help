@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import CopyableTextarea from './CopyableTextarea.svelte';
+import { createRawSnippet } from 'svelte';
 
 describe('CopyableTextarea', () => {
 	// Mock navigator.clipboard
@@ -16,8 +17,7 @@ describe('CopyableTextarea', () => {
 	it('renders textarea with given value', () => {
 		const { getByRole } = render(CopyableTextarea, {
 			props: {
-				value: 'Test content',
-				showButtons: true
+				value: 'Test content'
 			}
 		});
 
@@ -25,41 +25,57 @@ describe('CopyableTextarea', () => {
 		expect(textarea).toHaveValue('Test content');
 	});
 
-	it('copies text to clipboard when copy button is clicked', async () => {
-		mockClipboard.writeText.mockResolvedValue(undefined);
-
-		const { getByLabelText } = render(CopyableTextarea, {
+	it('renders buttons snippet when buttons prop is provided and value exists', () => {
+		const { container } = render(CopyableTextarea, {
 			props: {
-				value: 'Copy me',
-				showButtons: true
+				value: 'Test content',
+				buttons: createRawSnippet(() => {
+					return {
+						render: () => `<div data-testid="custom-buttons">Custom buttons rendered</div>`
+					};
+				})
 			}
 		});
 
-		const copyButton = getByLabelText('Copy');
-		await fireEvent.click(copyButton);
+		// Verify that the buttons snippet is rendered
+		const customButtons = container.querySelector('[data-testid="custom-buttons"]');
+		expect(customButtons).toBeInTheDocument();
+		expect(customButtons).toHaveTextContent('Custom buttons rendered');
+	});
 
-		expect(mockClipboard.writeText).toHaveBeenCalledWith('Copy me');
+	it('does not render buttons when no buttons prop is provided', () => {
+		const { container } = render(CopyableTextarea, {
+			props: {
+				value: 'Test content'
+			}
+		});
 
-		// Check tooltip updates
-		// Since the tooltip text is inside the button or a sibling, we need to check if "Copied!" is present
-		// The implementation uses a data-tip attribute on a parent div, but the text "Copied!" is not rendered as text content unless the tooltip is active and rendered by CSS/JS library.
-		// However, in the component code: copyTooltip = 'Copied!';
-		// And: <div class="tooltip tooltip-left" data-tip={copyTooltip}>
-		// So we should check if the data-tip attribute updates.
+		// Verify that no buttons are rendered
+		const customButtons = container.querySelector('[data-testid="custom-buttons"]');
+		expect(customButtons).not.toBeInTheDocument();
+	});
 
-		// Wait for state update
-		await new Promise((resolve) => setTimeout(resolve, 0));
+	it('does not render buttons when value is empty even if buttons prop is provided', () => {
+		const { container } = render(CopyableTextarea, {
+			props: {
+				value: '',
+				buttons: createRawSnippet(() => {
+					return {
+						render: () => `<div data-testid="custom-buttons">Custom buttons rendered</div>`
+					};
+				})
+			}
+		});
 
-		// Find the tooltip wrapper. It's the parent of the button.
-		const tooltipWrapper = copyButton.closest('.tooltip');
-		expect(tooltipWrapper).toHaveAttribute('data-tip', 'Copied!');
+		// Verify that buttons are not rendered when value is empty
+		const customButtons = container.querySelector('[data-testid="custom-buttons"]');
+		expect(customButtons).not.toBeInTheDocument();
 	});
 
 	it('selects all text when textarea is focused', async () => {
 		const { getByRole } = render(CopyableTextarea, {
 			props: {
-				value: 'Select all text',
-				showButtons: true
+				value: 'Select all text'
 			}
 		});
 
@@ -69,25 +85,5 @@ describe('CopyableTextarea', () => {
 		await fireEvent.focus(textarea);
 
 		expect(selectSpy).toHaveBeenCalled();
-	});
-
-	it('handles copy failure gracefully', async () => {
-		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-		mockClipboard.writeText.mockRejectedValue(new Error('Copy failed'));
-
-		const { getByLabelText } = render(CopyableTextarea, {
-			props: {
-				value: 'Test copy',
-				showButtons: true
-			}
-		});
-
-		const copyButton = getByLabelText('Copy');
-		await fireEvent.click(copyButton);
-
-		expect(mockClipboard.writeText).toHaveBeenCalledWith('Test copy');
-		expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to copy text: ', expect.any(Error));
-
-		consoleErrorSpy.mockRestore();
 	});
 });

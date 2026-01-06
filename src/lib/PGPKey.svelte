@@ -2,6 +2,9 @@
 	import { getKeyDetails, decryptPrivateKey } from './pgp';
 	import type { Key } from 'openpgp';
 	import CopyableTextarea from './CopyableTextarea.svelte';
+	import MiniActionButton from './MiniActionButton.svelte';
+	import CopyButtons from './CopyButtons.svelte';
+	import PublicKeyButtons from './PublicKeyButtons.svelte';
 
 	let {
 		value = $bindable(''),
@@ -9,6 +12,15 @@
 		label = '',
 		placeholder = 'Paste PGP Key (Armored)...'
 	} = $props();
+
+	let publicKey = $derived.by(() => {
+		if (!key) return null;
+		if (key.toPublic) {
+			return key.toPublic();
+		} else {
+			return key;
+		}
+	});
 
 	let decryptError = $state('');
 	let shaking = $state(false);
@@ -104,18 +116,6 @@
 		return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 	}
 
-	let showCopiedToast = $state(false);
-
-	function shareKey() {
-		if (!key) return;
-		const url = `${window.location.origin}/?key=${encodeURIComponent(key.armor())}`;
-		navigator.clipboard.writeText(url);
-		showCopiedToast = true;
-		setTimeout(() => {
-			showCopiedToast = false;
-		}, 2000);
-	}
-
 	let properties = $derived.by(() => {
 		if (!key) return [];
 
@@ -181,6 +181,14 @@
 	>
 {/snippet}
 
+{#snippet copyButtons()}
+	<CopyButtons value={key?.armor() || ''} />
+{/snippet}
+
+{#snippet publicKeyButtons()}
+	<PublicKeyButtons value={publicKey?.armor ? publicKey.armor() : value} />
+{/snippet}
+
 {#if key}
 	<div class="card bg-base-200 border selectable">
 		<div class="card-body">
@@ -238,9 +246,8 @@
 								type="password"
 								id="passphrase"
 								placeholder="Passphrase"
-								class="input input-bordered input-sm w-full join-item {decryptError
-									? 'input-error'
-									: ''}"
+								class="input input-bordered input-sm w-full join-item
+									{decryptError ? 'input-error' : ''}"
 								oninput={() => {
 									decryptError = '';
 								}}
@@ -268,46 +275,22 @@
 					</div>
 					<div class="divider my-2"></div>
 				{/if}
-
 				<div class="mt-4 flex flex-col gap-2">
-					<details class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
-						<summary class="collapse-title text-xs font-medium flex items-center justify-between">
-							<span>Show Public Key</span>
-							<div class="tooltip" data-tip={showCopiedToast ? 'Copied!' : 'Copy Share Link'}>
-								<button
-									type="button"
-									class="btn btn-xs btn-ghost"
-									onclick={(e) => {
-										e.stopPropagation();
-										shareKey();
-									}}
-									aria-label="Share Public Key"
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke-width="1.5"
-										stroke="currentColor"
-										class="w-4 h-4"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
-										/>
-									</svg>
-								</button>
+					<div class="relative">
+						<details class="collapse collapse-arrow border border-base-300 bg-base-100">
+							<summary class="collapse-title text-xs font-medium flex items-center justify-between">
+								<span>Show Public Key</span>
+							</summary>
+							<div class="collapse-content">
+								<CopyableTextarea
+									value={publicKey?.armor ? publicKey.armor() : ''}
+									class="text-xs"
+									fixed
+									buttons={publicKeyButtons}
+								/>
 							</div>
-						</summary>
-						<div class="collapse-content">
-							<CopyableTextarea
-								value={key.toPublic ? key.toPublic().armor() : key.armor()}
-								class="text-xs"
-								fixed
-							/>
-						</div>
-					</details>
+						</details>
+					</div>
 
 					{#if key.isPrivate()}
 						<details class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
@@ -325,23 +308,14 @@
 									{@render warningIcon()}
 									<span>Warning: Never share your private key!</span>
 								</div>
-								<CopyableTextarea value={key.armor()} class="text-xs" fixed />
+								<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
 							</div>
 						</details>
 					{/if}
 				</div>
 			</div>
 			<div class="absolute top-2 right-2 flex gap-1">
-				<div class="tooltip" data-tip="Remove Key">
-					<button
-						type="button"
-						class="btn btn-sm btn-ghost btn-circle"
-						onclick={clearKey}
-						aria-label="Remove key"
-					>
-						✕
-					</button>
-				</div>
+				<MiniActionButton label="Remove Key" onclick={clearKey}>✕</MiniActionButton>
 			</div>
 		</div>
 	</div>
@@ -351,9 +325,9 @@
 		{label}
 		{placeholder}
 		readonly={false}
-		showButtons={true}
 		selectAllOnFocus={false}
 		error={decryptError}
+		buttons={publicKeyButtons}
 	/>
 {/if}
 
