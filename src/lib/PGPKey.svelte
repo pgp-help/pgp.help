@@ -3,6 +3,8 @@
 	import type { Key } from 'openpgp';
 	import CopyableTextarea from './CopyableTextarea.svelte';
 	import MiniActionButton from './MiniActionButton.svelte';
+	import CopyButtons from './CopyButtons.svelte';
+	import PublicKeyButtons from './PublicKeyButtons.svelte';
 
 	let {
 		value = $bindable(''),
@@ -12,7 +14,7 @@
 	} = $props();
 
 	let publicKey = $derived.by(() => {
-		if (!key) return '';
+		if (!key) return null;
 		if (key.toPublic) {
 			return key.toPublic();
 		} else {
@@ -114,21 +116,6 @@
 		return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 	}
 
-	// function shareKey() {
-	// 	if (!publicKey) return;
-	// 	const url = `${window.location.origin}/?key=${encodeURIComponent(publicKey.armor())}`;
-	// 	navigator.clipboard.writeText(url);
-	// }
-
-	// async function copyKey(text: string, markdown = false) {
-	// 	const valueToCopy = markdown ? '```\n' + text + '\n```' : text;
-	// 	try {
-	// 		await navigator.clipboard.writeText(valueToCopy);
-	// 	} catch (err) {
-	// 		console.error('Failed to copy text: ', err);
-	// 	}
-	// }
-
 	let properties = $derived.by(() => {
 		if (!key) return [];
 
@@ -192,6 +179,14 @@
 			d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
 		/></svg
 	>
+{/snippet}
+
+{#snippet copyButtons()}
+	<CopyButtons value={key?.armor() || ''} />
+{/snippet}
+
+{#snippet publicKeyButtons()}
+	<PublicKeyButtons value={publicKey?.armor ? publicKey.armor() : value} />
 {/snippet}
 
 {#if key}
@@ -288,10 +283,10 @@
 							</summary>
 							<div class="collapse-content">
 								<CopyableTextarea
-									value={publicKey.armor()}
+									value={publicKey?.armor ? publicKey.armor() : ''}
 									class="text-xs"
 									fixed
-									showButtons={true}
+									buttons={publicKeyButtons}
 								/>
 							</div>
 						</details>
@@ -313,7 +308,7 @@
 									{@render warningIcon()}
 									<span>Warning: Never share your private key!</span>
 								</div>
-								<CopyableTextarea value={key.armor()} class="text-xs" fixed />
+								<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
 							</div>
 						</details>
 					{/if}
@@ -330,9 +325,9 @@
 		{label}
 		{placeholder}
 		readonly={false}
-		showButtons={true}
 		selectAllOnFocus={false}
 		error={decryptError}
+		buttons={publicKeyButtons}
 	/>
 {/if}
 

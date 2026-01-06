@@ -1,30 +1,41 @@
-<script>
+<script lang="ts">
 	// This component renders a textarea with a built-in "Copy to Clipboard" button.
 	// It also includes logic to auto-select all text when the textarea is focused,
 	// making it easier for users to copy the content manually if needed.
 
 	import { onMount, onDestroy } from 'svelte';
-	import MiniActionButton from './MiniActionButton.svelte';
-	import CopyIcon from './icons/CopyIcon.svelte';
-	import MarkdownIcon from './icons/MarkdownIcon.svelte';
-	import ShareIcon from './icons/ShareIcon.svelte';
+	import type { Snippet } from 'svelte';
 
-	export let value = '';
-	export let readonly = false;
-	export let placeholder = '';
-	export let label = '';
-	export let id = '';
-	export let showButtons = true;
-	export let selectAllOnFocus = true;
-	export let fixed = false;
-	export let error = '';
-	let className = '';
-	export { className as class };
+	let {
+		value = $bindable(''),
+		readonly = false,
+		placeholder = '',
+		label = '',
+		id = '',
+		selectAllOnFocus = true,
+		fixed = false,
+		error = '',
+		class: className = '',
+		buttons
+	} = $props<{
+		value?: string;
+		readonly?: boolean;
+		placeholder?: string;
+		label?: string;
+		id?: string;
+		selectAllOnFocus?: boolean;
+		fixed?: boolean;
+		error?: string;
+		class?: string;
+		buttons?: Snippet;
+	}>();
 
-	let textareaElement;
-	let resizeObserver;
+	let textareaElement = $state<HTMLTextAreaElement>();
+	let resizeObserver: ResizeObserver;
 
-	$: cols = fixed && value ? Math.max(...value.split('\n').map((l) => l.length)) + 0 : undefined;
+	let cols = $derived(
+		fixed && value ? Math.max(...value.split('\n').map((l) => l.length)) + 0 : undefined
+	);
 
 	onMount(() => {
 		if (fixed && textareaElement) {
@@ -49,23 +60,6 @@
 		textareaElement.style.height = 'auto';
 		textareaElement.style.height = textareaElement.scrollHeight + 'px';
 		//console.log('Height adjustment: scrollHeight =', textareaElement.style.height, 'px');
-	}
-
-	async function copyToClipboard() {
-		try {
-			await navigator.clipboard.writeText(value);
-		} catch (err) {
-			console.error('Failed to copy text: ', err);
-		}
-	}
-
-	async function copyToClipboardMarkdown() {
-		const markdownValue = '```\n' + value + '\n```';
-		try {
-			await navigator.clipboard.writeText(markdownValue);
-		} catch (err) {
-			console.error('Failed to copy text: ', err);
-		}
 	}
 
 	function handleFocus() {
@@ -96,7 +90,7 @@
 		}
 	}
 
-	function handleMouseUp(event) {
+	function handleMouseUp(event: MouseEvent) {
 		if (!selectAllOnFocus) return;
 
 		// If we flagged this interaction in 'handleMouseDown', prevent the default
@@ -122,37 +116,17 @@
 			: ''}"
 		style={fixed ? 'height: auto; overflow-y: hidden;' : ''}
 		aria-label={label}
-		on:focus={handleFocus}
-		on:mousedown={handleMouseDown}
-		on:mouseup={handleMouseUp}
+		onfocus={handleFocus}
+		onmousedown={handleMouseDown}
+		onmouseup={handleMouseUp}
 	></textarea>
 	{#if error}
 		<div class="label">
 			<span class="label-text-alt text-error">{error}</span>
 		</div>
 	{/if}
-	{#if showButtons && value}
-		<div class="fab fab-down absolute">
-			<!-- a focusable div with tabindex is necessary to work on all browsers. role="button" is necessary for accessibility -->
-			<div tabindex="0" role="button" class="btn btn-mini" title="Share"><ShareIcon /></div>
-
-			<!-- buttons that show up when FAB is open -->
-			<div>
-				<MiniActionButton secondary label="Copy" feedback="Copied!" onclick={copyToClipboard}>
-					<CopyIcon />
-				</MiniActionButton>
-			</div>
-			<div>
-				<MiniActionButton
-					secondary
-					label="Copy (Markdown)"
-					feedback="Copied!"
-					onclick={copyToClipboardMarkdown}
-				>
-					<MarkdownIcon />
-				</MiniActionButton>
-			</div>
-		</div>
+	{#if buttons && value}
+		{@render buttons()}
 	{/if}
 </div>
 
