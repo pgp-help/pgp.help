@@ -1,8 +1,9 @@
 /// <reference types="vitest/globals" />
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { render, screen, fireEvent, within } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import * as openpgp from 'openpgp';
 import App from './App.svelte';
+import { keyStore } from './lib/keyStore.svelte';
 
 describe('App', () => {
 	let validPublicKey: string;
@@ -22,6 +23,11 @@ describe('App', () => {
 		validPrivateKey = privateKey;
 	});
 
+	beforeEach(() => {
+		window.history.replaceState({}, '', '/');
+		keyStore.clear();
+	});
+
 	it('renders the core interface', () => {
 		render(App);
 		// Check Header
@@ -38,9 +44,16 @@ describe('App', () => {
 		const messageTextarea = screen.getByLabelText(/^Message/i);
 		const outputTextarea = screen.getByLabelText(/Encrypted Message/i);
 
-		// Use fireEvent for the key to simulate a paste/instant update and avoid
-		// thousands of intermediate renders/effects with partial keys
+		// Use fireEvent for the key to simulate a paste/instant update
 		await fireEvent.input(keyTextarea, { target: { value: validPublicKey } });
+
+		// Wait for the key to be parsed and displayed (this confirms the app accepted the key)
+		// We look for the badge that appears in the PGPKey card (main view)
+		// The main view badge is usually badge-sm or just badge, while sidebar is badge-xs
+		// But to be safe, we can look for the one inside the form/fieldset
+		const mainArea = screen.getByRole('main');
+		await within(mainArea).findByText('Public Key', { selector: '.badge' });
+
 		await user.type(messageTextarea, 'Hello World');
 
 		// Wait for the async encryption to complete
@@ -86,6 +99,10 @@ describe('App', () => {
 		// Paste private key
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
 
+		// Wait for the key to be parsed and displayed
+		const mainArea = screen.getByRole('main');
+		await within(mainArea).findByText('Private Key', { selector: '.badge' });
+
 		// Wait for unlock prompt
 		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
 		const unlockButton = screen.getByRole('button', { name: /Unlock/i });
@@ -94,7 +111,10 @@ describe('App', () => {
 		await user.click(unlockButton);
 
 		// Wait for unlock to complete (Unlocked badge appears)
-		await screen.findByText('Unlocked');
+		// Note: The text might be split across elements or inside a badge
+		await screen.findByText((content, element) => {
+			return element?.tagName.toLowerCase() === 'span' && content.includes('Unlocked');
+		});
 
 		// Now input the encrypted message
 		// The label for message input should have changed to "Encrypted Message"

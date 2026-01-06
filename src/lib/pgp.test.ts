@@ -17,9 +17,7 @@ describe('PGP Functions', () => {
 	beforeAll(async () => {
 		// Generate a test key pair
 		const { privateKey: privKeyArmored, publicKey: pubKey } = await openpgp.generateKey({
-			type: 'ecc',
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			curve: 'ed25519' as any, //Squash type error
+			type: 'curve25519',
 			userIDs: [{ name: 'Test User', email: 'test@example.com' }],
 			passphrase: 'testpassphrase'
 		});
@@ -92,15 +90,11 @@ describe('PGP Functions', () => {
 		});
 
 		it('should throw error for invalid inputs', async () => {
-			// @ts-expect-error Testing invalid input
 			await expect(encryptMessage(null, 'test')).rejects.toThrow();
 			const pubKeyObj = await openpgp.readKey({ armoredKey: publicKey });
-			// @ts-expect-error Testing invalid input
 			await expect(encryptMessage(pubKeyObj, null)).rejects.toThrow();
 
-			// @ts-expect-error Testing invalid input
 			await expect(decryptMessage(null, 'test')).rejects.toThrow();
-			// @ts-expect-error Testing invalid input
 			await expect(decryptMessage(privateKeyObj, null)).rejects.toThrow();
 		});
 	});
@@ -127,15 +121,11 @@ describe('PGP Functions', () => {
 		});
 
 		it('should throw error for invalid inputs', async () => {
-			// @ts-expect-error Testing invalid input
 			await expect(signMessage(null, 'test')).rejects.toThrow();
-			// @ts-expect-error Testing invalid input
 			await expect(signMessage(privateKeyObj, null)).rejects.toThrow();
 
-			// @ts-expect-error Testing invalid input
 			await expect(verifySignature(null, 'test')).rejects.toThrow();
 			const pubKeyObj = await openpgp.readKey({ armoredKey: publicKey });
-			// @ts-expect-error Testing invalid input
 			await expect(verifySignature(pubKeyObj, null)).rejects.toThrow();
 		});
 	});
