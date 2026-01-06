@@ -1,9 +1,12 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	let { children } = $props<{ children: Snippet }>();
+	let { children, class: className = 'absolute top-2 right-2 z-10 flex flex-col gap-2' } = $props<{
+		children: Snippet;
+		class?: string;
+	}>();
 </script>
 
-<div class="absolute top-2 right-2 z-10 flex flex-col gap-2 group">
+<div class="{className} group">
 	{@render children()}
 </div>

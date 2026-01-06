@@ -7,7 +7,8 @@
 		children,
 		feedback = 'Done!',
 		secondary = false,
-		class: className = ''
+		class: className = '',
+		tooltipDir = 'tooltip-left'
 	} = $props<{
 		label?: string;
 		onclick?: (e: MouseEvent) => void | Promise<void>;
@@ -15,6 +16,7 @@
 		feedback?: string;
 		secondary?: boolean;
 		class?: string;
+		tooltipDir?: string;
 	}>();
 
 	let currentTitle = $state(label);
@@ -48,7 +50,7 @@
 </script>
 
 <div
-	class="tooltip tooltip-left {secondary ? 'hidden group-hover:block animate-fade-in' : ''}"
+	class="tooltip {tooltipDir} {secondary ? 'hidden group-hover:block animate-fade-in' : ''}"
 	data-tip={currentTitle}
 >
 	<button

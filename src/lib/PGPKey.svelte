@@ -3,6 +3,10 @@
 	import type { Key } from 'openpgp';
 	import CopyableTextarea from './CopyableTextarea.svelte';
 	import MiniActionButton from './MiniActionButton.svelte';
+	import MiniActionGroup from './MiniActionGroup.svelte';
+	import LinkIcon from './icons/LinkIcon.svelte';
+	import CopyIcon from './icons/CopyIcon.svelte';
+	import MarkdownIcon from './icons/MarkdownIcon.svelte';
 
 	let {
 		value = $bindable(''),
@@ -118,6 +122,15 @@
 		if (!publicKey) return;
 		const url = `${window.location.origin}/?key=${encodeURIComponent(publicKey.armor())}`;
 		navigator.clipboard.writeText(url);
+	}
+
+	async function copyKey(text: string, markdown = false) {
+		const valueToCopy = markdown ? '```\n' + text + '\n```' : text;
+		try {
+			await navigator.clipboard.writeText(valueToCopy);
+		} catch (err) {
+			console.error('Failed to copy text: ', err);
+		}
 	}
 
 	let properties = $derived.by(() => {
@@ -273,37 +286,58 @@
 				{/if}
 
 				<div class="mt-4 flex flex-col gap-2">
-					<details class="collapse collapse-arrow border border-base-300 bg-base-100">
-						<summary class="collapse-title text-xs font-medium flex items-center justify-between">
-							<span>Show Public Key</span>
+					<div class="relative">
+						<details class="collapse collapse-arrow border border-base-300 bg-base-100">
+							<summary class="collapse-title text-xs font-medium flex items-center justify-between">
+								<span>Show Public Key</span>
+							</summary>
+							<div class="collapse-content">
+								<CopyableTextarea
+									value={publicKey.armor()}
+									class="text-xs"
+									fixed
+									showButtons={false}
+								/>
+							</div>
+						</details>
+						<MiniActionGroup class="absolute top-3 right-12 flex flex-col gap-2 z-10">
+							<MiniActionButton
+								label="Copy"
+								feedback="Copied!"
+								onclick={(e) => {
+									e.stopPropagation();
+									copyKey(publicKey.armor());
+								}}
+								tooltipDir="tooltip-left"
+							>
+								<CopyIcon />
+							</MiniActionButton>
+							<MiniActionButton
+								label="Copy as Markdown"
+								feedback="Copied!"
+								secondary={true}
+								onclick={(e) => {
+									e.stopPropagation();
+									copyKey(publicKey.armor(), true);
+								}}
+								tooltipDir="tooltip-left"
+							>
+								<MarkdownIcon />
+							</MiniActionButton>
 							<MiniActionButton
 								label="Share as Link"
 								feedback="Copied!"
+								secondary={true}
 								onclick={(e) => {
 									e.stopPropagation();
 									shareKey();
 								}}
+								tooltipDir="tooltip-left"
 							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke-width="1.5"
-									stroke="currentColor"
-									class="w-4 h-4"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
-									/>
-								</svg>
+								<LinkIcon />
 							</MiniActionButton>
-						</summary>
-						<div class="collapse-content">
-							<CopyableTextarea value={publicKey.armor()} class="text-xs" fixed />
-						</div>
-					</details>
+						</MiniActionGroup>
+					</div>
 
 					{#if key.isPrivate()}
 						<details class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">

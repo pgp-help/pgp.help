@@ -117,4 +117,54 @@ describe('PGPKey Component', () => {
 		// Wait for the animation to finish (mocking timers would be better but for simplicity)
 		// We can use vi.useFakeTimers() if we want to be precise
 	});
+
+	it('copies public key when Copy button is clicked, even for private key', async () => {
+		const mockPublicKey = {
+			armor: () => '-----BEGIN PGP PUBLIC KEY BLOCK-----\n...public...'
+		};
+		const mockPrivateKey = {
+			...mockKey,
+			isPrivate: () => true,
+			isDecrypted: () => false,
+			toPublic: () => mockPublicKey
+		};
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		vi.mocked(pgp.getKeyDetails).mockResolvedValue(mockPrivateKey as any);
+
+		// Mock clipboard
+		Object.defineProperty(navigator, 'clipboard', {
+			value: {
+				writeText: vi.fn()
+			},
+			writable: true
+		});
+
+		const { getByText } = render(PGPKey, {
+			props: {
+				value: 'valid-private-key'
+			}
+		});
+
+		await waitFor(() => {
+			expect(getByText('Private Key')).toBeTruthy();
+		});
+
+		// Find the Copy button associated with Show Public Key
+		// Since there might be multiple Copy buttons (one for private export), we need to be specific.
+		// The structure is: details > summary > MiniActionGroup > Copy Button
+		// We can look for the button with label "Copy" that is near "Show Public Key"
+		// Or just find all "Copy" buttons and pick the first one, as "Show Public Key" is rendered first.
+
+		const copyButtons = document.querySelectorAll('button[aria-label="Copy"]');
+		// Expect at least one
+		expect(copyButtons.length).toBeGreaterThan(0);
+
+		// The first one should be the Public Key copy button
+		const publicCopyBtn = copyButtons[0];
+		await fireEvent.click(publicCopyBtn);
+
+		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+			'-----BEGIN PGP PUBLIC KEY BLOCK-----\n...public...'
+		);
+	});
 });
