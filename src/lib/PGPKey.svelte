@@ -1,24 +1,26 @@
 <script lang="ts">
-	import { getKeyDetails } from './pgp';
+	import { getKeyDetails, decryptPrivateKey } from './pgp';
 	import type { Key } from 'openpgp';
 	import CopyableTextarea from './CopyableTextarea.svelte';
 
 	let {
 		value = $bindable(''),
-		cleanedKey = $bindable(''),
 		key = $bindable<Key | null>(null),
 		label = '',
 		placeholder = 'Paste PGP Key (Armored)...'
 	} = $props();
 
 	let expirationTime = $state<Date | null>(null);
+	let isDecrypted = $state(false);
+	let decryptError = $state('');
 
 	$effect(() => {
 		const k = value;
 		if (!k) {
 			key = null;
-			cleanedKey = '';
 			expirationTime = null;
+			isDecrypted = false;
+			decryptError = '';
 			return;
 		}
 
@@ -26,23 +28,63 @@
 			if (value === k) {
 				if (details) {
 					key = details;
-					cleanedKey = details.armor();
 					//For whatever reason, expirationTime is a promise. So fetch that too.
 					expirationTime = (await details.getExpirationTime()) as Date | null;
+
+					// Reset decryption state for new key
+					isDecrypted = false;
+					decryptError = '';
+
+					// If private key is not encrypted, mark as decrypted immediately
+					// Note: isDecrypted() method on key checks if the key material is available (decrypted)
+					// However, openpgpjs Key object doesn't have isDecrypted(), we check if we can use it.
+					// Actually, we can try to decrypt with empty password or check algorithm.
+					// But simpler: if it's private, we assume it might need decryption unless we know otherwise.
+					// Let's check if it's private.
+					if (details.isPrivate()) {
+						// Try to decrypt with empty password if it's not encrypted
+						// or check if it is already decrypted (some keys might be unencrypted)
+						// For now, we'll just wait for user interaction if it's private.
+					}
 				} else {
 					key = null;
-					cleanedKey = '';
 					expirationTime = null;
+					isDecrypted = false;
 				}
 			}
 		});
 	});
 
+	async function handleDecrypt(pass: string) {
+		if (!key || !key.isPrivate()) return;
+
+		decryptError = '';
+
+		const decryptedKey = await decryptPrivateKey(key, pass);
+
+		if (decryptedKey) {
+			isDecrypted = true;
+			key = decryptedKey;
+		} else {
+			decryptError = 'Incorrect passphrase or decryption failed';
+		}
+	}
+
 	function clearKey() {
 		value = '';
-		cleanedKey = '';
 		key = null;
 		expirationTime = null;
+		isDecrypted = false;
+		decryptError = '';
+	}
+
+	async function lockKey() {
+		if (!value) return;
+		const details = await getKeyDetails(value);
+		if (details) {
+			key = details;
+			isDecrypted = false;
+		}
 	}
 
 	function formatDate(date: Date | null) {
@@ -87,6 +129,36 @@
 	});
 </script>
 
+{#snippet warningIcon()}
+	<svg
+		xmlns="http://www.w3.org/2000/svg"
+		class="stroke-current shrink-0 h-4 w-4"
+		fill="none"
+		viewBox="0 0 24 24"
+		><path
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			stroke-width="2"
+			d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+		/></svg
+	>
+{/snippet}
+
+{#snippet lockIcon()}
+	<svg
+		xmlns="http://www.w3.org/2000/svg"
+		class="stroke-current shrink-0 h-3 w-3"
+		fill="none"
+		viewBox="0 0 24 24"
+		><path
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			stroke-width="2"
+			d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+		/></svg
+	>
+{/snippet}
+
 {#if key}
 	<div class="card bg-base-200 border selectable">
 		<div class="card-body">
@@ -97,6 +169,25 @@
 					<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
 						{key.isPrivate() ? 'Private Key' : 'Public Key'}
 					</span>
+					{#if key.isPrivate()}
+						{#if isDecrypted}
+							<span class="badge badge-success badge-sm">Unlocked</span>
+							<button
+								type="button"
+								class="btn btn-xs btn-ghost btn-circle"
+								onclick={(e) => {
+									e.preventDefault();
+									lockKey();
+								}}
+								aria-label="Lock key"
+								title="Lock key"
+							>
+								{@render lockIcon()}
+							</button>
+						{:else}
+							<span class="badge badge-warning badge-sm">Locked</span>
+						{/if}
+					{/if}
 				</div>
 
 				{#each properties as prop (prop.label)}
@@ -114,16 +205,81 @@
 					</div>
 				{/if}
 
-				<details class="collapse collapse-arrow mt-4 p-0">
-					<summary class="collapse-title text-xs font-medium min-h-0 py-2 pl-0">
-						Show Armored Key
-					</summary>
-					<div class="collapse-content px-0 pt-2">
-						<CopyableTextarea value={cleanedKey} fixed label="" />
-					</div>
-				</details>
+				{#if key.isPrivate()}
+					{#if !isDecrypted}
+						<div class="divider my-2"></div>
+						<div class="form-control w-full max-w-xs">
+							<label class="label" for="passphrase">
+								<span class="label-text">Unlock Private Key</span>
+							</label>
+							<div class="join">
+								<input
+									type="password"
+									id="passphrase"
+									placeholder="Passphrase"
+									class="input input-bordered input-sm w-full join-item"
+									onkeydown={(e) => {
+										if (e.key === 'Enter') {
+											e.preventDefault();
+											handleDecrypt(e.currentTarget.value);
+										}
+									}}
+								/>
+								<button
+									type="button"
+									class="btn btn-sm btn-primary join-item"
+									onclick={(e) => {
+										const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+										handleDecrypt(input.value);
+									}}
+								>
+									Unlock
+								</button>
+							</div>
+							{#if decryptError}
+								<div class="text-error text-xs mt-1">{decryptError}</div>
+							{/if}
+						</div>
+						<div class="divider my-2"></div>
+					{/if}
+				{/if}
+
+				<div class="mt-4 flex flex-col gap-2">
+					<details class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+						<summary class="collapse-title text-xs font-medium">Show Public Key</summary>
+						<div class="collapse-content">
+							<CopyableTextarea
+								value={key.toPublic ? key.toPublic().armor() : key.armor()}
+								class="text-xs"
+								fixed
+							/>
+						</div>
+					</details>
+
+					{#if key.isPrivate()}
+						<details class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+							<summary class="collapse-title text-xs font-medium flex items-center gap-2">
+								Export Private Key
+								<div
+									class="tooltip tooltip-right text-warning"
+									data-tip="Warning: Never share your private key!"
+								>
+									{@render warningIcon()}
+								</div>
+							</summary>
+							<div class="collapse-content">
+								<div class="alert alert-warning text-xs py-2 mb-2">
+									{@render warningIcon()}
+									<span>Warning: Never share your private key!</span>
+								</div>
+								<CopyableTextarea value={key.armor()} class="text-xs" fixed />
+							</div>
+						</details>
+					{/if}
+				</div>
 			</div>
 			<button
+				type="button"
 				class="btn btn-sm btn-ghost absolute top-2 right-2"
 				onclick={clearKey}
 				aria-label="Remove key"

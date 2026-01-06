@@ -35,7 +35,7 @@ describe('CopyableTextarea', () => {
 			}
 		});
 
-		const copyButton = getByLabelText('Copy to clipboard');
+		const copyButton = getByLabelText('Copy');
 		await fireEvent.click(copyButton);
 
 		expect(mockClipboard.writeText).toHaveBeenCalledWith('Copy me');
@@ -82,7 +82,7 @@ describe('CopyableTextarea', () => {
 			}
 		});
 
-		const copyButton = getByLabelText('Copy to clipboard');
+		const copyButton = getByLabelText('Copy');
 		await fireEvent.click(copyButton);
 
 		expect(mockClipboard.writeText).toHaveBeenCalledWith('Test copy');
