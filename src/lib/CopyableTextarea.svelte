@@ -14,6 +14,7 @@
 	export let showButtons = true;
 	export let selectAllOnFocus = true;
 	export let fixed = false;
+	export let error = '';
 	let className = '';
 	export { className as class };
 
@@ -113,13 +114,20 @@
 		{cols}
 		readonly={readonly || fixed}
 		{placeholder}
-		class="textarea textarea-code w-full {fixed ? 'resize-none' : ''} {className}"
+		class="textarea textarea-code w-full {fixed ? 'resize-none' : ''} {className} {error
+			? 'textarea-error'
+			: ''}"
 		style={fixed ? 'height: auto; overflow-y: hidden;' : ''}
 		aria-label={label}
 		on:focus={handleFocus}
 		on:mousedown={handleMouseDown}
 		on:mouseup={handleMouseUp}
 	></textarea>
+	{#if error}
+		<div class="label">
+			<span class="label-text-alt text-error">{error}</span>
+		</div>
+	{/if}
 	{#if showButtons}
 		<div class="absolute top-2 right-2 z-10 flex flex-col gap-2 group">
 			<!-- Main Copy Button -->

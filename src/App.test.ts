@@ -6,16 +6,20 @@ import App from './App.svelte';
 
 describe('App', () => {
 	let validPublicKey: string;
+	let validPrivateKey: string;
+	const passphrase = 'password123';
 
 	beforeAll(async () => {
 		// Generate a real test key pair
-		const { publicKey } = await openpgp.generateKey({
+		const { publicKey, privateKey } = await openpgp.generateKey({
 			type: 'ecc',
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			curve: 'ed25519' as any, //Squash type error
-			userIDs: [{ name: 'Test User', email: 'test@example.com' }]
+			userIDs: [{ name: 'Test User', email: 'test@example.com' }],
+			passphrase
 		});
 		validPublicKey = publicKey;
+		validPrivateKey = privateKey;
 	});
 
 	it('renders the core interface', () => {
@@ -63,6 +67,45 @@ describe('App', () => {
 			// With the new logic, invalid keys result in null key objects,
 			// so encryption is not attempted, and output remains empty.
 			expect(outputTextarea).toHaveValue('');
+		});
+	});
+
+	it('decrypts message with locked private key', async () => {
+		const user = userEvent.setup();
+		render(App);
+
+		// Encrypt a message manually to test decryption
+		const secretMessage = 'Top Secret Data';
+		const encrypted = (await openpgp.encrypt({
+			message: await openpgp.createMessage({ text: secretMessage }),
+			encryptionKeys: await openpgp.readKey({ armoredKey: validPublicKey })
+		})) as string;
+
+		const keyTextarea = screen.getByLabelText(/Public Key/i);
+
+		// Paste private key
+		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
+
+		// Wait for unlock prompt
+		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
+		const unlockButton = screen.getByRole('button', { name: /Unlock/i });
+
+		await user.type(passwordInput, passphrase);
+		await user.click(unlockButton);
+
+		// Wait for unlock to complete (Unlocked badge appears)
+		await screen.findByText('Unlocked');
+
+		// Now input the encrypted message
+		// The label for message input should have changed to "Encrypted Message"
+		const messageTextarea = screen.getByLabelText(/Encrypted Message/i);
+		const outputTextarea = screen.getByLabelText(/Decrypted Message/i);
+
+		await fireEvent.input(messageTextarea, { target: { value: encrypted } });
+
+		// Wait for the async decryption to complete
+		await vi.waitFor(() => {
+			expect(outputTextarea).toHaveValue(secretMessage);
 		});
 	});
 

@@ -6,53 +6,51 @@
 	let {
 		value = $bindable(''),
 		key = $bindable<Key | null>(null),
+		decryptError = $bindable(''), //bindable so parent can hint to child to unlock.
 		label = '',
 		placeholder = 'Paste PGP Key (Armored)...'
 	} = $props();
 
 	let expirationTime = $state<Date | null>(null);
-	let isDecrypted = $state(false);
-	let decryptError = $state('');
 
 	$effect(() => {
+		// Ensure the value hasn't changed while we were waiting for the promise
 		const k = value;
 		if (!k) {
-			key = null;
-			expirationTime = null;
-			isDecrypted = false;
-			decryptError = '';
+			clearKey();
 			return;
 		}
 
-		getKeyDetails(k).then(async (details) => {
-			if (value === k) {
-				if (details) {
+		getKeyDetails(k)
+			.then(async (details) => {
+				if (value === k) {
 					key = details;
 					//For whatever reason, expirationTime is a promise. So fetch that too.
 					expirationTime = (await details.getExpirationTime()) as Date | null;
 
 					// Reset decryption state for new key
-					isDecrypted = false;
 					decryptError = '';
 
-					// If private key is not encrypted, mark as decrypted immediately
-					// Note: isDecrypted() method on key checks if the key material is available (decrypted)
-					// However, openpgpjs Key object doesn't have isDecrypted(), we check if we can use it.
-					// Actually, we can try to decrypt with empty password or check algorithm.
-					// But simpler: if it's private, we assume it might need decryption unless we know otherwise.
-					// Let's check if it's private.
-					if (details.isPrivate()) {
-						// Try to decrypt with empty password if it's not encrypted
-						// or check if it is already decrypted (some keys might be unencrypted)
-						// For now, we'll just wait for user interaction if it's private.
+					// Try to decrypt with empty password (is this ever useful? not sure)
+					if (details.isPrivate() && !details.isDecrypted()) {
+						try {
+							const decryptedKey = await decryptPrivateKey(details, '');
+							if (value === k) {
+								key = decryptedKey;
+							}
+						} catch {
+							// Ignore error, key is likely password protected
+						}
 					}
-				} else {
+				}
+			})
+			.catch((err) => {
+				if (value === k) {
 					key = null;
 					expirationTime = null;
-					isDecrypted = false;
+					decryptError = err.message;
 				}
-			}
-		});
+			});
 	});
 
 	async function handleDecrypt(pass: string) {
@@ -60,13 +58,11 @@
 
 		decryptError = '';
 
-		const decryptedKey = await decryptPrivateKey(key, pass);
-
-		if (decryptedKey) {
-			isDecrypted = true;
+		try {
+			const decryptedKey = await decryptPrivateKey(key, pass);
 			key = decryptedKey;
-		} else {
-			decryptError = 'Incorrect passphrase or decryption failed';
+		} catch (err) {
+			decryptError = (err as Error).message;
 		}
 	}
 
@@ -74,16 +70,17 @@
 		value = '';
 		key = null;
 		expirationTime = null;
-		isDecrypted = false;
 		decryptError = '';
 	}
 
 	async function lockKey() {
 		if (!value) return;
-		const details = await getKeyDetails(value);
-		if (details) {
+		try {
+			const details = await getKeyDetails(value);
 			key = details;
-			isDecrypted = false;
+		} catch (e) {
+			// Should not happen if value was valid before, but good to be safe
+			console.error('Failed to re-parse key', e);
 		}
 	}
 
@@ -170,7 +167,7 @@
 						{key.isPrivate() ? 'Private Key' : 'Public Key'}
 					</span>
 					{#if key.isPrivate()}
-						{#if isDecrypted}
+						{#if key.isDecrypted()}
 							<span class="badge badge-success badge-sm">Unlocked</span>
 							<button
 								type="button"
@@ -206,7 +203,7 @@
 				{/if}
 
 				{#if key.isPrivate()}
-					{#if !isDecrypted}
+					{#if !key.isDecrypted()}
 						<div class="divider my-2"></div>
 						<div class="form-control w-full max-w-xs">
 							<label class="label" for="passphrase">
@@ -218,6 +215,9 @@
 									id="passphrase"
 									placeholder="Passphrase"
 									class="input input-bordered input-sm w-full join-item"
+									oninput={() => {
+										decryptError = '';
+									}}
 									onkeydown={(e) => {
 										if (e.key === 'Enter') {
 											e.preventDefault();
@@ -296,5 +296,6 @@
 		readonly={false}
 		showButtons={true}
 		selectAllOnFocus={false}
+		error={decryptError}
 	/>
 {/if}

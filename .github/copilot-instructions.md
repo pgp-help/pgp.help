@@ -7,5 +7,7 @@
 
 # When planning
 
-- Do not inspect upstream code unless absolutely necessary.
+- Do not overthink the plan. It's ok to proceed on a best-effort / partial information basis. We can always refactor later.
+- Be eager to discuss the plan - rather than get stuck thinking.
+- Do not spend time inspecting 3rd party libraries. Rely on internal knowledge.
 - Seek permission before doing large amounts of library inspection.

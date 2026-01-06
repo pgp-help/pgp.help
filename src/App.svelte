@@ -6,9 +6,11 @@
 
 	let keyInput = $state('');
 	let keyObject = $state(null);
+	let keyError = $state('');
 	let message = $state('');
 	let output = $state('');
 	let isProcessing = $state(false);
+	let error = $state('');
 
 	let isPrivate = $derived(keyObject?.isPrivate() ?? false);
 	let mode = $derived(isPrivate ? 'Decrypt' : 'Encrypt');
@@ -19,19 +21,35 @@
 
 		if (!k || !m) {
 			output = '';
+			error = '';
+			return;
+		}
+
+		if (k.isPrivate() && !k.isDecrypted()) {
+			keyError = 'Please unlock the private key to decrypt.';
+			output = '';
+			error = '';
 			return;
 		}
 
 		isProcessing = true;
+		error = '';
 
 		const processPromise = k.isPrivate() ? decryptMessage(k, m) : encryptMessage(k, m);
 
-		processPromise.then((result) => {
-			if (keyObject === k && message === m) {
-				output = result;
-				isProcessing = false;
-			}
-		});
+		processPromise
+			.then((result) => {
+				if (keyObject === k && message === m) {
+					output = result;
+					isProcessing = false;
+				}
+			})
+			.catch((err) => {
+				if (keyObject === k && message === m) {
+					error = err.message;
+					isProcessing = false;
+				}
+			});
 	});
 </script>
 
@@ -42,6 +60,7 @@
 			<PGPKey
 				bind:value={keyInput}
 				bind:key={keyObject}
+				bind:decryptError={keyError}
 				label={isPrivate ? 'Private Key' : 'Public Key'}
 			/>
 		</fieldset>
@@ -58,6 +77,7 @@
 					: 'Type your secret message...'}
 				label={mode === 'Decrypt' ? 'Encrypted Message' : 'Message'}
 				selectAllOnFocus={false}
+				{error}
 			/>
 		</fieldset>
 	</form>
