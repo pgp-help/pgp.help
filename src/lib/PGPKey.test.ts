@@ -83,4 +83,38 @@ describe('PGPKey Component', () => {
 		const input = getByPlaceholderText('Paste PGP Key (Armored)...') as HTMLTextAreaElement;
 		expect(input.value).toBe('');
 	});
+
+	it('nudges for decryption when nudgeForDecryption is called', async () => {
+		const mockPrivateKey = {
+			...mockKey,
+			isPrivate: () => true,
+			isDecrypted: () => false
+		};
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		vi.mocked(pgp.getKeyDetails).mockResolvedValue(mockPrivateKey as any);
+
+		const { component, container } = render(PGPKey, {
+			props: {
+				value: 'valid-private-key'
+			}
+		});
+
+		await waitFor(() => {
+			expect(container.querySelector('.form-control')).toBeTruthy();
+		});
+
+		const formControl = container.querySelector('.form-control');
+		expect(formControl?.classList.contains('shake')).toBe(false);
+
+		// Call the exported function
+		component.nudgeForDecryption();
+
+		// Wait for the class to be applied
+		await waitFor(() => {
+			expect(formControl?.classList.contains('shake')).toBe(true);
+		});
+
+		// Wait for the animation to finish (mocking timers would be better but for simplicity)
+		// We can use vi.useFakeTimers() if we want to be precise
+	});
 });

@@ -1,23 +1,31 @@
-<script>
+<script lang="ts">
 	import { encryptMessage, decryptMessage } from './lib/pgp.js';
 	import Layout from './Layout.svelte';
 	import CopyableTextarea from './lib/CopyableTextarea.svelte';
 	import PGPKey from './lib/PGPKey.svelte';
+	import type { Key } from 'openpgp';
 
-	let keyInput = $state('');
-	let keyObject = $state(null);
-	let keyError = $state('');
+	let keyObject = $state<Key | null>(null);
+	let pgpKeyComponent;
 	let message = $state('');
 	let output = $state('');
-	let isProcessing = $state(false);
 	let error = $state('');
 
 	let isPrivate = $derived(keyObject?.isPrivate() ?? false);
 	let mode = $derived(isPrivate ? 'Decrypt' : 'Encrypt');
 
+	let prevKeyObject = null;
+	let prevMessage = '';
+
 	$effect(() => {
 		const k = keyObject;
 		const m = message;
+
+		const keyChanged = k?.getFingerprint() !== prevKeyObject?.getFingerprint();
+		const messageChanged = m !== prevMessage;
+
+		prevKeyObject = k;
+		prevMessage = m;
 
 		if (!k || !m) {
 			output = '';
@@ -26,13 +34,17 @@
 		}
 
 		if (k.isPrivate() && !k.isDecrypted()) {
-			keyError = 'Please unlock the private key to decrypt.';
+			if (!keyChanged && !messageChanged) {
+				//This is probably the user just locking the key again, so don't reset / nudge.
+				return;
+			}
+			pgpKeyComponent?.nudgeForDecryption();
 			output = '';
 			error = '';
-			return;
+
+			//Fall through so that we also see any other errors (e.g. invalid armor)
 		}
 
-		isProcessing = true;
 		error = '';
 
 		const processPromise = k.isPrivate() ? decryptMessage(k, m) : encryptMessage(k, m);
@@ -41,13 +53,11 @@
 			.then((result) => {
 				if (keyObject === k && message === m) {
 					output = result;
-					isProcessing = false;
 				}
 			})
 			.catch((err) => {
 				if (keyObject === k && message === m) {
 					error = err.message;
-					isProcessing = false;
 				}
 			});
 	});
@@ -58,9 +68,8 @@
 		<fieldset class="fieldset">
 			<legend class="fieldset-legend">{isPrivate ? 'Private Key' : 'Public Key'}</legend>
 			<PGPKey
-				bind:value={keyInput}
+				bind:this={pgpKeyComponent}
 				bind:key={keyObject}
-				bind:decryptError={keyError}
 				label={isPrivate ? 'Private Key' : 'Public Key'}
 			/>
 		</fieldset>
@@ -85,9 +94,6 @@
 	<fieldset class="fieldset">
 		<legend class="fieldset-legend">
 			{mode === 'Decrypt' ? 'Decrypted Message' : 'Encrypted Message'}
-			{#if isProcessing}
-				<span class="loading loading-spinner loading-sm ml-2"></span>
-			{/if}
 		</legend>
 		<CopyableTextarea
 			value={output}
