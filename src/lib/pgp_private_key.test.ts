@@ -7,7 +7,7 @@ describe('PGP Private Key Usage', () => {
 		const passphrase = 'test-passphrase';
 		const { privateKey, publicKey } = await openpgp.generateKey({
 			type: 'ecc',
-			curve: 'curve25519',
+			curve: 'curve25519' as openpgp.EllipticCurveName, // Use proper OpenPGP type for curve parameter
 			userIDs: [{ name: 'Test User', email: 'test@example.com' }],
 			passphrase
 		});
