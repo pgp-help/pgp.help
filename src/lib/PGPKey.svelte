@@ -24,6 +24,8 @@
 	let expirationTime = $state<Date | null>(null);
 
 	$effect(() => {
+		// Try to parse the key whenever value changes
+
 		// Ensure the value hasn't changed while we were waiting for the promise
 		const k = value;
 		if (!k) {
@@ -105,8 +107,8 @@
 	let showCopiedToast = $state(false);
 
 	function shareKey() {
-		if (!value) return;
-		const url = `${window.location.origin}/?key=${encodeURIComponent(value)}`;
+		if (!key) return;
+		const url = `${window.location.origin}/?key=${encodeURIComponent(key.armor())}`;
 		navigator.clipboard.writeText(url);
 		showCopiedToast = true;
 		setTimeout(() => {
@@ -225,53 +227,79 @@
 					</div>
 				{/if}
 
-				{#if key.isPrivate()}
-					{#if !key.isDecrypted()}
-						<div class="divider my-2"></div>
-						<div class="form-control w-full max-w-xs {shaking ? 'shake' : ''}">
-							<label class="label" for="passphrase">
-								<span class="label-text">Unlock Private Key</span>
-							</label>
-							<div class="join">
-								<input
-									type="password"
-									id="passphrase"
-									placeholder="Passphrase"
-									class="input input-bordered input-sm w-full join-item {decryptError
-										? 'input-error'
-										: ''}"
-									oninput={() => {
-										decryptError = '';
-									}}
-									onkeydown={(e) => {
-										if (e.key === 'Enter') {
-											e.preventDefault();
-											handleDecrypt(e.currentTarget.value);
-										}
-									}}
-								/>
-								<button
-									type="button"
-									class="btn btn-sm btn-primary join-item"
-									onclick={(e) => {
-										const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-										handleDecrypt(input.value);
-									}}
-								>
-									Unlock
-								</button>
-							</div>
-							{#if decryptError}
-								<div class="text-error text-xs mt-1">{decryptError}</div>
-							{/if}
+				{#if key.isPrivate() && !key.isDecrypted()}
+					<div class="divider my-2"></div>
+					<div class="form-control w-full max-w-xs {shaking ? 'shake' : ''}">
+						<label class="label" for="passphrase">
+							<span class="label-text">Unlock Private Key</span>
+						</label>
+						<div class="join">
+							<input
+								type="password"
+								id="passphrase"
+								placeholder="Passphrase"
+								class="input input-bordered input-sm w-full join-item {decryptError
+									? 'input-error'
+									: ''}"
+								oninput={() => {
+									decryptError = '';
+								}}
+								onkeydown={(e) => {
+									if (e.key === 'Enter') {
+										e.preventDefault();
+										handleDecrypt(e.currentTarget.value);
+									}
+								}}
+							/>
+							<button
+								type="button"
+								class="btn btn-sm btn-primary join-item"
+								onclick={(e) => {
+									const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+									handleDecrypt(input.value);
+								}}
+							>
+								Unlock
+							</button>
 						</div>
-						<div class="divider my-2"></div>
-					{/if}
+						{#if decryptError}
+							<div class="text-error text-xs mt-1">{decryptError}</div>
+						{/if}
+					</div>
+					<div class="divider my-2"></div>
 				{/if}
 
 				<div class="mt-4 flex flex-col gap-2">
 					<details class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
-						<summary class="collapse-title text-xs font-medium">Show Public Key</summary>
+						<summary class="collapse-title text-xs font-medium flex items-center justify-between">
+							<span>Show Public Key</span>
+							<div class="tooltip" data-tip={showCopiedToast ? 'Copied!' : 'Copy Share Link'}>
+								<button
+									type="button"
+									class="btn btn-xs btn-ghost"
+									onclick={(e) => {
+										e.stopPropagation();
+										shareKey();
+									}}
+									aria-label="Share Public Key"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke-width="1.5"
+										stroke="currentColor"
+										class="w-4 h-4"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
+										/>
+									</svg>
+								</button>
+							</div>
+						</summary>
 						<div class="collapse-content">
 							<CopyableTextarea
 								value={key.toPublic ? key.toPublic().armor() : key.armor()}
@@ -304,38 +332,16 @@
 				</div>
 			</div>
 			<div class="absolute top-2 right-2 flex gap-1">
-				{#if !key.isPrivate()}
-					<div class="tooltip tooltip-left" data-tip={showCopiedToast ? 'Copied!' : 'Share Link'}>
-						<button
-							class="btn btn-sm btn-circle btn-ghost"
-							onclick={shareKey}
-							aria-label="Share Key"
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke-width="1.5"
-								stroke="currentColor"
-								class="w-5 h-5"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
-								/>
-							</svg>
-						</button>
-					</div>
-				{/if}
-				<button
-					type="button"
-					class="btn btn-sm btn-ghost btn-circle"
-					onclick={clearKey}
-					aria-label="Remove key"
-				>
-					✕
-				</button>
+				<div class="tooltip" data-tip="Remove Key">
+					<button
+						type="button"
+						class="btn btn-sm btn-ghost btn-circle"
+						onclick={clearKey}
+						aria-label="Remove key"
+					>
+						✕
+					</button>
+				</div>
 			</div>
 		</div>
 	</div>

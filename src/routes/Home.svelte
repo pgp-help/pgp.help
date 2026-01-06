@@ -12,6 +12,7 @@
 	let error = $state('');
 
 	$effect(() => {
+		// On initial load, check for 'key' parameter in URL and use that as the keyValue
 		const params = new URLSearchParams(window.location.search);
 		const keyParam = params.get('key');
 		if (keyParam && !keyValue) {
