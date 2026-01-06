@@ -77,7 +77,7 @@ export async function encryptMessage(publicKey: openpgp.Key, text: string): Prom
 		return encrypted as string;
 	} catch (error) {
 		console.error('Encryption error:', error);
-		return `Error: ${(error as Error).message}`;
+		throw error;
 	}
 }
 
@@ -93,7 +93,7 @@ export async function decryptMessage(
 	}
 
 	if (!privateKey.isPrivate()) {
-		return 'Error: Key is not a private key';
+		throw new Error('Key is not a private key');
 	}
 
 	try {
@@ -107,7 +107,7 @@ export async function decryptMessage(
 		return decrypted as string;
 	} catch (error) {
 		console.error('Decryption error:', error);
-		return `Error: ${(error as Error).message}`;
+		throw error;
 	}
 }
 
@@ -130,8 +130,7 @@ export async function signMessage(privateKey: openpgp.PrivateKey, text: string):
 		return signed as string;
 	} catch (error) {
 		console.error('Signing error:', error);
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		return `Error: ${(error as any).message}`;
+		throw error;
 	}
 }
 
@@ -160,7 +159,7 @@ export async function verifySignature(
 		return true;
 	} catch (error) {
 		console.error('Verification error:', error);
-		return false;
+		throw error;
 	}
 }
 
@@ -173,11 +172,11 @@ export async function getKeyDetails(armoredKey: string): Promise<openpgp.Key | n
 
 	try {
 		const cleanedKey = cleanKey(armoredKey);
-		if (!cleanedKey) return null;
+		if (!cleanedKey) throw new Error('Invalid key format');
 		return await openpgp.readKey({ armoredKey: cleanedKey });
-	} catch {
-		// Key parsing failed
-		return null;
+	} catch (error) {
+		console.error('Key parsing error:', error);
+		throw error;
 	}
 }
 
@@ -197,6 +196,6 @@ export async function decryptPrivateKey(
 		return decryptedKey;
 	} catch (e) {
 		console.error('Failed to decrypt private key', e);
-		return null;
+		throw e;
 	}
 }

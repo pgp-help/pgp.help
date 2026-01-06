@@ -15,9 +15,8 @@ describe('PGP Private Key Usage', () => {
 		const privateKeyObj = await openpgp.readKey({ armoredKey: privateKey });
 		const publicKeyObj = await openpgp.readKey({ armoredKey: publicKey });
 
-		// 2. Verify decryptPrivateKey returns null with wrong passphrase
-		const wrongPassResult = await decryptPrivateKey(privateKeyObj, 'wrong-passphrase');
-		expect(wrongPassResult).toBe(null);
+		// 2. Verify decryptPrivateKey throws with wrong passphrase
+		await expect(decryptPrivateKey(privateKeyObj, 'wrong-passphrase')).rejects.toThrow();
 
 		// 3. Verify decryptPrivateKey returns key object with correct passphrase
 		const correctPassResult = await decryptPrivateKey(privateKeyObj, passphrase);

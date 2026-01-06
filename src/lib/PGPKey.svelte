@@ -24,35 +24,44 @@
 			return;
 		}
 
-		getKeyDetails(k).then(async (details) => {
-			if (value === k) {
-				if (details) {
-					key = details;
-					//For whatever reason, expirationTime is a promise. So fetch that too.
-					expirationTime = (await details.getExpirationTime()) as Date | null;
+		getKeyDetails(k)
+			.then(async (details) => {
+				if (value === k) {
+					if (details) {
+						key = details;
+						//For whatever reason, expirationTime is a promise. So fetch that too.
+						expirationTime = (await details.getExpirationTime()) as Date | null;
 
-					// Reset decryption state for new key
-					isDecrypted = false;
-					decryptError = '';
+						// Reset decryption state for new key
+						isDecrypted = false;
+						decryptError = '';
 
-					// If private key is not encrypted, mark as decrypted immediately
-					// Note: isDecrypted() method on key checks if the key material is available (decrypted)
-					// However, openpgpjs Key object doesn't have isDecrypted(), we check if we can use it.
-					// Actually, we can try to decrypt with empty password or check algorithm.
-					// But simpler: if it's private, we assume it might need decryption unless we know otherwise.
-					// Let's check if it's private.
-					if (details.isPrivate()) {
-						// Try to decrypt with empty password if it's not encrypted
-						// or check if it is already decrypted (some keys might be unencrypted)
-						// For now, we'll just wait for user interaction if it's private.
+						// If private key is not encrypted, mark as decrypted immediately
+						// Note: isDecrypted() method on key checks if the key material is available (decrypted)
+						// However, openpgpjs Key object doesn't have isDecrypted(), we check if we can use it.
+						// Actually, we can try to decrypt with empty password or check algorithm.
+						// But simpler: if it's private, we assume it might need decryption unless we know otherwise.
+						// Let's check if it's private.
+						if (details.isPrivate()) {
+							// Try to decrypt with empty password if it's not encrypted
+							// or check if it is already decrypted (some keys might be unencrypted)
+							// For now, we'll just wait for user interaction if it's private.
+						}
+					} else {
+						key = null;
+						expirationTime = null;
+						isDecrypted = false;
 					}
-				} else {
+				}
+			})
+			.catch((err) => {
+				if (value === k) {
 					key = null;
 					expirationTime = null;
 					isDecrypted = false;
+					decryptError = err.message;
 				}
-			}
-		});
+			});
 	});
 
 	async function handleDecrypt(pass: string) {
@@ -60,13 +69,12 @@
 
 		decryptError = '';
 
-		const decryptedKey = await decryptPrivateKey(key, pass);
-
-		if (decryptedKey) {
+		try {
+			const decryptedKey = await decryptPrivateKey(key, pass);
 			isDecrypted = true;
 			key = decryptedKey;
-		} else {
-			decryptError = 'Incorrect passphrase or decryption failed';
+		} catch (err) {
+			decryptError = (err as Error).message;
 		}
 	}
 
@@ -296,5 +304,6 @@
 		readonly={false}
 		showButtons={true}
 		selectAllOnFocus={false}
+		error={decryptError}
 	/>
 {/if}
