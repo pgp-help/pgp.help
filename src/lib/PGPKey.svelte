@@ -31,16 +31,16 @@
 					// Reset decryption state for new key
 					decryptError = '';
 
-					// If private key is not encrypted, mark as decrypted immediately
-					// Note: isDecrypted() method on key checks if the key material is available (decrypted)
-					// However, openpgpjs Key object doesn't have isDecrypted(), we check if we can use it.
-					// Actually, we can try to decrypt with empty password or check algorithm.
-					// But simpler: if it's private, we assume it might need decryption unless we know otherwise.
-					// Let's check if it's private.
-					if (details.isPrivate()) {
-						// Try to decrypt with empty password if it's not encrypted
-						// or check if it is already decrypted (some keys might be unencrypted)
-						// For now, we'll just wait for user interaction if it's private.
+					// Try to decrypt with empty password (is this ever useful? not sure)
+					if (details.isPrivate() && !details.isDecrypted()) {
+						try {
+							const decryptedKey = await decryptPrivateKey(details, '');
+							if (value === k) {
+								key = decryptedKey;
+							}
+						} catch {
+							// Ignore error, key is likely password protected
+						}
 					}
 				}
 			})
