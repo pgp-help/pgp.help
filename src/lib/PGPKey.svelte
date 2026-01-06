@@ -90,12 +90,6 @@
 		decryptError = '';
 	}
 
-	function switchToPublicKey() {
-		if (key && key.isPrivate()) {
-			value = key.toPublic().armor();
-		}
-	}
-
 	function formatDate(date: Date | null) {
 		if (!date) return 'Never';
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -148,6 +142,13 @@
 					<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
 						{key.isPrivate() ? 'Private Key' : 'Public Key'}
 					</span>
+					{#if key.isPrivate()}
+						{#if isDecrypted}
+							<span class="badge badge-success badge-sm">Unlocked</span>
+						{:else}
+							<span class="badge badge-warning badge-sm">Locked</span>
+						{/if}
+					{/if}
 				</div>
 
 				{#each properties as prop (prop.label)}
@@ -166,9 +167,8 @@
 				{/if}
 
 				{#if key.isPrivate()}
-					<div class="divider my-2"></div>
-
 					{#if !isDecrypted}
+						<div class="divider my-2"></div>
 						<div class="form-control w-full max-w-xs">
 							<label class="label" for="passphrase">
 								<span class="label-text">Unlock Private Key</span>
@@ -198,31 +198,44 @@
 								<div class="text-error text-xs mt-1">{decryptError}</div>
 							{/if}
 						</div>
-					{:else}
-						<div class="alert alert-success py-2 text-xs flex items-center gap-2">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="stroke-current shrink-0 h-4 w-4"
-								fill="none"
-								viewBox="0 0 24 24"
-								><path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-								/></svg
-							>
-							<span>Key Unlocked</span>
-						</div>
+						<div class="divider my-2"></div>
 					{/if}
+				{/if}
 
-					<div class="mt-4 flex flex-col gap-2">
-						<button class="btn btn-sm btn-outline w-full" onclick={switchToPublicKey}>
-							Switch to Public Key
-						</button>
+				<div class="mt-4 flex flex-col gap-2">
+					<details class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+						<summary class="collapse-title text-xs font-medium">Show Public Key</summary>
+						<div class="collapse-content">
+							<CopyableTextarea
+								value={key.toPublic ? key.toPublic().armor() : key.armor()}
+								class="text-xs"
+								fixed
+							/>
+						</div>
+					</details>
 
+					{#if key.isPrivate()}
 						<details class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
-							<summary class="collapse-title text-xs font-medium">Export Private Key</summary>
+							<summary class="collapse-title text-xs font-medium flex items-center gap-2">
+								Export Private Key
+								<div
+									class="tooltip tooltip-right"
+									data-tip="Warning: Never share your private key!"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="stroke-warning h-4 w-4"
+										fill="none"
+										viewBox="0 0 24 24"
+										><path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+										/></svg
+									>
+								</div>
+							</summary>
 							<div class="collapse-content">
 								<div class="alert alert-warning text-xs py-2 mb-2">
 									<svg
@@ -242,19 +255,8 @@
 								<CopyableTextarea value={cleanedKey} class="text-xs" fixed />
 							</div>
 						</details>
-					</div>
-				{/if}
-
-				<details class="collapse collapse-arrow w-fit">
-					<summary class="collapse-title text-xs font-medium py-2 pl-0"> Show Public Key </summary>
-					<div class="collapse-content px-0 pt-2">
-						<CopyableTextarea
-							value={key.toPublic ? key.toPublic().armor() : key.armor()}
-							class="text-xs"
-							fixed
-						/>
-					</div>
-				</details>
+					{/if}
+				</div>
 			</div>
 			<button
 				class="btn btn-sm btn-ghost absolute top-2 right-2"
