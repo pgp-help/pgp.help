@@ -24,7 +24,7 @@
 		</div>
 	</div>
 
-	<main class="flex-1 container mx-auto max-w-6xl py-8">
+	<main class="flex-1 container mx-auto max-w-4xl py-8">
 		<slot />
 	</main>
 

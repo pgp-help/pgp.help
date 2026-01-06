@@ -11,6 +11,15 @@
 		placeholder = 'Paste PGP Key (Armored)...'
 	} = $props();
 
+	let publicKey = $derived.by(() => {
+		if (!key) return '';
+		if (key.toPublic) {
+			return key.toPublic();
+		} else {
+			return key;
+		}
+	});
+
 	let decryptError = $state('');
 	let shaking = $state(false);
 
@@ -106,8 +115,8 @@
 	}
 
 	function shareKey() {
-		if (!key) return;
-		const url = `${window.location.origin}/?key=${encodeURIComponent(key.armor())}`;
+		if (!publicKey) return;
+		const url = `${window.location.origin}/?key=${encodeURIComponent(publicKey.armor())}`;
 		navigator.clipboard.writeText(url);
 	}
 
@@ -233,9 +242,8 @@
 								type="password"
 								id="passphrase"
 								placeholder="Passphrase"
-								class="input input-bordered input-sm w-full join-item {decryptError
-									? 'input-error'
-									: ''}"
+								class="input input-bordered input-sm w-full join-item
+									{decryptError ? 'input-error' : ''}"
 								oninput={() => {
 									decryptError = '';
 								}}
@@ -265,7 +273,7 @@
 				{/if}
 
 				<div class="mt-4 flex flex-col gap-2">
-					<details class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+					<details class="collapse collapse-arrow border border-base-300 bg-base-100">
 						<summary class="collapse-title text-xs font-medium flex items-center justify-between">
 							<span>Show Public Key</span>
 							<MiniActionButton
@@ -293,11 +301,7 @@
 							</MiniActionButton>
 						</summary>
 						<div class="collapse-content">
-							<CopyableTextarea
-								value={key.toPublic ? key.toPublic().armor() : key.armor()}
-								class="text-xs"
-								fixed
-							/>
+							<CopyableTextarea value={publicKey.armor()} class="text-xs" fixed />
 						</div>
 					</details>
 

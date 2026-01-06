@@ -70,10 +70,10 @@ describe('PGPKey Component', () => {
 		});
 
 		await waitFor(() => {
-			expect(getByLabelText('Remove key')).toBeTruthy();
+			expect(getByLabelText('Remove Key')).toBeTruthy();
 		});
 
-		const removeBtn = getByLabelText('Remove key');
+		const removeBtn = getByLabelText('Remove Key');
 		await fireEvent.click(removeBtn);
 
 		// Should revert to input mode
