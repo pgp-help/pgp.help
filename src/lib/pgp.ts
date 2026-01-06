@@ -184,3 +184,19 @@ export async function decryptPrivateKey(
 		throw e;
 	}
 }
+
+/**
+ * Generates a new PGP key pair.
+ */
+export async function generateKeyPair(
+	name: string,
+	email: string,
+	passphrase?: string
+): Promise<{ privateKey: string; publicKey: string; revocationCertificate: string }> {
+	const { privateKey, publicKey, revocationCertificate } = await openpgp.generateKey({
+		type: 'curve25519',
+		userIDs: [{ name, email }],
+		passphrase
+	});
+	return { privateKey, publicKey, revocationCertificate };
+}

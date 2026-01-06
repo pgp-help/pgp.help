@@ -5,26 +5,45 @@
 	import type { Key } from 'openpgp';
 	import CopyButtons from '../lib/CopyButtons.svelte';
 
+	let { initialKey = '', onKeyChange } = $props<{
+		// The initial armored key string to display (e.g. from URL/Store)
+		initialKey?: string;
+		// Callback to notify parent when a VALID key is parsed.
+		onKeyChange?: (keyObject: Key) => void;
+	}>();
+
+	// The parsed OpenPGP key object (null if invalid/empty)
 	let keyObject = $state<Key | null>(null);
-	let keyValue = $state('');
+	// The raw armored key string (bound to the textarea/input)
+	let keyValue = $state(initialKey);
+	// Reference to the PGPKey component instance (for calling methods like nudgeForDecryption)
 	let pgpKeyComponent;
+	// The input message to be encrypted or decrypted
 	let message = $state('');
+	// The result of the encryption or decryption operation
 	let output = $state('');
+	// Any error message from the operation (e.g. decryption failure)
 	let error = $state('');
 
 	$effect(() => {
-		// On initial load, check for 'key' parameter in URL and use that as the keyValue
-		const params = new URLSearchParams(window.location.search);
-		const keyParam = params.get('key');
-		if (keyParam && !keyValue) {
-			keyValue = keyParam;
-			const newUrl = window.location.pathname;
-			window.history.replaceState({}, '', newUrl);
+		if (initialKey !== undefined) {
+			keyValue = initialKey;
+		}
+	});
+
+	$effect(() => {
+		if (keyObject) {
+			onKeyChange?.(keyObject);
 		}
 	});
 
 	let isPrivate = $derived(keyObject?.isPrivate() ?? false);
 	let mode = $derived(isPrivate ? 'Decrypt' : 'Encrypt');
+
+	// Expose key state for parent to observe
+	export function getCurrentKey() {
+		return { keyObject, keyValue };
+	}
 
 	let prevKeyObject = null;
 	let prevMessage = '';
