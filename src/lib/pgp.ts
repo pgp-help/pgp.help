@@ -85,11 +85,15 @@ export async function encryptMessage(publicKey: openpgp.Key, text: string): Prom
  * Decrypts an encrypted message using a private PGP key.
  */
 export async function decryptMessage(
-	privateKey: openpgp.PrivateKey,
+	privateKey: openpgp.Key,
 	encryptedMessage: string
 ): Promise<string> {
 	if (!privateKey || !encryptedMessage) {
 		return '';
+	}
+
+	if (!privateKey.isPrivate()) {
+		return 'Error: Key is not a private key';
 	}
 
 	try {
@@ -97,7 +101,7 @@ export async function decryptMessage(
 
 		const { data: decrypted } = await openpgp.decrypt({
 			message,
-			decryptionKeys: privateKey
+			decryptionKeys: privateKey as openpgp.PrivateKey
 		});
 
 		return decrypted as string;
@@ -173,6 +177,26 @@ export async function getKeyDetails(armoredKey: string): Promise<openpgp.Key | n
 		return await openpgp.readKey({ armoredKey: cleanedKey });
 	} catch {
 		// Key parsing failed
+		return null;
+	}
+}
+
+/**
+ * Decrypts a private key with a passphrase.
+ * Returns the decrypted key if successful, null otherwise.
+ */
+export async function decryptPrivateKey(
+	key: openpgp.Key,
+	passphrase: string
+): Promise<openpgp.PrivateKey | null> {
+	if (!key.isPrivate()) return null;
+
+	try {
+		const privateKey = key as openpgp.PrivateKey;
+		const decryptedKey = await openpgp.decryptKey({ privateKey, passphrase });
+		return decryptedKey;
+	} catch (e) {
+		console.error('Failed to decrypt private key', e);
 		return null;
 	}
 }
