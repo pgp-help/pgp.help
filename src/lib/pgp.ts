@@ -4,8 +4,8 @@ import * as openpgp from 'openpgp';
  * Normalizes a PGP key by removing preamble/postamble, trimming whitespace,
  * Returns null if the key is invalid.
  */
-export function cleanKey(armoredKey: string): string | null {
-	if (!armoredKey) return null;
+export function cleanKey(armoredKey: string): string {
+	if (!armoredKey) throw new Error('Key is empty');
 
 	// Extract the block (Public or Private)
 	const match = armoredKey.match(
@@ -13,7 +13,7 @@ export function cleanKey(armoredKey: string): string | null {
 	);
 
 	if (!match) {
-		return null;
+		throw new Error('Invalid key format: Missing PGP header/footer');
 	}
 
 	const block = match[0];
@@ -23,7 +23,7 @@ export function cleanKey(armoredKey: string): string | null {
 		.map((line) => line.trim())
 		.filter((line) => line.length > 0);
 
-	if (lines.length < 2) return null;
+	if (lines.length < 2) throw new Error('Invalid key format: Key is too short');
 
 	const headerLines: string[] = [];
 	const bodyLines: string[] = [];
@@ -62,9 +62,7 @@ export function cleanKey(armoredKey: string): string | null {
  * Encrypts a text message using a public PGP key.
  */
 export async function encryptMessage(publicKey: openpgp.Key, text: string): Promise<string> {
-	if (!publicKey || !text) {
-		return '';
-	}
+	if (text == null) throw new Error('Message text is required');
 
 	try {
 		const message = await openpgp.createMessage({ text });
@@ -88,10 +86,6 @@ export async function decryptMessage(
 	privateKey: openpgp.Key,
 	encryptedMessage: string
 ): Promise<string> {
-	if (!privateKey || !encryptedMessage) {
-		return '';
-	}
-
 	if (!privateKey.isPrivate()) {
 		throw new Error('Key is not a private key');
 	}
@@ -115,9 +109,7 @@ export async function decryptMessage(
  * Signs a text message using a private PGP key.
  */
 export async function signMessage(privateKey: openpgp.PrivateKey, text: string): Promise<string> {
-	if (!privateKey || !text) {
-		return '';
-	}
+	if (text == null) throw new Error('Message text is required');
 
 	try {
 		const message = await openpgp.createMessage({ text });
@@ -141,10 +133,6 @@ export async function verifySignature(
 	publicKey: openpgp.Key,
 	signedMessage: string
 ): Promise<boolean> {
-	if (!publicKey || !signedMessage) {
-		return false;
-	}
-
 	try {
 		const message = await openpgp.readMessage({ armoredMessage: signedMessage });
 
@@ -167,12 +155,9 @@ export async function verifySignature(
  * Parses a PGP key and returns the OpenPGP Key object.
  * Returns null if the key is invalid.
  */
-export async function getKeyDetails(armoredKey: string): Promise<openpgp.Key | null> {
-	if (!armoredKey) return null;
-
+export async function getKeyDetails(armoredKey: string): Promise<openpgp.Key> {
 	try {
 		const cleanedKey = cleanKey(armoredKey);
-		if (!cleanedKey) throw new Error('Invalid key format');
 		return await openpgp.readKey({ armoredKey: cleanedKey });
 	} catch (error) {
 		console.error('Key parsing error:', error);
@@ -187,8 +172,8 @@ export async function getKeyDetails(armoredKey: string): Promise<openpgp.Key | n
 export async function decryptPrivateKey(
 	key: openpgp.Key,
 	passphrase: string
-): Promise<openpgp.PrivateKey | null> {
-	if (!key.isPrivate()) return null;
+): Promise<openpgp.PrivateKey> {
+	if (!key.isPrivate()) throw new Error('Key is not a private key');
 
 	try {
 		const privateKey = key as openpgp.PrivateKey;

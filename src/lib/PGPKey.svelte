@@ -15,6 +15,7 @@
 	let decryptError = $state('');
 
 	$effect(() => {
+		// Ensure the value hasn't changed while we were waiting for the promise
 		const k = value;
 		if (!k) {
 			key = null;
@@ -27,30 +28,24 @@
 		getKeyDetails(k)
 			.then(async (details) => {
 				if (value === k) {
-					if (details) {
-						key = details;
-						//For whatever reason, expirationTime is a promise. So fetch that too.
-						expirationTime = (await details.getExpirationTime()) as Date | null;
+					key = details;
+					//For whatever reason, expirationTime is a promise. So fetch that too.
+					expirationTime = (await details.getExpirationTime()) as Date | null;
 
-						// Reset decryption state for new key
-						isDecrypted = false;
-						decryptError = '';
+					// Reset decryption state for new key
+					isDecrypted = false;
+					decryptError = '';
 
-						// If private key is not encrypted, mark as decrypted immediately
-						// Note: isDecrypted() method on key checks if the key material is available (decrypted)
-						// However, openpgpjs Key object doesn't have isDecrypted(), we check if we can use it.
-						// Actually, we can try to decrypt with empty password or check algorithm.
-						// But simpler: if it's private, we assume it might need decryption unless we know otherwise.
-						// Let's check if it's private.
-						if (details.isPrivate()) {
-							// Try to decrypt with empty password if it's not encrypted
-							// or check if it is already decrypted (some keys might be unencrypted)
-							// For now, we'll just wait for user interaction if it's private.
-						}
-					} else {
-						key = null;
-						expirationTime = null;
-						isDecrypted = false;
+					// If private key is not encrypted, mark as decrypted immediately
+					// Note: isDecrypted() method on key checks if the key material is available (decrypted)
+					// However, openpgpjs Key object doesn't have isDecrypted(), we check if we can use it.
+					// Actually, we can try to decrypt with empty password or check algorithm.
+					// But simpler: if it's private, we assume it might need decryption unless we know otherwise.
+					// Let's check if it's private.
+					if (details.isPrivate()) {
+						// Try to decrypt with empty password if it's not encrypted
+						// or check if it is already decrypted (some keys might be unencrypted)
+						// For now, we'll just wait for user interaction if it's private.
 					}
 				}
 			})
@@ -88,10 +83,13 @@
 
 	async function lockKey() {
 		if (!value) return;
-		const details = await getKeyDetails(value);
-		if (details) {
+		try {
+			const details = await getKeyDetails(value);
 			key = details;
 			isDecrypted = false;
+		} catch (e) {
+			// Should not happen if value was valid before, but good to be safe
+			console.error('Failed to re-parse key', e);
 		}
 	}
 

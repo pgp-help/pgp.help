@@ -91,13 +91,17 @@ describe('PGP Functions', () => {
 			expect(decrypted).toBe(originalMessage);
 		});
 
-		it('should return empty string for invalid inputs', async () => {
-			expect(await encryptMessage(null, 'test')).toBe('');
+		it('should throw error for invalid inputs', async () => {
+			// @ts-expect-error Testing invalid input
+			await expect(encryptMessage(null, 'test')).rejects.toThrow();
 			const pubKeyObj = await openpgp.readKey({ armoredKey: publicKey });
-			expect(await encryptMessage(pubKeyObj, '')).toBe('');
+			// @ts-expect-error Testing invalid input
+			await expect(encryptMessage(pubKeyObj, null)).rejects.toThrow();
 
-			expect(await decryptMessage(null, 'test')).toBe('');
-			expect(await decryptMessage(privateKeyObj, '')).toBe('');
+			// @ts-expect-error Testing invalid input
+			await expect(decryptMessage(null, 'test')).rejects.toThrow();
+			// @ts-expect-error Testing invalid input
+			await expect(decryptMessage(privateKeyObj, null)).rejects.toThrow();
 		});
 	});
 
@@ -122,13 +126,17 @@ describe('PGP Functions', () => {
 			await expect(verifySignature(pubKeyObj, invalidSigned)).rejects.toThrow();
 		});
 
-		it('should return empty string or false for invalid inputs', async () => {
-			expect(await signMessage(null, 'test')).toBe('');
-			expect(await signMessage(privateKeyObj, '')).toBe('');
+		it('should throw error for invalid inputs', async () => {
+			// @ts-expect-error Testing invalid input
+			await expect(signMessage(null, 'test')).rejects.toThrow();
+			// @ts-expect-error Testing invalid input
+			await expect(signMessage(privateKeyObj, null)).rejects.toThrow();
 
-			expect(await verifySignature(null, 'test')).toBe(false);
+			// @ts-expect-error Testing invalid input
+			await expect(verifySignature(null, 'test')).rejects.toThrow();
 			const pubKeyObj = await openpgp.readKey({ armoredKey: publicKey });
-			expect(await verifySignature(pubKeyObj, '')).toBe(false);
+			// @ts-expect-error Testing invalid input
+			await expect(verifySignature(pubKeyObj, null)).rejects.toThrow();
 		});
 	});
 });
