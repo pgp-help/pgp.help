@@ -6,22 +6,18 @@
 	let {
 		value = $bindable(''),
 		key = $bindable<Key | null>(null),
+		decryptError = $bindable(''), //bindable so parent can hint to child to unlock.
 		label = '',
 		placeholder = 'Paste PGP Key (Armored)...'
 	} = $props();
 
 	let expirationTime = $state<Date | null>(null);
-	let isDecrypted = $state(false);
-	let decryptError = $state('');
 
 	$effect(() => {
 		// Ensure the value hasn't changed while we were waiting for the promise
 		const k = value;
 		if (!k) {
-			key = null;
-			expirationTime = null;
-			isDecrypted = false;
-			decryptError = '';
+			clearKey();
 			return;
 		}
 
@@ -33,7 +29,6 @@
 					expirationTime = (await details.getExpirationTime()) as Date | null;
 
 					// Reset decryption state for new key
-					isDecrypted = false;
 					decryptError = '';
 
 					// If private key is not encrypted, mark as decrypted immediately
@@ -53,7 +48,6 @@
 				if (value === k) {
 					key = null;
 					expirationTime = null;
-					isDecrypted = false;
 					decryptError = err.message;
 				}
 			});
@@ -66,7 +60,6 @@
 
 		try {
 			const decryptedKey = await decryptPrivateKey(key, pass);
-			isDecrypted = true;
 			key = decryptedKey;
 		} catch (err) {
 			decryptError = (err as Error).message;
@@ -77,7 +70,6 @@
 		value = '';
 		key = null;
 		expirationTime = null;
-		isDecrypted = false;
 		decryptError = '';
 	}
 
@@ -86,7 +78,6 @@
 		try {
 			const details = await getKeyDetails(value);
 			key = details;
-			isDecrypted = false;
 		} catch (e) {
 			// Should not happen if value was valid before, but good to be safe
 			console.error('Failed to re-parse key', e);
@@ -176,7 +167,7 @@
 						{key.isPrivate() ? 'Private Key' : 'Public Key'}
 					</span>
 					{#if key.isPrivate()}
-						{#if isDecrypted}
+						{#if key.isDecrypted()}
 							<span class="badge badge-success badge-sm">Unlocked</span>
 							<button
 								type="button"
@@ -212,7 +203,7 @@
 				{/if}
 
 				{#if key.isPrivate()}
-					{#if !isDecrypted}
+					{#if !key.isDecrypted()}
 						<div class="divider my-2"></div>
 						<div class="form-control w-full max-w-xs">
 							<label class="label" for="passphrase">
@@ -224,6 +215,9 @@
 									id="passphrase"
 									placeholder="Passphrase"
 									class="input input-bordered input-sm w-full join-item"
+									oninput={() => {
+										decryptError = '';
+									}}
 									onkeydown={(e) => {
 										if (e.key === 'Enter') {
 											e.preventDefault();

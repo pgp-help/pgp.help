@@ -6,6 +6,7 @@
 
 	let keyInput = $state('');
 	let keyObject = $state(null);
+	let keyError = $state('');
 	let message = $state('');
 	let output = $state('');
 	let isProcessing = $state(false);
@@ -19,6 +20,13 @@
 		const m = message;
 
 		if (!k || !m) {
+			output = '';
+			error = '';
+			return;
+		}
+
+		if (k.isPrivate() && !k.isDecrypted()) {
+			keyError = 'Please unlock the private key to decrypt.';
 			output = '';
 			error = '';
 			return;
@@ -52,6 +60,7 @@
 			<PGPKey
 				bind:value={keyInput}
 				bind:key={keyObject}
+				bind:decryptError={keyError}
 				label={isPrivate ? 'Private Key' : 'Public Key'}
 			/>
 		</fieldset>
