@@ -31,7 +31,7 @@ describe('App', () => {
 	it('renders the core interface', () => {
 		render(App);
 		// Check Header
-		expect(screen.getByRole('link', { name: 'PGP Help' })).toBeInTheDocument();
+		expect(screen.getByRole('link', { name: 'pgp.help' })).toBeInTheDocument();
 		expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/Encrypted Message/i)).toBeInTheDocument();
 	});

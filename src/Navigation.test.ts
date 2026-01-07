@@ -95,11 +95,12 @@ describe('Navigation', () => {
 		const main = screen.getByRole('main');
 		await within(main).findByText(/User One/);
 
-		// Verify URL is updated to use fingerprint instead of raw key
+		// Verify URL is updated to use path-based fingerprint instead of raw key
 		await waitFor(() => {
 			const currentUrl = new URL(window.location.href);
 			expect(currentUrl.searchParams.has('key')).toBe(false);
-			expect(currentUrl.searchParams.has('fingerprint')).toBe(true);
+			// Fingerprint should now be in the path, not query params
+			expect(currentUrl.pathname).toMatch(/\/[a-f0-9]{40}$/i); // 40-char hex fingerprint at end of path
 		});
 	});
 

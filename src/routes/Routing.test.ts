@@ -38,7 +38,7 @@ describe('Routing', () => {
 		expect(screen.getByText('What is PGP?')).toBeInTheDocument();
 
 		// Click Home link
-		const homeLink = screen.getByRole('link', { name: 'PGP Help' });
+		const homeLink = screen.getByRole('link', { name: 'pgp.help' });
 		await fireEvent.click(homeLink);
 
 		// Should now be on Home page

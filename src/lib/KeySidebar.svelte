@@ -1,31 +1,37 @@
 <script lang="ts">
 	import { keyStore } from './keyStore.svelte.js';
 	import KeyListItem from './KeyListItem.svelte';
-	import { navigate, router } from './router.svelte.js';
+	import { navigate, parsePath, buildPath } from './router.svelte.js';
 
 	let selectedFingerprint = $derived.by(() => {
-		const params = new URLSearchParams(router.search);
-		return params.get('fingerprint') || params.get('key');
+		const { fingerprint, keyParam } = parsePath();
+		return fingerprint || keyParam;
 	});
 
 	function handleNavigation(e: Event, fingerprint?: string | null, mode?: string) {
 		e.preventDefault();
-		const url = new URL(window.location.href);
-		url.searchParams.delete('key');
+		const { basePath } = parsePath();
 
 		if (fingerprint) {
-			url.searchParams.set('fingerprint', fingerprint);
-			if (mode) {
-				url.searchParams.set('mode', mode);
-			} else {
-				url.searchParams.delete('mode');
-			}
+			// Generate path-based URL for fingerprint, clearing key param
+			const newUrl = buildPath({
+				basePath,
+				fingerprint,
+				mode,
+				clearKey: true,
+				clearMode: !mode // Clear mode if not specified
+			});
+			navigate(newUrl);
 		} else {
-			url.searchParams.delete('fingerprint');
-			url.searchParams.delete('mode');
+			// Navigate to base path without fingerprint, clearing all params
+			const newUrl = buildPath({
+				basePath,
+				clearKey: true,
+				clearMode: true,
+				clearFingerprint: true
+			});
+			navigate(newUrl);
 		}
-
-		navigate(url.pathname + url.search);
 	}
 </script>
 
@@ -54,7 +60,7 @@
 		{#each keyStore.keys as key (key.getFingerprint())}
 			<div class="flex flex-col">
 				<a
-					href="?fingerprint={key.getFingerprint()}"
+					href="/pgp.svelte/{key.getFingerprint()}"
 					class="block group"
 					onclick={(e) => handleNavigation(e, key.getFingerprint())}
 				>
@@ -62,7 +68,7 @@
 				</a>
 				{#if key.isPrivate()}
 					<a
-						href="?fingerprint={key.getFingerprint()}&mode=encrypt"
+						href="/pgp.svelte/{key.getFingerprint()}?mode=encrypt"
 						class="text-xs px-2 pb-1 text-primary hover:underline text-right"
 						onclick={(e) => handleNavigation(e, key.getFingerprint(), 'encrypt')}
 					>
