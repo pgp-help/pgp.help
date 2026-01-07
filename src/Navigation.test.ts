@@ -32,7 +32,7 @@ describe('Navigation', () => {
 		// but usually starts with "Public Key" label or generic "PGP Key" if we changed it.
 		// In Home.svelte: label={isPrivate ? 'Private Key' : 'Public Key'}
 		// Initially isPrivate is false.
-		const keyTextarea = screen.getByLabelText(/Public Key/i);
+		const keyTextarea = screen.getByLabelText(/^Public Key$/i);
 		await fireEvent.input(keyTextarea, { target: { value: key1.privateKey } });
 
 		// Verify it appears in sidebar
@@ -50,7 +50,7 @@ describe('Navigation', () => {
 
 		// Verify form is cleared.
 		// The main view should revert to textarea.
-		const keyTextarea2 = await screen.findByLabelText(/Public Key/i);
+		const keyTextarea2 = await screen.findByLabelText(/^Public Key$/i);
 		expect(keyTextarea2).toBeInTheDocument();
 		expect((keyTextarea2 as HTMLTextAreaElement).value).toBe('');
 
@@ -101,5 +101,31 @@ describe('Navigation', () => {
 			expect(currentUrl.searchParams.has('key')).toBe(false);
 			expect(currentUrl.searchParams.has('fingerprint')).toBe(true);
 		});
+	});
+
+	it('allows encrypting with a private key', async () => {
+		const user = userEvent.setup();
+		render(App);
+
+		// Add private key
+		const keyTextarea = screen.getByLabelText(/^Public Key$/i);
+		await fireEvent.input(keyTextarea, { target: { value: key1.privateKey } });
+
+		const sidebar = screen.getByRole('complementary', { name: /Sidebar/i });
+		await within(sidebar).findByText(/User One/);
+
+		// Find the "Encrypt with public key" link in the sidebar item
+		const encryptLink = within(sidebar).getByRole('link', { name: /Encrypt with public key/i });
+		await user.click(encryptLink);
+
+		// Verify URL has mode=encrypt
+		await waitFor(() => {
+			const currentUrl = new URL(window.location.href);
+			expect(currentUrl.searchParams.get('mode')).toBe('encrypt');
+		});
+
+		// Verify Main view is in Encrypt mode
+		const main = screen.getByRole('main');
+		await within(main).findByPlaceholderText(/Type your secret message/i);
 	});
 });

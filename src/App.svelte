@@ -12,9 +12,10 @@
 		const params = new URLSearchParams(router.search);
 		const fp = params.get('fingerprint');
 		const keyParam = params.get('key');
+		const mode = params.get('mode');
 
 		if (fp) {
-			const stored = keyStore.getKey(fp);
+			const stored = keyStore.getKey(fp, mode === 'encrypt' ? 'public' : undefined);
 			if (stored) {
 				currentKey = stored.armor();
 			}

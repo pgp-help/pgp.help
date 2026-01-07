@@ -82,4 +82,26 @@ describe('KeyStore', () => {
 		expect(newStore.keys).toHaveLength(1);
 		expect(newStore.keys[0].getFingerprint()).toBeDefined();
 	});
+
+	it('retrieves public key from private key when requested', async () => {
+		const priv = await getKeyDetails(privateKeyArmor);
+		await keyStore.addKey(priv);
+
+		const fp = priv.getFingerprint();
+
+		// Default behavior (returns private)
+		const k1 = keyStore.getKey(fp);
+		expect(k1?.isPrivate()).toBe(true);
+		expect(k1?.getFingerprint()).toBe(fp);
+
+		// Request public
+		const k2 = keyStore.getKey(fp, 'public');
+		expect(k2?.isPrivate()).toBe(false);
+		expect(k2?.getFingerprint()).toBe(fp);
+
+		// Request private (explicit)
+		const k3 = keyStore.getKey(fp, 'private');
+		expect(k3?.isPrivate()).toBe(true);
+		expect(k3?.getFingerprint()).toBe(fp);
+	});
 });
