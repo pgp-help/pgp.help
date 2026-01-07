@@ -92,8 +92,15 @@ export class KeyStore {
 		this.save();
 	}
 
-	getKey(fingerprint: string) {
-		return this.keys.find((k) => k.getFingerprint() === fingerprint);
+	getKey(fingerprint: string, type?: 'public' | 'private') {
+		// TODO: This defaults to returning private key if type is not specified.
+		// We should make this more explicit!
+
+		const key = this.keys.find((k) => k.getFingerprint() === fingerprint);
+		if (key && type === 'public' && key.isPrivate()) {
+			return key.toPublic();
+		}
+		return key;
 	}
 }
 
