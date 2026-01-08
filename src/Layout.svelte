@@ -25,26 +25,19 @@
 		</div>
 	</div>
 
-	<div class="flex flex-1 overflow-hidden">
-		<main class="flex-1 overflow-y-auto p-4 sm:p-8">
-			<div class="container mx-auto max-w-4xl">
-				<slot />
-			</div>
-
-			<footer class="footer footer-center p-4 mt-8 text-base-content/50">
-				<aside>
-					<p>
-						View source on
-						<a
-							class="link link-hover link-primary"
-							href="https://github.com/pgp-help/pgp.svelte"
-							rel="noopener"
-						>
-							GitHub
-						</a>
-					</p>
-				</aside>
-			</footer>
-		</main>
-	</div>
+	<slot />
+	<footer class="footer footer-center p-4 mt-8 text-base-content/50">
+		<aside>
+			<p>
+				View source on
+				<a
+					class="link link-hover link-primary"
+					href="https://github.com/pgp-help/pgp.svelte"
+					rel="noopener"
+				>
+					GitHub
+				</a>
+			</p>
+		</aside>
+	</footer>
 </div>

@@ -131,7 +131,7 @@
 {/snippet}
 
 <div class="flex flex-1 overflow-hidden">
-	<aside class="h-full" aria-label="Sidebar">
+	<aside aria-label="Sidebar">
 		<KeySidebar />
 	</aside>
 
@@ -191,26 +191,26 @@
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>
+
+				{#snippet outputButtonsSnippet()}
+					<CopyButtons value={output} />
+				{/snippet}
+
+				<fieldset class="fieldset">
+					<legend class="fieldset-legend">
+						{mode === PGPMode.DECRYPT ? 'Decrypted Message' : 'Encrypted Message'}
+					</legend>
+					<CopyableTextarea
+						value={output}
+						readonly={true}
+						placeholder={mode === PGPMode.DECRYPT
+							? 'Decrypted output will appear here...'
+							: 'Encrypted output will appear here...'}
+						label={mode === PGPMode.DECRYPT ? 'Decrypted Message' : 'Encrypted Message'}
+						buttons={outputButtonsSnippet}
+					/>
+				</fieldset>
 			</form>
 		</div>
 	</section>
 </div>
-
-{#snippet outputButtonsSnippet()}
-	<CopyButtons value={output} />
-{/snippet}
-
-<fieldset class="fieldset">
-	<legend class="fieldset-legend">
-		{mode === PGPMode.DECRYPT ? 'Decrypted Message' : 'Encrypted Message'}
-	</legend>
-	<CopyableTextarea
-		value={output}
-		readonly={true}
-		placeholder={mode === PGPMode.DECRYPT
-			? 'Decrypted output will appear here...'
-			: 'Encrypted output will appear here...'}
-		label={mode === PGPMode.DECRYPT ? 'Decrypted Message' : 'Encrypted Message'}
-		buttons={outputButtonsSnippet}
-	/>
-</fieldset>
