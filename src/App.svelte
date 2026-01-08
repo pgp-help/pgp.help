@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Layout from './Layout.svelte';
-	import Home from './routes/Home.svelte';
+	import PGPWorkflow from './routes/PGPWorkflow.svelte';
 	import Guide from './routes/Guide.svelte';
 	import { router, navigate, parsePath, buildPath } from './lib/router.svelte.js';
 	import { keyStore } from './lib/keyStore.svelte.js';
@@ -71,7 +71,7 @@
 	{#if router.path === '/Guide'}
 		<Guide />
 	{:else}
-		<Home
+		<PGPWorkflow
 			initialKey={currentKey}
 			onKeyChange={handleKeyChange}
 			mode={currentMode}

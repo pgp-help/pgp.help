@@ -13,7 +13,7 @@ describe('Routing', () => {
 	it('navigates to Guide page when clicking Guide link', async () => {
 		render(App);
 
-		// Initially on Home page
+		// Initially on PGP Workflow page
 		expect(screen.getByLabelText(/Public Key/i)).toBeInTheDocument();
 		expect(screen.queryByText('What is PGP?')).not.toBeInTheDocument();
 
@@ -41,7 +41,7 @@ describe('Routing', () => {
 		const homeLink = screen.getByRole('link', { name: 'pgp.help' });
 		await fireEvent.click(homeLink);
 
-		// Should now be on Home page
+		// Should now be on PGP Workflow page
 		expect(screen.getByLabelText(/Public Key/i)).toBeInTheDocument();
 		expect(screen.queryByText('What is PGP?')).not.toBeInTheDocument();
 		expect(window.location.pathname).toBe('/');

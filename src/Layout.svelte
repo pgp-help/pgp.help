@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { navigate } from './lib/router.svelte.js';
-	import KeySidebar from './lib/KeySidebar.svelte';
 
 	// Intercept link clicks to use client-side routing instead of full page reload
 	function handleNav(e: MouseEvent) {
@@ -27,10 +26,6 @@
 	</div>
 
 	<div class="flex flex-1 overflow-hidden">
-		<aside class="hidden md:block h-full overflow-hidden" aria-label="Sidebar">
-			<KeySidebar />
-		</aside>
-
 		<main class="flex-1 overflow-y-auto p-4 sm:p-8">
 			<div class="container mx-auto max-w-4xl">
 				<slot />

@@ -131,11 +131,11 @@
 {/snippet}
 
 <div class="flex flex-1 overflow-hidden">
-	<aside class="hidden md:block h-full overflow-hidden" aria-label="Sidebar">
+	<aside class="h-full" aria-label="Sidebar">
 		<KeySidebar />
 	</aside>
 
-	<main class="flex-1 overflow-y-auto p-4 sm:p-8">
+	<section class="flex-1 overflow-y-auto p-4 sm:p-8" aria-label="PGP Workflow">
 		<div class="container mx-auto max-w-4xl">
 			<form class="space-y-6">
 				<fieldset class="fieldset">
@@ -193,7 +193,7 @@
 				</fieldset>
 			</form>
 		</div>
-	</main>
+	</section>
 </div>
 
 {#snippet outputButtonsSnippet()}
