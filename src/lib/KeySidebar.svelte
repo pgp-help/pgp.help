@@ -2,6 +2,7 @@
 	import { keyStore } from './keyStore.svelte.js';
 	import KeyListItem from './KeyListItem.svelte';
 	import { navigate, parsePath, buildPath } from './router.svelte.js';
+	import { PGPMode } from './types.js';
 
 	let selectedFingerprint = $derived.by(() => {
 		const { fingerprint, keyParam } = parsePath();
@@ -68,9 +69,9 @@
 				</a>
 				{#if key.isPrivate()}
 					<a
-						href="/pgp.svelte/{key.getFingerprint()}?mode=encrypt"
+						href="/pgp.svelte/{key.getFingerprint()}?mode={PGPMode.ENCRYPT}"
 						class="text-xs px-2 pb-1 text-primary hover:underline text-right"
-						onclick={(e) => handleNavigation(e, key.getFingerprint(), 'encrypt')}
+						onclick={(e) => handleNavigation(e, key.getFingerprint(), PGPMode.ENCRYPT)}
 					>
 						Encrypt with public key
 					</a>

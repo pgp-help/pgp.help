@@ -116,6 +116,10 @@ describe('App', () => {
 			return element?.tagName.toLowerCase() === 'span' && content.includes('Unlocked');
 		});
 
+		// Switch to decrypt mode using the mode switching widget
+		const decryptButton = screen.getByRole('button', { name: /Decrypt/i });
+		await user.click(decryptButton);
+
 		// Now input the encrypted message
 		// The label for message input should have changed to "Encrypted Message"
 		const messageTextarea = screen.getByLabelText(/Encrypted Message/i);

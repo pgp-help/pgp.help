@@ -1,4 +1,5 @@
 import { SvelteURLSearchParams } from 'svelte/reactivity';
+import { PGPMode } from './types.js';
 
 /**
  * A simple reactive router using Svelte 5 runes.
@@ -52,7 +53,7 @@ export function parsePath(path: string = router.path, search: string = router.se
 
 	// Extract query parameters
 	const keyParam = params.get('key');
-	const mode = params.get('mode');
+	const mode = params.get('mode') || PGPMode.ENCRYPT; // Default to encrypt mode
 
 	return {
 		basePath,
