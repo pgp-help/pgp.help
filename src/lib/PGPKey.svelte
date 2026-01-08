@@ -116,6 +116,21 @@
 		return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 	}
 
+	function closeOnBlur(e: FocusEvent) {
+		// The element that lost focus (the collapse div)
+		const target = e.currentTarget as HTMLElement;
+
+		// Check if the new focused element (relatedTarget) is outside the collapse div.
+		// If relatedTarget is null, focus left the window/document.
+		// If relatedTarget is not contained within target, focus moved to another element on the page.
+		if (!e.relatedTarget || !target.contains(e.relatedTarget as Node)) {
+			// Find the checkbox that controls the collapse state
+			const checkbox = target.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
+			// Uncheck it to close the collapse
+			if (checkbox) checkbox.checked = false;
+		}
+	}
+
 	let properties = $derived.by(() => {
 		if (!key) return [];
 
@@ -277,10 +292,10 @@
 				{/if}
 				<div class="mt-4 flex flex-col gap-2">
 					<div
-						tabindex="0"
-						role="button"
 						class="collapse collapse-arrow border border-base-300 bg-base-100"
+						onfocusout={closeOnBlur}
 					>
+						<input type="checkbox" />
 						<div class="collapse-title text-xs font-medium">Show Public Key</div>
 						<div class="collapse-content">
 							<CopyableTextarea
@@ -294,10 +309,10 @@
 
 					{#if key.isPrivate()}
 						<div
-							tabindex="0"
-							role="button"
 							class="collapse collapse-arrow border border-base-300 bg-base-100"
+							onfocusout={closeOnBlur}
 						>
+							<input type="checkbox" />
 							<div class="collapse-title text-xs font-medium flex items-center gap-2">
 								Export Private Key
 								<div
