@@ -4,12 +4,22 @@
 	import PGPKey from '../lib/PGPKey.svelte';
 	import type { Key } from 'openpgp';
 	import CopyButtons from '../lib/CopyButtons.svelte';
+	import { PGPMode, type PGPModeType } from '../lib/types.js';
 
-	let { initialKey = '', onKeyChange } = $props<{
+	let {
+		initialKey = '',
+		onKeyChange,
+		mode = PGPMode.ENCRYPT,
+		onModeChange
+	} = $props<{
 		// The initial armored key string to display (e.g. from URL/Store)
 		initialKey?: string;
 		// Callback to notify parent when a VALID key is parsed.
 		onKeyChange?: (keyObject: Key) => void;
+		// The current mode (encrypt/decrypt)
+		mode?: PGPModeType;
+		// Callback to notify parent when mode changes
+		onModeChange?: (mode: PGPModeType) => void;
 	}>();
 
 	// The parsed OpenPGP key object (null if invalid/empty)
@@ -38,7 +48,28 @@
 	});
 
 	let isPrivate = $derived(keyObject?.isPrivate() ?? false);
-	let mode = $derived(isPrivate ? 'Decrypt' : 'Encrypt');
+
+	// Helper to determine if mode switching should be available
+	let canSwitchMode = $derived(keyObject !== null);
+
+	// Helper to determine valid modes for current key
+	let availableModes = $derived.by(() => {
+		if (!keyObject) return [PGPMode.ENCRYPT];
+		if (keyObject.isPrivate()) {
+			return [PGPMode.ENCRYPT, PGPMode.DECRYPT];
+		} else {
+			return [PGPMode.ENCRYPT];
+		}
+	});
+
+	// Ensure mode is valid for current key
+	$effect(() => {
+		if (keyObject && !availableModes.includes(mode)) {
+			// If current mode is not available, switch to first available mode
+			const newMode = availableModes[0] as PGPModeType;
+			onModeChange?.(newMode);
+		}
+	});
 
 	// Expose key state for parent to observe
 	export function getCurrentKey() {
@@ -64,7 +95,8 @@
 			return;
 		}
 
-		if (k.isPrivate() && !k.isDecrypted()) {
+		// Check if we need to decrypt the private key for the current operation
+		if (mode === PGPMode.DECRYPT && k.isPrivate() && !k.isDecrypted()) {
 			if (!keyChanged && !messageChanged) {
 				//This is probably the user just locking the key again, so don't reset / nudge.
 				return;
@@ -72,13 +104,12 @@
 			pgpKeyComponent?.nudgeForDecryption();
 			output = '';
 			error = '';
-
-			//Fall through so that we also see any other errors (e.g. invalid armor)
+			return; // Don't proceed until key is unlocked
 		}
 
 		error = '';
 
-		const processPromise = k.isPrivate() ? decryptMessage(k, m) : encryptMessage(k, m);
+		const processPromise = mode === PGPMode.DECRYPT ? decryptMessage(k, m) : encryptMessage(k, m);
 
 		processPromise
 			.then((result) => {
@@ -115,16 +146,38 @@
 		/>
 	</fieldset>
 
+	{#if canSwitchMode && availableModes.length > 1}
+		<div class="divider"></div>
+		<fieldset class="fieldset">
+			<legend class="fieldset-legend">Mode</legend>
+			<div class="form-control">
+				<div class="join">
+					{#each availableModes as availableMode (availableMode)}
+						<button
+							type="button"
+							class="btn join-item {mode === availableMode ? 'btn-primary' : 'btn-outline'}"
+							onclick={() => onModeChange?.(availableMode)}
+						>
+							{availableMode === PGPMode.ENCRYPT ? 'Encrypt' : 'Decrypt'}
+						</button>
+					{/each}
+				</div>
+			</div>
+		</fieldset>
+	{/if}
+
 	<div class="divider"></div>
 
 	<fieldset class="fieldset">
-		<legend class="fieldset-legend">{mode === 'Decrypt' ? 'Encrypted Message' : 'Message'}</legend>
+		<legend class="fieldset-legend"
+			>{mode === PGPMode.DECRYPT ? 'Encrypted Message' : 'Message'}</legend
+		>
 		<CopyableTextarea
 			bind:value={message}
-			placeholder={mode === 'Decrypt'
+			placeholder={mode === PGPMode.DECRYPT
 				? 'Paste encrypted message...'
 				: 'Type your secret message...'}
-			label={mode === 'Decrypt' ? 'Encrypted Message' : 'Message'}
+			label={mode === PGPMode.DECRYPT ? 'Encrypted Message' : 'Message'}
 			selectAllOnFocus={false}
 			{error}
 			buttons={copyButtonsSnippet}
@@ -138,15 +191,15 @@
 
 <fieldset class="fieldset">
 	<legend class="fieldset-legend">
-		{mode === 'Decrypt' ? 'Decrypted Message' : 'Encrypted Message'}
+		{mode === PGPMode.DECRYPT ? 'Decrypted Message' : 'Encrypted Message'}
 	</legend>
 	<CopyableTextarea
 		value={output}
 		readonly={true}
-		placeholder={mode === 'Decrypt'
+		placeholder={mode === PGPMode.DECRYPT
 			? 'Decrypted output will appear here...'
 			: 'Encrypted output will appear here...'}
-		label={mode === 'Decrypt' ? 'Decrypted Message' : 'Encrypted Message'}
+		label={mode === PGPMode.DECRYPT ? 'Decrypted Message' : 'Encrypted Message'}
 		buttons={outputButtonsSnippet}
 	/>
 </fieldset>

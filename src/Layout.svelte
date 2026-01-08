@@ -16,7 +16,7 @@
 <div class="h-screen flex flex-col overflow-hidden">
 	<div class="navbar bg-base-200 flex-none z-10">
 		<div class="navbar-start">
-			<a class="btn btn-ghost text-xl" href="/" onclick={handleNav}>PGP Help</a>
+			<a class="btn btn-ghost text-xl" href="/" onclick={handleNav}>pgp.help</a>
 		</div>
 		<div class="navbar-center hidden sm:flex">
 			<p class="text-sm opacity-80">Simple secure client-side encryption</p>

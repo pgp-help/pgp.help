@@ -31,7 +31,7 @@ describe('App', () => {
 	it('renders the core interface', () => {
 		render(App);
 		// Check Header
-		expect(screen.getByRole('link', { name: 'PGP Help' })).toBeInTheDocument();
+		expect(screen.getByRole('link', { name: 'pgp.help' })).toBeInTheDocument();
 		expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/Encrypted Message/i)).toBeInTheDocument();
 	});
@@ -115,6 +115,10 @@ describe('App', () => {
 		await screen.findByText((content, element) => {
 			return element?.tagName.toLowerCase() === 'span' && content.includes('Unlocked');
 		});
+
+		// Switch to decrypt mode using the mode switching widget
+		const decryptButton = screen.getByRole('button', { name: /Decrypt/i });
+		await user.click(decryptButton);
 
 		// Now input the encrypted message
 		// The label for message input should have changed to "Encrypted Message"

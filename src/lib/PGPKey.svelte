@@ -276,25 +276,29 @@
 					<div class="divider my-2"></div>
 				{/if}
 				<div class="mt-4 flex flex-col gap-2">
-					<div class="relative">
-						<details class="collapse collapse-arrow border border-base-300 bg-base-100">
-							<summary class="collapse-title text-xs font-medium flex items-center justify-between">
-								<span>Show Public Key</span>
-							</summary>
-							<div class="collapse-content">
-								<CopyableTextarea
-									value={publicKey?.armor ? publicKey.armor() : ''}
-									class="text-xs"
-									fixed
-									buttons={publicKeyButtons}
-								/>
-							</div>
-						</details>
+					<div
+						tabindex="0"
+						role="button"
+						class="collapse collapse-arrow border border-base-300 bg-base-100"
+					>
+						<div class="collapse-title text-xs font-medium">Show Public Key</div>
+						<div class="collapse-content">
+							<CopyableTextarea
+								value={publicKey?.armor ? publicKey.armor() : ''}
+								class="text-xs"
+								fixed
+								buttons={publicKeyButtons}
+							/>
+						</div>
 					</div>
 
 					{#if key.isPrivate()}
-						<details class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
-							<summary class="collapse-title text-xs font-medium flex items-center gap-2">
+						<div
+							tabindex="0"
+							role="button"
+							class="collapse collapse-arrow border border-base-300 bg-base-100"
+						>
+							<div class="collapse-title text-xs font-medium flex items-center gap-2">
 								Export Private Key
 								<div
 									class="tooltip tooltip-right text-warning"
@@ -302,7 +306,7 @@
 								>
 									{@render warningIcon()}
 								</div>
-							</summary>
+							</div>
 							<div class="collapse-content">
 								<div class="alert alert-warning text-xs py-2 mb-2">
 									{@render warningIcon()}
@@ -310,7 +314,7 @@
 								</div>
 								<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
 							</div>
-						</details>
+						</div>
 					{/if}
 				</div>
 			</div>
