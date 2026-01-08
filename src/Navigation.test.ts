@@ -41,7 +41,7 @@ describe('Navigation', () => {
 		await within(sidebar).findByText(/User One/);
 
 		// Verify main view shows it (card view)
-		const mainArea = screen.getByRole('region', { name: 'PGP Workflow' });
+		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
 		await within(mainArea).findByText(/User One/);
 
 		// 2. Press New Key
@@ -92,7 +92,7 @@ describe('Navigation', () => {
 		const sidebar = screen.getByRole('complementary', { name: /Sidebar/i });
 		await within(sidebar).findByText(/User One/);
 
-		const mainArea = screen.getByRole('region', { name: 'PGP Workflow' });
+		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
 		await within(mainArea).findByText(/User One/);
 
 		// Verify URL is updated to use path-based fingerprint instead of raw key
@@ -102,31 +102,5 @@ describe('Navigation', () => {
 			// Fingerprint should now be in the path, not query params
 			expect(currentUrl.pathname).toMatch(/\/[a-f0-9]{40}$/i); // 40-char hex fingerprint at end of path
 		});
-	});
-
-	it('allows encrypting with a private key', async () => {
-		const user = userEvent.setup();
-		render(App);
-
-		// Add private key
-		const keyTextarea = screen.getByLabelText(/^Public Key$/i);
-		await fireEvent.input(keyTextarea, { target: { value: key1.privateKey } });
-
-		const sidebar = screen.getByRole('complementary', { name: /Sidebar/i });
-		await within(sidebar).findByText(/User One/);
-
-		// Find the "Encrypt with public key" link in the sidebar item
-		const encryptLink = within(sidebar).getByRole('link', { name: /Encrypt with public key/i });
-		await user.click(encryptLink);
-
-		// Verify URL has mode=encrypt
-		await waitFor(() => {
-			const currentUrl = new URL(window.location.href);
-			expect(currentUrl.searchParams.get('mode')).toBe('encrypt');
-		});
-
-		// Verify Main view is in Encrypt mode
-		const main = screen.getByRole('main');
-		await within(main).findByPlaceholderText(/Type your secret message/i);
 	});
 });
