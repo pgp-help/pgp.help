@@ -25,7 +25,9 @@
 		</div>
 	</div>
 
-	<slot />
+	<div class="flex flex-1 overflow-hidden">
+		<slot />
+	</div>
 	<footer class="footer footer-center p-4 mt-8 text-base-content/50">
 		<aside>
 			<p>
