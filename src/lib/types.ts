@@ -4,7 +4,9 @@
  */
 export enum PGPMode {
 	ENCRYPT = 'encrypt',
-	DECRYPT = 'decrypt'
+	DECRYPT = 'decrypt',
+	SIGN = 'sign',
+	VERIFY = 'verify'
 }
 
 /**
