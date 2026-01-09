@@ -120,7 +120,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 
 		const { getByText, queryByPlaceholderText } = render(PGPKey, {
 			props: {
-				value: 'valid-armored-key'
+				key: testKey
 			}
 		});
 
@@ -141,10 +141,12 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 	it('clears the key when remove button is clicked', async () => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
+		const onRemove = vi.fn();
 
-		const { getByLabelText, getByPlaceholderText } = render(PGPKey, {
+		const { getByLabelText } = render(PGPKey, {
 			props: {
-				value: 'valid-armored-key'
+				key: testKey,
+				onRemove
 			}
 		});
 
@@ -155,12 +157,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		const removeBtn = getByLabelText('Remove Key');
 		await fireEvent.click(removeBtn);
 
-		// Should revert to input mode
-		expect(getByPlaceholderText('Paste PGP Key (Armored)...')).toBeTruthy();
-
-		// Value should be cleared (checking via prop binding requires component interaction check or checking the input value)
-		const input = getByPlaceholderText('Paste PGP Key (Armored)...') as HTMLTextAreaElement;
-		expect(input.value).toBe('');
+		expect(onRemove).toHaveBeenCalled();
 	});
 
 	it('nudges for decryption when nudgeForDecryption is called', async () => {
@@ -169,7 +166,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 
 		const { component, container } = render(PGPKey, {
 			props: {
-				value: 'valid-private-key'
+				key: testPrivateKey
 			}
 		});
 
@@ -206,7 +203,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 
 		const { getByText } = render(PGPKey, {
 			props: {
-				value: 'valid-private-key'
+				key: testPrivateKey
 			}
 		});
 

@@ -6,12 +6,10 @@
 	import CopyButtons from './CopyButtons.svelte';
 	import PublicKeyButtons from './PublicKeyButtons.svelte';
 
-	let {
-		value = $bindable(''),
-		key = $bindable<Key | null>(null),
-		label = '',
-		placeholder = 'Paste PGP Key (Armored)...'
-	} = $props();
+	let { key = $bindable<Key>(), onRemove } = $props<{
+		key: Key;
+		onRemove?: () => void;
+	}>();
 
 	let publicKey = $derived.by(() => {
 		if (!key) return null;
@@ -44,20 +42,6 @@
 		})();
 	});
 
-	$effect(() => {
-		// This is to do with parsing ?key=... URL params.
-		// This code is in the wrong place. It should be in the PGPWorkflow for the case where key is not specified
-		if (value && !key) {
-			getKeyDetails(value)
-				.then((k) => {
-					key = k;
-				})
-				.catch(() => {
-					// ignore
-				});
-		}
-	});
-
 	async function handleDecrypt(pass: string) {
 		if (!key || !key.isPrivate()) return;
 
@@ -72,16 +56,12 @@
 	}
 
 	function clearKey() {
-		value = '';
-		key = null;
-		expirationTime = null;
-		decryptError = '';
+		onRemove?.();
 	}
 
 	async function lockKey() {
-		if (!value) return;
 		try {
-			const details = await getKeyDetails(value);
+			const details = await getKeyDetails(key.armor());
 			key = details;
 			decryptError = '';
 		} catch (e) {
@@ -178,11 +158,11 @@
 {/snippet}
 
 {#snippet copyButtons()}
-	<CopyButtons value={key?.armor() || ''} />
+	<CopyButtons value={key.armor()} />
 {/snippet}
 
 {#snippet publicKeyButtons()}
-	<PublicKeyButtons value={publicKey?.armor ? publicKey.armor() : value} />
+	<PublicKeyButtons value={publicKey?.armor ? publicKey.armor() : key.armor()} />
 {/snippet}
 
 {#if key}
@@ -319,16 +299,6 @@
 			</div>
 		</div>
 	</div>
-{:else}
-	<CopyableTextarea
-		bind:value
-		{label}
-		{placeholder}
-		readonly={false}
-		selectAllOnFocus={false}
-		error={decryptError}
-		buttons={publicKeyButtons}
-	/>
 {/if}
 
 <style>

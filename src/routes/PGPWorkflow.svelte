@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { encryptMessage, decryptMessage, getKeyDetails, decryptPrivateKey } from '../lib/pgp.js';
+	import { encryptMessage, decryptMessage } from '../lib/pgp.js';
 	import CopyableTextarea from '../lib/CopyableTextarea.svelte';
 	import PGPKey from '../lib/PGPKey.svelte';
+	import RawKeyInput from '../lib/RawKeyInput.svelte';
 	import type { Key } from 'openpgp';
 	import CopyButtons from '../lib/CopyButtons.svelte';
 	import KeySidebar from '../lib/KeySidebar.svelte';
@@ -33,8 +34,6 @@
 	let output = $state('');
 	// Any error message from the operation (e.g. decryption failure)
 	let error = $state('');
-	// Error message for key parsing
-	let keyError = $state('');
 
 	$effect(() => {
 		if (initialKey !== undefined && initialKey !== '') {
@@ -52,10 +51,8 @@
 			if (currentKeyValue !== storedArmor) {
 				keyValue = storedArmor;
 				keyObject = selectedKey;
-				keyError = '';
 			} else if (keyObject?.getFingerprint() !== selectedKey.getFingerprint()) {
 				keyObject = selectedKey;
-				keyError = '';
 			}
 		} else if (keyParam) {
 			if (currentKeyValue !== keyParam) {
@@ -91,55 +88,6 @@
 				}
 			});
 		}
-	});
-
-	// Try to parse the key whenever keyValue changes
-	$effect(() => {
-		const k = keyValue;
-		if (!k) {
-			// Only clear if we are not currently selecting a key
-			// This prevents clearing when we are just typing
-			if (!fingerprint) {
-				keyObject = null;
-				keyError = '';
-			}
-			return;
-		}
-
-		// If we already have a key object and it matches the string, don't re-parse
-		// This avoids infinite loops if we update keyValue from keyObject
-		if (keyObject && keyObject.armor() === k) {
-			return;
-		}
-
-		getKeyDetails(k)
-			.then(async (details) => {
-				// Check if the keyValue is still the same as when we started parsing
-				if (keyValue === k) {
-					keyObject = details;
-					keyError = '';
-
-					// Try to decrypt with empty password
-					if (details.isPrivate() && !details.isDecrypted()) {
-						try {
-							const decryptedKey = await decryptPrivateKey(details, '');
-							if (keyValue === k) {
-								keyObject = decryptedKey;
-							}
-						} catch {
-							// Ignore error, key is likely password protected
-						}
-					}
-				}
-			})
-			.catch((err) => {
-				if (keyValue === k) {
-					// Only clear keyObject if we really failed to parse what looks like a key
-					// But keep the text so user can fix it
-					keyObject = null;
-					keyError = err.message;
-				}
-			});
 	});
 
 	// Update keyValue when keyObject changes (e.g. after decryption)
@@ -266,16 +214,22 @@
 					{/if}
 				</legend>
 				{#if keyObject}
-					<PGPKey bind:this={pgpKeyComponent} key={keyObject} />
+					<PGPKey
+						bind:this={pgpKeyComponent}
+						bind:key={keyObject}
+						onRemove={() => {
+							keyObject = null;
+							keyValue = '';
+						}}
+					/>
 				{:else}
-					<CopyableTextarea
+					<RawKeyInput
 						bind:value={keyValue}
 						label={isPrivate ? 'Private Key' : 'Public Key'}
 						placeholder="Paste PGP Key (Armored)..."
-						readonly={false}
-						selectAllOnFocus={false}
-						error={keyError}
-						buttons={copyButtonsSnippet}
+						onKeyParsed={(k) => {
+							keyObject = k;
+						}}
 					/>
 				{/if}
 			</fieldset>
