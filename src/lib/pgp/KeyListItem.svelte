@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { keyStore } from './keyStore.svelte.js';
-	import MiniActionButton from './MiniActionButton.svelte';
-	import TrashIcon from './icons/TrashIcon.svelte';
+	import MiniActionButton from '../ui/MiniActionButton.svelte';
+	import TrashIcon from '../ui/icons/TrashIcon.svelte';
 	import type { Key } from 'openpgp';
 
 	let { key, isSelected } = $props<{ key: Key; isSelected: boolean }>();

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { getKeyDetails, decryptPrivateKey } from './pgp';
 	import type { Key } from 'openpgp';
-	import CopyableTextarea from './CopyableTextarea.svelte';
-	import CopyButtons from './CopyButtons.svelte';
+	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
+	import CopyButtons from '../ui/CopyButtons.svelte';
 	import PublicKeyButtons from './PublicKeyButtons.svelte';
 
 	let { key = $bindable<Key>() } = $props<{

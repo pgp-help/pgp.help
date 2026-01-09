@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PGPMode } from './router.svelte';
+import { PGPMode } from '../router.svelte';
 
 // This is a bit of a noddy test (thanks Claude) but it does help teach me how enums work!
 

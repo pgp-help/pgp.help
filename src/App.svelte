@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Layout from './Layout.svelte';
-	import PGPWorkflow from './routes/PGPWorkflow.svelte';
+	import PGPWorkflow from './lib/pgp/PGPWorkflow.svelte';
 	import Guide from './routes/Guide.svelte';
 	import { router } from './lib/router.svelte.js';
 </script>

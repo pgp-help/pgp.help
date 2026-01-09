@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { keyStore } from './keyStore.svelte.js';
 	import KeyListItem from './KeyListItem.svelte';
-	import { router } from './router.svelte.js';
+	import { router } from '../router.svelte.js';
 
 	let selectedFingerprint = $derived(router.activeRoute.pgp.fingerprint);
 

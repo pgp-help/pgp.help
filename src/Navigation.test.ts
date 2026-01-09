@@ -2,8 +2,8 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within, waitFor } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import App from './App.svelte';
-import { keyStore } from './lib/keyStore.svelte';
-import { generateKeyPair } from './lib/pgp';
+import { keyStore } from './lib/pgp/keyStore.svelte';
+import { generateKeyPair } from './lib/pgp/pgp';
 import { router } from './lib/router.svelte';
 
 describe('Navigation', () => {

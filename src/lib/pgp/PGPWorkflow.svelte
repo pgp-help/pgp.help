@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { encryptMessage, decryptMessage } from '../lib/pgp.js';
-	import CopyableTextarea from '../lib/CopyableTextarea.svelte';
-	import PGPKey from '../lib/PGPKey.svelte';
-	import RawKeyInput from '../lib/RawKeyInput.svelte';
+	import { encryptMessage, decryptMessage } from './pgp.js';
+	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
+	import PGPKey from './PGPKey.svelte';
+	import RawKeyInput from './RawKeyInput.svelte';
 	import type { Key } from 'openpgp';
-	import CopyButtons from '../lib/CopyButtons.svelte';
-	import KeySidebar from '../lib/KeySidebar.svelte';
-	import { PGPMode, router } from '../lib/router.svelte';
-	import { keyStore } from '../lib/keyStore.svelte.js';
+	import CopyButtons from '../ui/CopyButtons.svelte';
+	import KeySidebar from './KeySidebar.svelte';
+	import { PGPMode, router } from '../router.svelte.js';
+	import { keyStore } from './keyStore.svelte.js';
 	import { untrack } from 'svelte';
 
 	let { initialKey = '' } = $props<{
@@ -25,7 +25,8 @@
 	// The parsed OpenPGP key object (null if invalid/empty)
 	let keyObject = $state<Key | null>(null);
 	// The raw armored key string (bound to the textarea/input)
-	let keyValue = $state(initialKey);
+	// Initialize to empty string; will be updated by effect when initialKey changes
+	let keyValue = $state('');
 	// Reference to the PGPKey component instance (for calling methods like nudgeForDecryption)
 	let pgpKeyComponent = $state<PGPKey | null>(null);
 	// The input message to be encrypted or decrypted

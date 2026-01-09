@@ -88,7 +88,7 @@ class Router {
 		this.navigate(`${base}/`);
 	}
 
-	openKey(fingerprint: string, mode?: PGPModeType) {
+	openKey(fingerprint: string, mode?: PGPMode) {
 		const currentMode =
 			this.activeRoute.page === 'Home' ? this.activeRoute.pgp.mode : PGPMode.ENCRYPT;
 		const targetMode = mode || currentMode;
@@ -101,7 +101,7 @@ class Router {
 		this.navigate(`${base}/${fingerprint}${searchStr ? '?' + searchStr : ''}`);
 	}
 
-	setMode(mode: PGPModeType) {
+	setMode(mode: PGPMode) {
 		if (this.activeRoute.page !== 'Home') return;
 
 		const { fingerprint, keyParam } = this.activeRoute.pgp;
