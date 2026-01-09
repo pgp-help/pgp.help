@@ -36,45 +36,27 @@
 	let expirationTime = $state<Date | null>(null);
 
 	$effect(() => {
-		// Try to parse the key whenever value changes
-
-		// Ensure the value hasn't changed while we were waiting for the promise
-		const k = value;
-		if (!k) {
-			clearKey();
-			return;
-		}
-
-		getKeyDetails(k)
-			.then(async (details) => {
-				if (value === k) {
-					key = details;
-					//For whatever reason, expirationTime is a promise. So fetch that too.
-					expirationTime = (await details.getExpirationTime()) as Date | null;
-
-					// Reset decryption state for new key
-					decryptError = '';
-
-					// Try to decrypt with empty password (is this ever useful? not sure)
-					if (details.isPrivate() && !details.isDecrypted()) {
-						try {
-							const decryptedKey = await decryptPrivateKey(details, '');
-							if (value === k) {
-								key = decryptedKey;
-							}
-						} catch {
-							// Ignore error, key is likely password protected
-						}
-					}
-				}
-			})
-			.catch((err) => {
-				if (value === k) {
-					key = null;
-					expirationTime = null;
-					decryptError = err.message;
-				}
+		if (key) {
+			key.getExpirationTime().then((t) => {
+				expirationTime = t as Date | null;
 			});
+		} else {
+			expirationTime = null;
+		}
+	});
+
+	$effect(() => {
+		// This is to do with parsing ?key=... URL params.
+		// This code is in the wrong place. It should be in the PGPWorkflow for the case where key is not specified
+		if (value && !key) {
+			getKeyDetails(value)
+				.then((k) => {
+					key = k;
+				})
+				.catch(() => {
+					// ignore
+				});
+		}
 	});
 
 	async function handleDecrypt(pass: string) {

@@ -1,50 +1,130 @@
 <script lang="ts">
-	import { encryptMessage, decryptMessage } from '../lib/pgp.js';
+	import { encryptMessage, decryptMessage, getKeyDetails, decryptPrivateKey } from '../lib/pgp.js';
 	import CopyableTextarea from '../lib/CopyableTextarea.svelte';
 	import PGPKey from '../lib/PGPKey.svelte';
 	import type { Key } from 'openpgp';
 	import CopyButtons from '../lib/CopyButtons.svelte';
 	import { PGPMode, type PGPModeType } from '../lib/types.js';
 	import KeySidebar from '../lib/KeySidebar.svelte';
+	import { router } from '../lib/router.svelte.js';
+	import { keyStore } from '../lib/keyStore.svelte.js';
 
-	let {
-		initialKey = '',
-		onKeyChange,
-		mode = PGPMode.ENCRYPT,
-		onModeChange
-	} = $props<{
-		// The initial armored key string to display (e.g. from URL/Store)
+	let { initialKey = '' } = $props<{
 		initialKey?: string;
-		// Callback to notify parent when a VALID key is parsed.
-		onKeyChange?: (keyObject: Key) => void;
-		// The current mode (encrypt/decrypt)
-		mode?: PGPModeType;
-		// Callback to notify parent when mode changes
-		onModeChange?: (mode: PGPModeType) => void;
 	}>();
+
+	// Derived state from router
+	let mode = $derived(router.activeRoute.pgp.mode);
+	let fingerprint = $derived(router.activeRoute.pgp.fingerprint);
+	let keyParam = $derived(router.activeRoute.pgp.keyParam);
 
 	// The parsed OpenPGP key object (null if invalid/empty)
 	let keyObject = $state<Key | null>(null);
 	// The raw armored key string (bound to the textarea/input)
 	let keyValue = $state(initialKey);
 	// Reference to the PGPKey component instance (for calling methods like nudgeForDecryption)
-	let pgpKeyComponent;
+	let pgpKeyComponent = $state();
 	// The input message to be encrypted or decrypted
 	let message = $state('');
 	// The result of the encryption or decryption operation
 	let output = $state('');
 	// Any error message from the operation (e.g. decryption failure)
 	let error = $state('');
+	// Error message for key parsing
+	let keyError = $state('');
 
 	$effect(() => {
-		if (initialKey !== undefined) {
+		if (initialKey !== undefined && initialKey !== '') {
 			keyValue = initialKey;
 		}
 	});
 
+	// Sync keyValue from router state (fingerprint or keyParam)
+	$effect(() => {
+		// This effect runs when fingerprint or keyParam changes
+		if (fingerprint) {
+			const stored = keyStore.getKey(fingerprint);
+			if (stored) {
+				keyValue = stored.armor();
+			}
+		} else if (keyParam) {
+			keyValue = keyParam;
+		} else {
+			// If we navigated to root, clear key
+			// Only clear if initialKey is not set (to avoid clearing on first load if passed via prop)
+			if (!initialKey) {
+				keyValue = '';
+			}
+		}
+	});
+
+	// When a valid key is parsed, save it and update URL if needed
 	$effect(() => {
 		if (keyObject) {
-			onKeyChange?.(keyObject);
+			const fp = keyObject.getFingerprint();
+			console.log(`WF: Got a new key ${fp}`);
+
+			keyStore.addKey(keyObject).then(() => {
+				// If we are not already viewing this key (by fingerprint), navigate to it.
+				if (fingerprint !== fp) {
+					// Determine target mode
+					let targetMode = mode;
+					// Default to decrypt for private keys if not specified
+					if (keyObject.isPrivate() && !router.activeRoute.pgp.mode) {
+						targetMode = PGPMode.DECRYPT;
+					}
+					router.openKey(fp, targetMode);
+				}
+			});
+		}
+	});
+
+	// Try to parse the key whenever keyValue changes
+	$effect(() => {
+		const k = keyValue;
+		if (!k) {
+			keyObject = null;
+			keyError = '';
+			return;
+		}
+
+		// If we already have a key object and it matches the string, don't re-parse
+		// This avoids infinite loops if we update keyValue from keyObject
+		if (keyObject && keyObject.armor() === k) {
+			return;
+		}
+
+		getKeyDetails(k)
+			.then(async (details) => {
+				if (keyValue === k) {
+					keyObject = details;
+					keyError = '';
+
+					// Try to decrypt with empty password
+					if (details.isPrivate() && !details.isDecrypted()) {
+						try {
+							const decryptedKey = await decryptPrivateKey(details, '');
+							if (keyValue === k) {
+								keyObject = decryptedKey;
+							}
+						} catch {
+							// Ignore error, key is likely password protected
+						}
+					}
+				}
+			})
+			.catch((err) => {
+				if (keyValue === k) {
+					keyObject = null;
+					keyError = err.message;
+				}
+			});
+	});
+
+	// Update keyValue when keyObject changes (e.g. after decryption)
+	$effect(() => {
+		if (keyObject && keyObject.armor() !== keyValue) {
+			keyValue = keyObject.armor();
 		}
 	});
 
@@ -68,7 +148,7 @@
 		if (keyObject && !availableModes.includes(mode)) {
 			// If current mode is not available, switch to first available mode
 			const newMode = availableModes[0] as PGPModeType;
-			onModeChange?.(newMode);
+			router.setMode(newMode);
 		}
 	});
 
@@ -145,12 +225,19 @@
 						Public Key
 					{/if}
 				</legend>
-				<PGPKey
-					bind:this={pgpKeyComponent}
-					bind:key={keyObject}
-					bind:value={keyValue}
-					label={isPrivate ? 'Private Key' : 'Public Key'}
-				/>
+				{#if keyObject}
+					<PGPKey bind:this={pgpKeyComponent} key={keyObject} />
+				{:else}
+					<CopyableTextarea
+						bind:value={keyValue}
+						label={isPrivate ? 'Private Key' : 'Public Key'}
+						placeholder="Paste PGP Key (Armored)..."
+						readonly={false}
+						selectAllOnFocus={false}
+						error={keyError}
+						buttons={copyButtonsSnippet}
+					/>
+				{/if}
 			</fieldset>
 
 			{#if canSwitchMode && availableModes.length > 1}
@@ -163,7 +250,7 @@
 								<button
 									type="button"
 									class="btn join-item {mode === availableMode ? 'btn-primary' : 'btn-outline'}"
-									onclick={() => onModeChange?.(availableMode)}
+									onclick={() => router.setMode(availableMode)}
 								>
 									{availableMode === PGPMode.ENCRYPT ? 'Encrypt' : 'Decrypt'}
 								</button>

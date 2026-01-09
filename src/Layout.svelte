@@ -1,27 +1,27 @@
 <script lang="ts">
-	import { navigate } from './lib/router.svelte.js';
+	import { router } from './lib/router.svelte.js';
 
-	// Intercept link clicks to use client-side routing instead of full page reload
-	function handleNav(e: MouseEvent) {
-		const target = e.currentTarget as HTMLAnchorElement;
-		const href = target.getAttribute('href');
-		if (href && href.startsWith('/')) {
-			e.preventDefault();
-			navigate(href);
-		}
+	function handleHome(e: MouseEvent) {
+		e.preventDefault();
+		router.openHome();
+	}
+
+	function handleGuide(e: MouseEvent) {
+		e.preventDefault();
+		router.openGuide();
 	}
 </script>
 
 <div class="h-screen flex flex-col overflow-hidden">
 	<div class="navbar bg-base-200 flex-none z-10">
 		<div class="navbar-start">
-			<a class="btn btn-ghost text-xl" href="/" onclick={handleNav}>pgp.help</a>
+			<a class="btn btn-ghost text-xl" href="/" onclick={handleHome}>pgp.help</a>
 		</div>
 		<div class="navbar-center hidden sm:flex">
 			<p class="text-sm opacity-80">Simple secure client-side encryption</p>
 		</div>
 		<div class="navbar-end">
-			<a class="btn btn-ghost btn-sm" href="/Guide" onclick={handleNav}> Guide </a>
+			<a class="btn btn-ghost btn-sm" href="/Guide" onclick={handleGuide}> Guide </a>
 		</div>
 	</div>
 

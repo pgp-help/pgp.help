@@ -1,133 +1,111 @@
 import { SvelteURLSearchParams } from 'svelte/reactivity';
-import { PGPMode } from './types.js';
+import { PGPMode, type PGPModeType } from './types.js';
 
-/**
- * A simple reactive router using Svelte 5 runes.
- * It tracks the current window location (pathname and search) and provides a navigate function.
- */
-export const router = $state({
-	path: window.location.pathname,
-	search: window.location.search
-});
+class Router {
+	// Raw state tracking window location
+	raw = $state({
+		path: window.location.pathname,
+		search: window.location.search
+	});
 
-/**
- * Navigates to a new URL using the History API.
- * Updates the reactive router state.
- * @param url The URL to navigate to (can be relative or absolute).
- */
-export function navigate(url: string) {
-	// Handle full URL or path
-	// If it starts with /, treat as path + search
-	// But URL constructor needs base if relative
+	constructor() {
+		if (typeof window !== 'undefined') {
+			window.addEventListener('popstate', () => {
+				this.raw.path = window.location.pathname;
+				this.raw.search = window.location.search;
+			});
+		}
+	}
 
-	// eslint-disable-next-line svelte/prefer-svelte-reactivity -- not a reacive context
-	const u = new URL(url, window.location.origin);
-	window.history.pushState({}, '', u.toString());
-	router.path = u.pathname;
-	router.search = u.search;
+	// Derived state for high-level routing
+	activeRoute = $derived.by(() => {
+		const path = this.raw.path;
+		const pathParts = path.split('/').filter(Boolean);
+		const lastSegment = pathParts[pathParts.length - 1];
+
+		let page: 'Guide' | 'Home' = 'Home';
+		let fingerprint: string | null = null;
+		let basePath = path;
+
+		if (lastSegment === 'Guide') {
+			page = 'Guide';
+			basePath = '/' + pathParts.slice(0, -1).join('/');
+		} else if (lastSegment && /^[a-f0-9]{16,}$/i.test(lastSegment)) {
+			fingerprint = lastSegment;
+			basePath = '/' + pathParts.slice(0, -1).join('/');
+		} else {
+			basePath = path;
+		}
+
+		// Normalize basePath
+		if (basePath.length > 1 && basePath.endsWith('/')) {
+			basePath = basePath.slice(0, -1);
+		}
+		if (!basePath.startsWith('/')) basePath = '/' + basePath;
+
+		// Parse query params
+		const params = new SvelteURLSearchParams(this.raw.search);
+		const keyParam = params.get('key');
+		const mode = (params.get('mode') as PGPModeType) || PGPMode.ENCRYPT;
+
+		return {
+			page,
+			basePath,
+			pgp: {
+				fingerprint,
+				keyParam,
+				mode
+			}
+		};
+	});
+
+	// Navigation primitives
+	navigate(url: string) {
+		const u = new URL(url, window.location.origin);
+		window.history.pushState({}, '', u.toString());
+		this.raw.path = u.pathname;
+		this.raw.search = u.search;
+	}
+
+	// Semantic Actions
+	openGuide() {
+		const base = this.activeRoute.basePath === '/' ? '' : this.activeRoute.basePath;
+		this.navigate(`${base}/Guide`);
+	}
+
+	openHome() {
+		const base = this.activeRoute.basePath === '/' ? '' : this.activeRoute.basePath;
+		this.navigate(`${base}/`);
+	}
+
+	openKey(fingerprint: string, mode?: PGPModeType) {
+		const currentMode =
+			this.activeRoute.page === 'Home' ? this.activeRoute.pgp.mode : PGPMode.ENCRYPT;
+		const targetMode = mode || currentMode;
+
+		const search = new SvelteURLSearchParams();
+		if (targetMode !== PGPMode.ENCRYPT) search.set('mode', targetMode);
+
+		const base = this.activeRoute.basePath === '/' ? '' : this.activeRoute.basePath;
+		const searchStr = search.toString();
+		this.navigate(`${base}/${fingerprint}${searchStr ? '?' + searchStr : ''}`);
+	}
+
+	setMode(mode: PGPModeType) {
+		if (this.activeRoute.page !== 'Home') return;
+
+		const { fingerprint, keyParam } = this.activeRoute.pgp;
+		const search = new SvelteURLSearchParams();
+
+		if (keyParam) search.set('key', keyParam);
+		if (mode !== PGPMode.ENCRYPT) search.set('mode', mode);
+
+		const base = this.activeRoute.basePath === '/' ? '' : this.activeRoute.basePath;
+		const path = fingerprint ? `${base}/${fingerprint}` : `${base}/`;
+
+		const searchStr = search.toString();
+		this.navigate(`${path}${searchStr ? '?' + searchStr : ''}`);
+	}
 }
 
-/**
- * Parses the current URL to extract all routing information.
- * @param path The pathname to parse (defaults to current router.path)
- * @param search The search params to parse (defaults to current router.search)
- * @returns Object containing all URL components and routing info
- */
-export function parsePath(path: string = router.path, search: string = router.search) {
-	const pathParts = path.split('/').filter(Boolean); // Remove empty parts
-
-	const params = new SvelteURLSearchParams(search);
-
-	// Extract fingerprint from the last segment if it looks like a hex fingerprint (at least 16 chars)
-	const lastSegment = pathParts[pathParts.length - 1];
-	const fingerprint = lastSegment && lastSegment.match(/^[a-f0-9]{16,}$/i) ? lastSegment : null;
-
-	// Base path is everything except the fingerprint
-	let basePath;
-	if (fingerprint) {
-		basePath = '/' + pathParts.slice(0, -1).join('/');
-		if (basePath === '/') basePath = '/pgp.svelte';
-	} else {
-		basePath = path || '/pgp.svelte';
-	}
-
-	// Extract query parameters
-	const keyParam = params.get('key');
-	const mode = params.get('mode') || PGPMode.ENCRYPT; // Default to encrypt mode
-
-	return {
-		basePath,
-		fingerprint,
-		keyParam,
-		mode,
-		fullPath: path,
-		search,
-		pathParts,
-		params
-	};
-}
-
-/**
- * Builds a complete URL with path and query parameters.
- * @param options Configuration object for building the URL
- * @returns The constructed URL (path + search)
- */
-export function buildPath(options: {
-	basePath?: string;
-	fingerprint?: string | null;
-	keyParam?: string | null;
-	mode?: string | null;
-	clearKey?: boolean;
-	clearMode?: boolean;
-	clearFingerprint?: boolean;
-}) {
-	const {
-		basePath = '/pgp.svelte',
-		fingerprint,
-		keyParam,
-		mode,
-		clearKey = false,
-		clearMode = false,
-		clearFingerprint = false
-	} = options;
-
-	// Build the path
-	let path;
-	if (fingerprint && !clearFingerprint) {
-		// Ensure basePath starts with / and doesn't end with /
-		const cleanBasePath = basePath.startsWith('/') ? basePath : '/' + basePath;
-		const normalizedBasePath = cleanBasePath.endsWith('/')
-			? cleanBasePath.slice(0, -1)
-			: cleanBasePath;
-		path = `${normalizedBasePath}/${fingerprint}`;
-	} else {
-		path = basePath;
-	}
-
-	// Build query parameters
-	const params = new SvelteURLSearchParams();
-
-	// Add key parameter if specified and not being cleared
-	if (keyParam && !clearKey) {
-		params.set('key', keyParam);
-	}
-
-	// Add mode parameter if specified and not being cleared
-	if (mode && !clearMode) {
-		params.set('mode', mode);
-	}
-
-	// When navigating to a fingerprint, automatically clear key param
-	if (fingerprint && !clearFingerprint) {
-		// Don't add key param when we have a fingerprint
-	}
-
-	const search = params.toString();
-	return search ? `${path}?${search}` : path;
-}
-
-// Listen for browser navigation events (back/forward) to update the router state.
-window.addEventListener('popstate', () => {
-	router.path = window.location.pathname;
-	router.search = window.location.search;
-});
+export const router = new Router();
