@@ -5,6 +5,8 @@
 	import CopyButtons from '../ui/CopyButtons.svelte';
 	import PublicKeyButtons from './PublicKeyButtons.svelte';
 
+	// Bindable because when we decrypt the key we modify it in place and expect the
+	// parent component to see the updated value.
 	let { key = $bindable<Key>() } = $props<{
 		key: Key;
 	}>();
