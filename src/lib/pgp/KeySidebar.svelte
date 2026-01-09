@@ -2,6 +2,7 @@
 	import { keyStore } from './keyStore.svelte.js';
 	import KeyListItem from './KeyListItem.svelte';
 	import { router, Pages } from '../router.svelte.js';
+	import { slide } from 'svelte/transition';
 
 	let selectedFingerprint = $derived(router.activeRoute.pgp.fingerprint);
 
@@ -56,7 +57,7 @@
 			</div>
 		{/if}
 		{#each keyStore.keys as key (key.getFingerprint())}
-			<div class="flex flex-col">
+			<div class="flex flex-col" transition:slide={{ duration: 200 }}>
 				<a
 					href="/pgp.svelte/{key.getFingerprint()}"
 					class="block group"
