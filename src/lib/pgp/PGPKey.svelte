@@ -31,12 +31,10 @@
 	let expirationTime = $state<Date | null>(null);
 
 	$effect(() => {
-		// NTH: Shoudln't need the null guard!
-		if (!key) return;
 		console.log(`Got a new key ${key.getFingerprint()}`);
-		(async () => {
-			expirationTime = (await key.getExpirationTime()) as Date | null;
-		})();
+		key.getExpirationTime().then((t) => {
+			expirationTime = t as Date | null;
+		});
 	});
 
 	async function handleDecrypt(pass: string) {
