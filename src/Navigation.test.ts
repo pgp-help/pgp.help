@@ -45,7 +45,7 @@ describe('Navigation', () => {
 		await within(mainArea).findByText(/User One/);
 
 		// 2. Press New Key
-		const newKeyButton = within(sidebar).getByRole('button', { name: /New Key/i });
+		const newKeyButton = within(sidebar).getByRole('button', { name: /Import Key/i });
 		await user.click(newKeyButton);
 
 		// Verify form is cleared.

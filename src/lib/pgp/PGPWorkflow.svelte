@@ -214,7 +214,7 @@
 					{/if}
 				</legend>
 				{#if keyObject}
-					<PGPKey bind:this={pgpKeyComponent} key={keyObject} />
+					<PGPKey bind:this={pgpKeyComponent} bind:key={keyObject} />
 				{:else}
 					<RawKeyInput
 						bind:value={keyValue}
