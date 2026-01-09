@@ -138,28 +138,6 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		expect(queryByPlaceholderText('Paste PGP Key (Armored)...')).toBeNull();
 	});
 
-	it('clears the key when remove button is clicked', async () => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
-		const onRemove = vi.fn();
-
-		const { getByLabelText } = render(PGPKey, {
-			props: {
-				key: testKey,
-				onRemove
-			}
-		});
-
-		await waitFor(() => {
-			expect(getByLabelText('Remove Key')).toBeTruthy();
-		});
-
-		const removeBtn = getByLabelText('Remove Key');
-		await fireEvent.click(removeBtn);
-
-		expect(onRemove).toHaveBeenCalled();
-	});
-
 	it('nudges for decryption when nudgeForDecryption is called', async () => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testPrivateKey as any);

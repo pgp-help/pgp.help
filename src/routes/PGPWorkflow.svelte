@@ -214,14 +214,7 @@
 					{/if}
 				</legend>
 				{#if keyObject}
-					<PGPKey
-						bind:this={pgpKeyComponent}
-						bind:key={keyObject}
-						onRemove={() => {
-							keyObject = null;
-							keyValue = '';
-						}}
-					/>
+					<PGPKey bind:this={pgpKeyComponent} bind:key={keyObject} />
 				{:else}
 					<RawKeyInput
 						bind:value={keyValue}

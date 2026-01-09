@@ -2,18 +2,15 @@
 	import { getKeyDetails, decryptPrivateKey } from './pgp';
 	import type { Key } from 'openpgp';
 	import CopyableTextarea from './CopyableTextarea.svelte';
-	import MiniActionButton from './MiniActionButton.svelte';
 	import CopyButtons from './CopyButtons.svelte';
 	import PublicKeyButtons from './PublicKeyButtons.svelte';
 
-	let { key = $bindable<Key>(), onRemove } = $props<{
+	let { key = $bindable<Key>() } = $props<{
 		key: Key;
-		onRemove?: () => void;
 	}>();
 
 	let publicKey = $derived.by(() => {
-		if (!key) return null;
-		if (key.toPublic) {
+		if (key.isPrivate()) {
 			return key.toPublic();
 		} else {
 			return key;
@@ -53,10 +50,6 @@
 		} catch (err) {
 			decryptError = (err as Error).message;
 		}
-	}
-
-	function clearKey() {
-		onRemove?.();
 	}
 
 	async function lockKey() {
@@ -165,141 +158,136 @@
 	<PublicKeyButtons value={publicKey?.armor ? publicKey.armor() : key.armor()} />
 {/snippet}
 
-{#if key}
-	<div class="card bg-base-200 border selectable">
-		<div class="card-body">
-			<div>
-				<!-- to force card-body to treat this as a single item -->
-				<div class="flex items-center gap-2 mb-1">
-					<h4 class="font-bold text-lg">{key.getUserIDs()[0] || 'Unknown User'}</h4>
-					<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
-						{key.isPrivate() ? 'Private Key' : 'Public Key'}
-					</span>
-					{#if key.isPrivate()}
-						{#if key.isDecrypted()}
-							<span class="badge badge-success badge-sm">Unlocked</span>
-							<button
-								type="button"
-								class="btn btn-xs btn-ghost btn-circle"
-								onclick={(e) => {
+<div class="card bg-base-200 border selectable">
+	<div class="card-body">
+		<div>
+			<!-- to force card-body to treat this as a single item -->
+			<div class="flex items-center gap-2 mb-1">
+				<h4 class="font-bold text-lg">{key.getUserIDs()[0] || 'Unknown User'}</h4>
+				<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
+					{key.isPrivate() ? 'Private Key' : 'Public Key'}
+				</span>
+				{#if key.isPrivate()}
+					{#if key.isDecrypted()}
+						<span class="badge badge-success badge-sm">Unlocked</span>
+						<button
+							type="button"
+							class="btn btn-xs btn-ghost btn-circle"
+							onclick={(e) => {
+								e.preventDefault();
+								lockKey();
+							}}
+							aria-label="Lock key"
+							title="Lock key"
+						>
+							{@render lockIcon()}
+						</button>
+					{:else}
+						<span class="badge badge-warning badge-sm">Locked</span>
+					{/if}
+				{/if}
+			</div>
+
+			{#each properties as prop (prop.label)}
+				<div class="text-xs font-mono opacity-70 flex items-start gap-1">
+					<div class="tooltip" data-tip={prop.tooltip}>
+						<span class="cursor-help">{prop.label}</span>:
+					</div>
+					<span class="break-all">{prop.value}</span>
+				</div>
+			{/each}
+
+			{#if key.getUserIDs().length > 1}
+				<div class="mt-2 text-xs opacity-60">
+					+{key.getUserIDs().length - 1} other ID(s)
+				</div>
+			{/if}
+
+			{#if key.isPrivate() && !key.isDecrypted()}
+				<div class="divider my-2"></div>
+				<div class="form-control w-full max-w-xs {shaking ? 'shake' : ''}">
+					<label class="label" for="passphrase">
+						<span class="label-text">Unlock Private Key</span>
+					</label>
+					<div class="join">
+						<input
+							type="password"
+							id="passphrase"
+							placeholder="Passphrase"
+							class="input input-bordered input-sm w-full join-item
+									{decryptError ? 'input-error' : ''}"
+							oninput={() => {
+								decryptError = '';
+							}}
+							onkeydown={(e) => {
+								if (e.key === 'Enter') {
 									e.preventDefault();
-									lockKey();
-								}}
-								aria-label="Lock key"
-								title="Lock key"
-							>
-								{@render lockIcon()}
-							</button>
-						{:else}
-							<span class="badge badge-warning badge-sm">Locked</span>
-						{/if}
+									handleDecrypt(e.currentTarget.value);
+								}
+							}}
+						/>
+						<button
+							type="button"
+							class="btn btn-sm btn-primary join-item"
+							onclick={(e) => {
+								const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+								handleDecrypt(input.value);
+							}}
+						>
+							Unlock
+						</button>
+					</div>
+					{#if decryptError}
+						<div class="text-error text-xs mt-1">{decryptError}</div>
 					{/if}
 				</div>
-
-				{#each properties as prop (prop.label)}
-					<div class="text-xs font-mono opacity-70 flex items-start gap-1">
-						<div class="tooltip" data-tip={prop.tooltip}>
-							<span class="cursor-help">{prop.label}</span>:
-						</div>
-						<span class="break-all">{prop.value}</span>
+				<div class="divider my-2"></div>
+			{/if}
+			<div class="mt-4 flex flex-col gap-2">
+				<div
+					class="collapse collapse-arrow border border-base-300 bg-base-100"
+					onfocusout={closeOnBlur}
+				>
+					<input type="checkbox" />
+					<div class="collapse-title text-xs font-medium">Show Public Key</div>
+					<div class="collapse-content">
+						<CopyableTextarea
+							value={publicKey?.armor ? publicKey.armor() : ''}
+							class="text-xs"
+							fixed
+							buttons={publicKeyButtons}
+						/>
 					</div>
-				{/each}
+				</div>
 
-				{#if key.getUserIDs().length > 1}
-					<div class="mt-2 text-xs opacity-60">
-						+{key.getUserIDs().length - 1} other ID(s)
-					</div>
-				{/if}
-
-				{#if key.isPrivate() && !key.isDecrypted()}
-					<div class="divider my-2"></div>
-					<div class="form-control w-full max-w-xs {shaking ? 'shake' : ''}">
-						<label class="label" for="passphrase">
-							<span class="label-text">Unlock Private Key</span>
-						</label>
-						<div class="join">
-							<input
-								type="password"
-								id="passphrase"
-								placeholder="Passphrase"
-								class="input input-bordered input-sm w-full join-item
-									{decryptError ? 'input-error' : ''}"
-								oninput={() => {
-									decryptError = '';
-								}}
-								onkeydown={(e) => {
-									if (e.key === 'Enter') {
-										e.preventDefault();
-										handleDecrypt(e.currentTarget.value);
-									}
-								}}
-							/>
-							<button
-								type="button"
-								class="btn btn-sm btn-primary join-item"
-								onclick={(e) => {
-									const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-									handleDecrypt(input.value);
-								}}
-							>
-								Unlock
-							</button>
-						</div>
-						{#if decryptError}
-							<div class="text-error text-xs mt-1">{decryptError}</div>
-						{/if}
-					</div>
-					<div class="divider my-2"></div>
-				{/if}
-				<div class="mt-4 flex flex-col gap-2">
+				{#if key.isPrivate()}
 					<div
 						class="collapse collapse-arrow border border-base-300 bg-base-100"
 						onfocusout={closeOnBlur}
 					>
 						<input type="checkbox" />
-						<div class="collapse-title text-xs font-medium">Show Public Key</div>
+						<div class="collapse-title text-xs font-medium flex items-center gap-2">
+							Export Private Key
+							<div
+								class="tooltip tooltip-right text-warning"
+								data-tip="Warning: Never share your private key!"
+							>
+								{@render warningIcon()}
+							</div>
+						</div>
 						<div class="collapse-content">
-							<CopyableTextarea
-								value={publicKey?.armor ? publicKey.armor() : ''}
-								class="text-xs"
-								fixed
-								buttons={publicKeyButtons}
-							/>
+							<div class="alert alert-warning text-xs py-2 mb-2">
+								{@render warningIcon()}
+								<span>Warning: Never share your private key!</span>
+							</div>
+							<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
 						</div>
 					</div>
-
-					{#if key.isPrivate()}
-						<div
-							class="collapse collapse-arrow border border-base-300 bg-base-100"
-							onfocusout={closeOnBlur}
-						>
-							<input type="checkbox" />
-							<div class="collapse-title text-xs font-medium flex items-center gap-2">
-								Export Private Key
-								<div
-									class="tooltip tooltip-right text-warning"
-									data-tip="Warning: Never share your private key!"
-								>
-									{@render warningIcon()}
-								</div>
-							</div>
-							<div class="collapse-content">
-								<div class="alert alert-warning text-xs py-2 mb-2">
-									{@render warningIcon()}
-									<span>Warning: Never share your private key!</span>
-								</div>
-								<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
-							</div>
-						</div>
-					{/if}
-				</div>
-			</div>
-			<div class="absolute top-2 right-2 flex gap-1">
-				<MiniActionButton label="Remove Key" onclick={clearKey}>✕</MiniActionButton>
+				{/if}
 			</div>
 		</div>
 	</div>
-{/if}
+</div>
 
 <style>
 	.shake {
