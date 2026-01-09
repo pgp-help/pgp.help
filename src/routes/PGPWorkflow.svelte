@@ -4,26 +4,29 @@
 	import PGPKey from '../lib/PGPKey.svelte';
 	import type { Key } from 'openpgp';
 	import CopyButtons from '../lib/CopyButtons.svelte';
-	import { PGPMode, type PGPModeType } from '../lib/types.js';
 	import KeySidebar from '../lib/KeySidebar.svelte';
-	import { router } from '../lib/router.svelte.js';
+	import { PGPMode, router } from '../lib/router.svelte';
 	import { keyStore } from '../lib/keyStore.svelte.js';
+	import { untrack } from 'svelte';
 
 	let { initialKey = '' } = $props<{
 		initialKey?: string;
 	}>();
 
 	// Derived state from router
-	let mode = $derived(router.activeRoute.pgp.mode);
+	let mode = $derived<PGPMode>(router.activeRoute.pgp.mode);
 	let fingerprint = $derived(router.activeRoute.pgp.fingerprint);
 	let keyParam = $derived(router.activeRoute.pgp.keyParam);
+
+	// Derived selected key from store
+	let selectedKey = $derived(fingerprint ? keyStore.getKey(fingerprint) : null);
 
 	// The parsed OpenPGP key object (null if invalid/empty)
 	let keyObject = $state<Key | null>(null);
 	// The raw armored key string (bound to the textarea/input)
 	let keyValue = $state(initialKey);
 	// Reference to the PGPKey component instance (for calling methods like nudgeForDecryption)
-	let pgpKeyComponent = $state();
+	let pgpKeyComponent = $state<PGPKey | null>(null);
 	// The input message to be encrypted or decrypted
 	let message = $state('');
 	// The result of the encryption or decryption operation
@@ -41,19 +44,29 @@
 
 	// Sync keyValue from router state (fingerprint or keyParam)
 	$effect(() => {
+		const currentKeyValue = untrack(() => keyValue);
+
 		// This effect runs when fingerprint or keyParam changes
-		if (fingerprint) {
-			const stored = keyStore.getKey(fingerprint);
-			if (stored) {
-				keyValue = stored.armor();
+		if (selectedKey) {
+			const storedArmor = selectedKey.armor();
+			if (currentKeyValue !== storedArmor) {
+				keyValue = storedArmor;
+				keyObject = selectedKey;
+				keyError = '';
+			} else if (keyObject?.getFingerprint() !== selectedKey.getFingerprint()) {
+				keyObject = selectedKey;
+				keyError = '';
 			}
 		} else if (keyParam) {
-			keyValue = keyParam;
+			if (currentKeyValue !== keyParam) {
+				keyValue = keyParam;
+			}
 		} else {
 			// If we navigated to root, clear key
 			// Only clear if initialKey is not set (to avoid clearing on first load if passed via prop)
-			if (!initialKey) {
+			if (!initialKey && currentKeyValue !== '') {
 				keyValue = '';
+				keyObject = null;
 			}
 		}
 	});
@@ -73,7 +86,8 @@
 					if (keyObject.isPrivate() && !router.activeRoute.pgp.mode) {
 						targetMode = PGPMode.DECRYPT;
 					}
-					router.openKey(fp, targetMode);
+					// Use untrack to avoid infinite loops
+					untrack(() => router.openKey(fp, targetMode));
 				}
 			});
 		}
@@ -83,8 +97,12 @@
 	$effect(() => {
 		const k = keyValue;
 		if (!k) {
-			keyObject = null;
-			keyError = '';
+			// Only clear if we are not currently selecting a key
+			// This prevents clearing when we are just typing
+			if (!fingerprint) {
+				keyObject = null;
+				keyError = '';
+			}
 			return;
 		}
 
@@ -96,6 +114,7 @@
 
 		getKeyDetails(k)
 			.then(async (details) => {
+				// Check if the keyValue is still the same as when we started parsing
 				if (keyValue === k) {
 					keyObject = details;
 					keyError = '';
@@ -115,6 +134,8 @@
 			})
 			.catch((err) => {
 				if (keyValue === k) {
+					// Only clear keyObject if we really failed to parse what looks like a key
+					// But keep the text so user can fix it
 					keyObject = null;
 					keyError = err.message;
 				}
@@ -124,6 +145,8 @@
 	// Update keyValue when keyObject changes (e.g. after decryption)
 	$effect(() => {
 		if (keyObject && keyObject.armor() !== keyValue) {
+			// Only update if the key object is actually different from what we have in text
+			// This happens when we decrypt a key, or when we select a key from the sidebar
 			keyValue = keyObject.armor();
 		}
 	});
@@ -147,8 +170,9 @@
 	$effect(() => {
 		if (keyObject && !availableModes.includes(mode)) {
 			// If current mode is not available, switch to first available mode
-			const newMode = availableModes[0] as PGPModeType;
-			router.setMode(newMode);
+			const newMode = availableModes[0] as PGPMode;
+			// Use untrack to avoid infinite loops if router.setMode triggers this effect again
+			untrack(() => router.setMode(newMode));
 		}
 	});
 
@@ -190,10 +214,26 @@
 
 		error = '';
 
+		// Use untrack to prevent this effect from re-running when output or error changes
+		// This is important because we are setting output/error inside the promise callback
+		// and we don't want to trigger the effect again.
+		// Although output/error are not dependencies here, it's good practice.
+
 		const processPromise = mode === PGPMode.DECRYPT ? decryptMessage(k, m) : encryptMessage(k, m);
 
 		processPromise
 			.then((result) => {
+				// Check if the key and message are still the same
+				// We need to access the current values of keyObject and message, but we can't use them directly
+				// because they are reactive. We should use the captured k and m.
+				// However, we also need to check if the component state has moved on.
+				// The best way is to check if k and m match the current state.
+				// But since we are in a promise, we need to be careful.
+
+				// Actually, checking against the captured k and m is correct for ensuring we don't overwrite
+				// with a stale result. But we also want to make sure we don't overwrite if the user has
+				// cleared the input.
+
 				if (keyObject === k && message === m) {
 					output = result;
 				}

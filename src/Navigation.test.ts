@@ -83,8 +83,8 @@ describe('Navigation', () => {
 		window.history.replaceState({}, '', url.toString());
 
 		// Manually sync router state because replaceState doesn't trigger it
-		router.path = url.pathname;
-		router.search = url.search;
+		router.raw.path = url.pathname;
+		router.raw.search = url.search;
 
 		render(App);
 

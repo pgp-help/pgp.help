@@ -1,5 +1,15 @@
 import { SvelteURLSearchParams } from 'svelte/reactivity';
-import { PGPMode, type PGPModeType } from './types.js';
+
+/**
+ * Enum for PGP operation modes
+ * Defines the available modes for PGP operations in the application
+ */
+export enum PGPMode {
+	ENCRYPT = 'encrypt',
+	DECRYPT = 'decrypt',
+	SIGN = 'sign',
+	VERIFY = 'verify'
+}
 
 class Router {
 	// Raw state tracking window location
@@ -46,7 +56,7 @@ class Router {
 		// Parse query params
 		const params = new SvelteURLSearchParams(this.raw.search);
 		const keyParam = params.get('key');
-		const mode = (params.get('mode') as PGPModeType) || PGPMode.ENCRYPT;
+		const mode = (params.get('mode') as PGPMode) || PGPMode.ENCRYPT;
 
 		return {
 			page,
