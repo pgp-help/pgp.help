@@ -48,11 +48,8 @@ describe('App', () => {
 		await fireEvent.input(keyTextarea, { target: { value: validPublicKey } });
 
 		// Wait for the key to be parsed and displayed (this confirms the app accepted the key)
-		// We look for the badge that appears in the PGPKey card (main view)
-		// The main view badge is usually badge-sm or just badge, while sidebar is badge-xs
-		// But to be safe, we can look for the one inside the form/fieldset
-		const mainArea = screen.getByRole('main');
-		await within(mainArea).findByText('Public Key', { selector: '.badge' });
+		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
+		await within(mainArea).findByText('Public Key', { selector: 'legend' });
 
 		await user.type(messageTextarea, 'Hello World');
 
@@ -100,8 +97,8 @@ describe('App', () => {
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
 
 		// Wait for the key to be parsed and displayed
-		const mainArea = screen.getByRole('main');
-		await within(mainArea).findByText('Private Key', { selector: '.badge' });
+		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
+		await within(mainArea).findByText('Private Key', { selector: 'legend' });
 
 		// Wait for unlock prompt
 		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);

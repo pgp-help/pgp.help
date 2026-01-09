@@ -86,13 +86,10 @@ export async function decryptMessage(
 	privateKey: openpgp.Key,
 	encryptedMessage: string
 ): Promise<string> {
-	if (!privateKey.isPrivate()) {
-		throw new Error('Key is not a private key');
-	}
+	// readMessage outside of try-catch as we don't want to log malformed message errors
+	const message = await openpgp.readMessage({ armoredMessage: encryptedMessage });
 
 	try {
-		const message = await openpgp.readMessage({ armoredMessage: encryptedMessage });
-
 		const { data: decrypted } = await openpgp.decrypt({
 			message,
 			decryptionKeys: privateKey as openpgp.PrivateKey
@@ -100,7 +97,7 @@ export async function decryptMessage(
 
 		return decrypted as string;
 	} catch (error) {
-		console.error('Decryption error:', error);
+		console.debug('Decryption error:', error);
 		throw error;
 	}
 }
@@ -180,7 +177,10 @@ export async function decryptPrivateKey(
 		const decryptedKey = await openpgp.decryptKey({ privateKey, passphrase });
 		return decryptedKey;
 	} catch (e) {
-		console.error('Failed to decrypt private key', e);
+		// Suppress logging for incorrect passphrase errors
+		if (!e.message.includes('Incorrect')) {
+			console.error('Failed to decrypt private key', e);
+		}
 		throw e;
 	}
 }

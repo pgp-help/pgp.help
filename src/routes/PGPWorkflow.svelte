@@ -5,6 +5,7 @@
 	import type { Key } from 'openpgp';
 	import CopyButtons from '../lib/CopyButtons.svelte';
 	import { PGPMode, type PGPModeType } from '../lib/types.js';
+	import KeySidebar from '../lib/KeySidebar.svelte';
 
 	let {
 		initialKey = '',
@@ -129,77 +130,85 @@
 	<CopyButtons value={message} />
 {/snippet}
 
-<form class="space-y-6">
-	<fieldset class="fieldset">
-		<legend class="fieldset-legend">
-			{#if isPrivate}
-				Private Key
-			{:else}
-				Public Key
+<aside aria-label="Sidebar">
+	<KeySidebar />
+</aside>
+
+<main class="flex-1 overflow-y-auto p-4 sm:p-8" aria-label="PGP Workflow">
+	<div class="container mx-auto max-w-4xl">
+		<form class="space-y-6">
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">
+					{#if isPrivate}
+						Private Key
+					{:else}
+						Public Key
+					{/if}
+				</legend>
+				<PGPKey
+					bind:this={pgpKeyComponent}
+					bind:key={keyObject}
+					bind:value={keyValue}
+					label={isPrivate ? 'Private Key' : 'Public Key'}
+				/>
+			</fieldset>
+
+			{#if canSwitchMode && availableModes.length > 1}
+				<div class="divider"></div>
+				<fieldset class="fieldset">
+					<legend class="fieldset-legend">Mode</legend>
+					<div class="form-control">
+						<div class="join">
+							{#each availableModes as availableMode (availableMode)}
+								<button
+									type="button"
+									class="btn join-item {mode === availableMode ? 'btn-primary' : 'btn-outline'}"
+									onclick={() => onModeChange?.(availableMode)}
+								>
+									{availableMode === PGPMode.ENCRYPT ? 'Encrypt' : 'Decrypt'}
+								</button>
+							{/each}
+						</div>
+					</div>
+				</fieldset>
 			{/if}
-		</legend>
-		<PGPKey
-			bind:this={pgpKeyComponent}
-			bind:key={keyObject}
-			bind:value={keyValue}
-			label={isPrivate ? 'Private Key' : 'Public Key'}
-		/>
-	</fieldset>
 
-	{#if canSwitchMode && availableModes.length > 1}
-		<div class="divider"></div>
-		<fieldset class="fieldset">
-			<legend class="fieldset-legend">Mode</legend>
-			<div class="form-control">
-				<div class="join">
-					{#each availableModes as availableMode (availableMode)}
-						<button
-							type="button"
-							class="btn join-item {mode === availableMode ? 'btn-primary' : 'btn-outline'}"
-							onclick={() => onModeChange?.(availableMode)}
-						>
-							{availableMode === PGPMode.ENCRYPT ? 'Encrypt' : 'Decrypt'}
-						</button>
-					{/each}
-				</div>
-			</div>
-		</fieldset>
-	{/if}
+			<div class="divider"></div>
 
-	<div class="divider"></div>
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend"
+					>{mode === PGPMode.DECRYPT ? 'Encrypted Message' : 'Message'}</legend
+				>
+				<CopyableTextarea
+					bind:value={message}
+					placeholder={mode === PGPMode.DECRYPT
+						? 'Paste encrypted message...'
+						: 'Type your secret message...'}
+					label={mode === PGPMode.DECRYPT ? 'Encrypted Message' : 'Message'}
+					selectAllOnFocus={false}
+					{error}
+					buttons={copyButtonsSnippet}
+				/>
+			</fieldset>
 
-	<fieldset class="fieldset">
-		<legend class="fieldset-legend"
-			>{mode === PGPMode.DECRYPT ? 'Encrypted Message' : 'Message'}</legend
-		>
-		<CopyableTextarea
-			bind:value={message}
-			placeholder={mode === PGPMode.DECRYPT
-				? 'Paste encrypted message...'
-				: 'Type your secret message...'}
-			label={mode === PGPMode.DECRYPT ? 'Encrypted Message' : 'Message'}
-			selectAllOnFocus={false}
-			{error}
-			buttons={copyButtonsSnippet}
-		/>
-	</fieldset>
-</form>
+			{#snippet outputButtonsSnippet()}
+				<CopyButtons value={output} />
+			{/snippet}
 
-{#snippet outputButtonsSnippet()}
-	<CopyButtons value={output} />
-{/snippet}
-
-<fieldset class="fieldset">
-	<legend class="fieldset-legend">
-		{mode === PGPMode.DECRYPT ? 'Decrypted Message' : 'Encrypted Message'}
-	</legend>
-	<CopyableTextarea
-		value={output}
-		readonly={true}
-		placeholder={mode === PGPMode.DECRYPT
-			? 'Decrypted output will appear here...'
-			: 'Encrypted output will appear here...'}
-		label={mode === PGPMode.DECRYPT ? 'Decrypted Message' : 'Encrypted Message'}
-		buttons={outputButtonsSnippet}
-	/>
-</fieldset>
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">
+					{mode === PGPMode.DECRYPT ? 'Decrypted Message' : 'Encrypted Message'}
+				</legend>
+				<CopyableTextarea
+					value={output}
+					readonly={true}
+					placeholder={mode === PGPMode.DECRYPT
+						? 'Decrypted output will appear here...'
+						: 'Encrypted output will appear here...'}
+					label={mode === PGPMode.DECRYPT ? 'Decrypted Message' : 'Encrypted Message'}
+					buttons={outputButtonsSnippet}
+				/>
+			</fieldset>
+		</form>
+	</div>
+</main>
