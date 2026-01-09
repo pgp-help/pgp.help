@@ -3,7 +3,7 @@ import { render, screen, fireEvent, within } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import * as openpgp from 'openpgp';
 import App from './App.svelte';
-import { keyStore } from './lib/keyStore.svelte';
+import { keyStore } from './lib/pgp/keyStore.svelte';
 
 describe('App', () => {
 	let validPublicKey: string;

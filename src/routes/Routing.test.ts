@@ -6,7 +6,7 @@ import { router } from '../lib/router.svelte.js';
 describe('Routing', () => {
 	beforeEach(() => {
 		// Reset router state before each test
-		router.path = '/';
+		router.raw.path = '/';
 		window.history.pushState({}, '', '/');
 	});
 
@@ -29,7 +29,7 @@ describe('Routing', () => {
 
 	it('navigates back to Home page when clicking PGP Help link', async () => {
 		// Start on Guide page
-		router.path = '/Guide';
+		router.raw.path = '/Guide';
 		window.history.pushState({}, '', '/Guide');
 
 		render(App);

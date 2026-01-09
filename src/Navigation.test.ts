@@ -2,8 +2,8 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within, waitFor } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import App from './App.svelte';
-import { keyStore } from './lib/keyStore.svelte';
-import { generateKeyPair } from './lib/pgp';
+import { keyStore } from './lib/pgp/keyStore.svelte';
+import { generateKeyPair } from './lib/pgp/pgp';
 import { router } from './lib/router.svelte';
 
 describe('Navigation', () => {
@@ -83,8 +83,8 @@ describe('Navigation', () => {
 		window.history.replaceState({}, '', url.toString());
 
 		// Manually sync router state because replaceState doesn't trigger it
-		router.path = url.pathname;
-		router.search = url.search;
+		router.raw.path = url.pathname;
+		router.raw.search = url.search;
 
 		render(App);
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PGPMode, type PGPModeType } from './types.js';
+import { PGPMode } from '../router.svelte';
 
 // This is a bit of a noddy test (thanks Claude) but it does help teach me how enums work!
 
@@ -7,14 +7,6 @@ describe('PGPMode enum', () => {
 	it('should have correct enum values', () => {
 		expect(PGPMode.ENCRYPT).toBe('encrypt');
 		expect(PGPMode.DECRYPT).toBe('decrypt');
-	});
-
-	it('should work as a type', () => {
-		const mode: PGPModeType = PGPMode.ENCRYPT;
-		expect(mode).toBe('encrypt');
-
-		const mode2: PGPModeType = PGPMode.DECRYPT;
-		expect(mode2).toBe('decrypt');
 	});
 
 	it('should be compatible with string literals', () => {
@@ -27,7 +19,7 @@ describe('PGPMode enum', () => {
 	});
 
 	it('should work in switch statements', () => {
-		function getModeDescription(mode: PGPModeType): string {
+		function getModeDescription(mode: PGPMode): string {
 			switch (mode) {
 				case PGPMode.ENCRYPT:
 					return 'Encryption mode';

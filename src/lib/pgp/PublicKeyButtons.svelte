@@ -1,9 +1,9 @@
 <script lang="ts">
-	import MiniActionButton from './MiniActionButton.svelte';
-	import CopyIcon from './icons/CopyIcon.svelte';
-	import MarkdownIcon from './icons/MarkdownIcon.svelte';
-	import LinkIcon from './icons/LinkIcon.svelte';
-	import ShareIcon from './icons/ShareIcon.svelte';
+	import MiniActionButton from '../ui/MiniActionButton.svelte';
+	import CopyIcon from '../ui/icons/CopyIcon.svelte';
+	import MarkdownIcon from '../ui/icons/MarkdownIcon.svelte';
+	import LinkIcon from '../ui/icons/LinkIcon.svelte';
+	import ShareIcon from '../ui/icons/ShareIcon.svelte';
 
 	let { value = '' } = $props();
 

@@ -1,43 +1,24 @@
 <script lang="ts">
 	import { keyStore } from './keyStore.svelte.js';
 	import KeyListItem from './KeyListItem.svelte';
-	import { navigate, parsePath, buildPath } from './router.svelte.js';
+	import { router } from '../router.svelte.js';
 
-	let selectedFingerprint = $derived.by(() => {
-		const { fingerprint, keyParam } = parsePath();
-		return fingerprint || keyParam;
-	});
+	let selectedFingerprint = $derived(router.activeRoute.pgp.fingerprint);
 
-	function handleNavigation(e: Event, fingerprint?: string | null, mode?: string) {
+	function handleNewKey(e: Event) {
 		e.preventDefault();
-		const { basePath } = parsePath();
+		router.openHome();
+	}
 
-		if (fingerprint) {
-			// Generate path-based URL for fingerprint, clearing key param
-			const newUrl = buildPath({
-				basePath,
-				fingerprint,
-				mode,
-				clearKey: true,
-				clearMode: !mode // Clear mode if not specified
-			});
-			navigate(newUrl);
-		} else {
-			// Navigate to base path without fingerprint, clearing all params
-			const newUrl = buildPath({
-				basePath,
-				clearKey: true,
-				clearMode: true,
-				clearFingerprint: true
-			});
-			navigate(newUrl);
-		}
+	function handleSelectKey(e: Event, fingerprint: string) {
+		e.preventDefault();
+		router.openKey(fingerprint);
 	}
 </script>
 
 <div class="h-full flex flex-col bg-base-100 border-r border-base-300 w-64">
 	<div class="p-4 border-b border-base-300">
-		<button class="btn btn-primary w-full" onclick={(e) => handleNavigation(e)}>
+		<button class="btn btn-primary w-full" onclick={handleNewKey}>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				class="h-5 w-5 mr-2"
@@ -62,7 +43,7 @@
 				<a
 					href="/pgp.svelte/{key.getFingerprint()}"
 					class="block group"
-					onclick={(e) => handleNavigation(e, key.getFingerprint())}
+					onclick={(e) => handleSelectKey(e, key.getFingerprint())}
 				>
 					<KeyListItem {key} isSelected={selectedFingerprint === key.getFingerprint()} />
 				</a>
