@@ -31,7 +31,6 @@
 	let expirationTime = $state<Date | null>(null);
 
 	$effect(() => {
-		console.log(`Got a new key ${key.getFingerprint()}`);
 		key.getExpirationTime().then((t) => {
 			expirationTime = t as Date | null;
 		});

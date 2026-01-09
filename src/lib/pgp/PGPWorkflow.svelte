@@ -73,7 +73,6 @@
 	$effect(() => {
 		if (keyObject) {
 			const fp = keyObject.getFingerprint();
-			console.log(`WF: Got a new key ${fp}`);
 
 			keyStore.addKey(keyObject).then(() => {
 				// If we are not already viewing this key (by fingerprint), navigate to it.
