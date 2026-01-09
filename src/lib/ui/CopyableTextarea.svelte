@@ -59,7 +59,6 @@
 		if (!textareaElement) return;
 		textareaElement.style.height = 'auto';
 		textareaElement.style.height = textareaElement.scrollHeight + 'px';
-		//console.log('Height adjustment: scrollHeight =', textareaElement.style.height, 'px');
 	}
 
 	function handleFocus() {
