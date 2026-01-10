@@ -38,7 +38,7 @@ describe('Navigation', () => {
 		// Verify it appears in sidebar
 		// Sidebar is in <aside> with aria-label="Sidebar"
 		const sidebar = screen.getByRole('complementary', { name: /Sidebar/i });
-		await within(sidebar).findByText(/User One/);
+		await within(sidebar).findByTitle('User One');
 
 		// Verify main view shows it (card view)
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
@@ -58,14 +58,14 @@ describe('Navigation', () => {
 		await fireEvent.input(keyTextarea2, { target: { value: key2.privateKey } });
 
 		// Verify it appears in sidebar
-		await within(sidebar).findByText(/User Two/);
+		await within(sidebar).findByTitle('User Two');
 
 		// Verify both are present in sidebar
-		expect(within(sidebar).getByText(/User One/)).toBeInTheDocument();
-		expect(within(sidebar).getByText(/User Two/)).toBeInTheDocument();
+		expect(within(sidebar).getByTitle('User One')).toBeInTheDocument();
+		expect(within(sidebar).getByTitle('User Two')).toBeInTheDocument();
 
 		// 4. Select previous private key
-		await user.click(within(sidebar).getByText(/User One/));
+		await user.click(within(sidebar).getByTitle('User One'));
 
 		// Verify App navigates to it
 		// Main view should show User One
@@ -90,7 +90,7 @@ describe('Navigation', () => {
 
 		// Verify it gets added to the store and sidebar automatically
 		const sidebar = screen.getByRole('complementary', { name: /Sidebar/i });
-		await within(sidebar).findByText(/User One/);
+		await within(sidebar).findByTitle('User One');
 
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
 		await within(mainArea).findByText(/User One/);
