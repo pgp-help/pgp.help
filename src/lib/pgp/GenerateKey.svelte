@@ -7,7 +7,6 @@
 	let name = $state('');
 	let email = $state('');
 	let passphrase = $state('');
-	let isGenerating = $state(false);
 	let error = $state('');
 
 	let isPassphraseComplex = $derived(passphrase.length >= 8);
@@ -15,7 +14,6 @@
 	async function handleGenerate(e: Event) {
 		e.preventDefault();
 
-		isGenerating = true;
 		error = '';
 
 		try {
@@ -28,9 +26,12 @@
 			router.openKey(privateKeyObj.getFingerprint());
 		} catch (err) {
 			error = (err as Error).message;
-		} finally {
-			isGenerating = false;
 		}
+	}
+
+	function fillAnonymous() {
+		name = 'Anonymous';
+		email = `${Math.random().toString(36).substring(2)}@anonymous.local`;
 	}
 </script>
 
@@ -54,7 +55,6 @@
 					placeholder="John Doe"
 					class="input input-bordered w-full"
 					required
-					disabled={isGenerating}
 				/>
 			</div>
 
@@ -69,8 +69,13 @@
 					placeholder="john@example.com"
 					class="input input-bordered w-full"
 					required
-					disabled={isGenerating}
 				/>
+			</div>
+
+			<div class="flex justify-end">
+				<button type="button" class="btn btn-ghost" onclick={fillAnonymous}
+					>Fill with anonymous details</button
+				>
 			</div>
 
 			<div class="form-control w-full">
@@ -108,7 +113,6 @@
 					bind:value={passphrase}
 					placeholder="Enter a strong passphrase..."
 					class="input input-bordered w-full"
-					disabled={isGenerating}
 				/>
 			</div>
 
@@ -119,20 +123,9 @@
 			{/if}
 
 			<div class="flex justify-end gap-2 mt-6">
-				<button
-					type="button"
-					class="btn btn-ghost"
-					onclick={() => router.openHome()}
-					disabled={isGenerating}>Cancel</button
+				<button type="button" class="btn btn-ghost" onclick={() => router.openHome()}>Cancel</button
 				>
-				<button type="submit" class="btn btn-primary" disabled={isGenerating}>
-					{#if isGenerating}
-						<span class="loading loading-spinner"></span>
-						Generating...
-					{:else}
-						Generate Key
-					{/if}
-				</button>
+				<button type="submit" class="btn btn-primary">Generate Key</button>
 			</div>
 		</form>
 	</div>
