@@ -10,7 +10,10 @@
 	let email = $state('');
 
 	$effect(() => {
-		const user = key.getUserIDs()[0] || 'Unknown';
+		const user = key.getUserIDs()[0] || '<Unknown>';
+		// Parse name and email from user ID
+		// (.*?) => non-greedy match for name
+		// (?:\s+<([^>]+)>)? => non-capturing group for optional email in angle brackets
 		const match = user.match(/^(.*?)(?:\s+<([^>]+)>)?$/);
 		if (match) {
 			name = match[1].trim();
