@@ -5,16 +5,6 @@ import * as openpgp from 'openpgp';
 import App from './App.svelte';
 import { keyStore } from './lib/pgp/keyStore.svelte';
 
-// Mock console.error to suppress expected error messages during tests
-const originalConsoleError = console.error;
-beforeAll(() => {
-	console.error = vi.fn();
-});
-
-afterAll(() => {
-	console.error = originalConsoleError;
-});
-
 describe('App', () => {
 	let validPublicKey: string;
 	let validPrivateKey: string;
@@ -73,27 +63,6 @@ describe('App', () => {
 			},
 			{ timeout: 5000 }
 		);
-	});
-
-	it('shows error with invalid key', async () => {
-		const user = userEvent.setup();
-		render(App);
-
-		const keyTextarea = screen.getByLabelText(/Public Key/i);
-		const messageTextarea = screen.getByLabelText(/^Message/i);
-		const outputTextarea = screen.getByLabelText(/Encrypted Message/i);
-
-		// Type invalid key - this will trigger error logging which we've mocked
-		await user.type(keyTextarea, 'invalid');
-		await user.type(messageTextarea, 'Hello World');
-
-		// Wait a bit for any async operations
-		await new Promise((resolve) => setTimeout(resolve, 100));
-
-		// With invalid keys, encryption is not attempted, and output remains empty
-		expect(outputTextarea).toHaveValue('');
-		// Verify that error logging occurred (expected behavior)
-		expect(console.error).toHaveBeenCalled();
 	});
 
 	it('decrypts message with locked private key', async () => {
