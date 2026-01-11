@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => {
 	}
 
 	return {
-		base: '/',
+		base: '/pgp.svelte/',
 		plugins,
 		resolve: {
 			conditions: ['browser']
