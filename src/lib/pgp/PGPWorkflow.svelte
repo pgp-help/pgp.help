@@ -3,7 +3,7 @@
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import PGPKey from './PGPKey.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
-	import type { Key } from 'openpgp';
+	import { type Key } from 'openpgp';
 	import CopyButtons from '../ui/CopyButtons.svelte';
 	import KeySidebar from './KeySidebar.svelte';
 	import { PGPMode, router } from '../router.svelte.js';
@@ -27,9 +27,18 @@
 	// Any error message from the operation (e.g. decryption failure)
 	let error = $state('');
 
+	// Helper to determine valid modes for current key
+	let availableModes = $derived.by(() => {
+		if (!keyObject) return [PGPMode.ENCRYPT];
+		if (keyObject.isPrivate()) {
+			return [PGPMode.ENCRYPT, PGPMode.DECRYPT]; //, PGPMode.SIGN, PGPMode.VERIFY];
+		} else {
+			return [PGPMode.ENCRYPT]; //, PGPMode.VERIFY];
+		}
+	});
+
 	// Sync keyValue from router state (fingerprint or keyParam)
 	$effect(() => {
-		const currentKeyValue = untrack(() => keyValue);
 		const { fingerprint, keyParam, mode: routerMode } = router.activeRoute.pgp;
 
 		if (fingerprint) {
@@ -43,23 +52,13 @@
 				console.warn('Fingerprint not found in store, navigating home:', fingerprint);
 				router.openHome();
 			} else {
-				// const storedArmor = selectedKey.armor();
-				// if (currentKeyValue !== storedArmor) {
-				// 	keyValue = storedArmor;
-				// 	keyObject = selectedKey;
-				// } else if (keyObject?.getFingerprint() !== selectedKey.getFingerprint()) {
-				// 	keyObject = selectedKey;
-				// }
 				keyObject = selectedKey;
 				if (routerMode) {
 					mode = routerMode;
-					//TODO: Clear the queryparam!
 				}
 			}
 		} else if (keyParam) {
-			if (currentKeyValue !== keyParam) {
-				keyValue = keyParam;
-			}
+			keyValue = keyParam;
 		} else {
 			keyValue = '';
 			keyObject = null;
@@ -77,21 +76,9 @@
 		}
 	});
 
-	let isPrivate = $derived(keyObject?.isPrivate() ?? false);
-
-	// Helper to determine valid modes for current key
-	let availableModes = $derived.by(() => {
-		if (!keyObject) return [PGPMode.ENCRYPT];
-		if (keyObject.isPrivate()) {
-			return [PGPMode.ENCRYPT, PGPMode.DECRYPT];
-		} else {
-			return [PGPMode.ENCRYPT];
-		}
-	});
-
 	// Ensure mode is valid for current key
 	$effect(() => {
-		if (keyObject && !availableModes.includes(mode)) {
+		if (!availableModes.includes(mode)) {
 			// If current mode is not available, switch to first available mode
 			const newMode = availableModes[0] as PGPMode;
 			// Use untrack to avoid infinite loops if router.setMode triggers this effect again
@@ -99,18 +86,40 @@
 		}
 	});
 
-	let prevKeyObject = null;
-	let prevMessage = '';
+	let isPrivate = $derived(keyObject?.isPrivate() ?? false);
+
+	$effect(() => {
+		// Wrap async logic in a non-async function to comply with $effect requirements.
+		// $effect callbacks must return void or a cleanup function, not a Promise.
+		const currentMode = untrack(() => mode);
+		if (keyObject?.isPrivate() && currentMode !== PGPMode.DECRYPT) {
+			console.log('Checking armor type for mode auto-switch...', message.substring(0, 30));
+			// Fire off the async check without awaiting at the effect level
+			// getArmorType(message).then((armorType) => {
+			// 	console.log('Armor type check for mode auto-switch:', armorType);
+			// 	if (armorType === enums.armor.message) {
+			// 		mode = PGPMode.DECRYPT;
+			// 		output = '';
+			// 	}
+			// });
+			if (message.startsWith('-----BEGIN PGP MESSAGE-----')) {
+				console.log('Auto-switching to DECRYPT mode based on armor type.');
+				mode = PGPMode.DECRYPT;
+				output = '';
+			}
+		} else {
+			console.log(
+				'No armor type check needed for mode auto-switch.',
+				keyObject?.isPrivate(),
+				currentMode
+			);
+		}
+	});
 
 	$effect(() => {
 		const k = keyObject;
 		const m = message;
-
-		const keyChanged = k?.getFingerprint() !== prevKeyObject?.getFingerprint();
-		const messageChanged = m !== prevMessage;
-
-		prevKeyObject = k;
-		prevMessage = m;
+		const currentMode = mode;
 
 		if (!k || !m) {
 			output = '';
@@ -120,10 +129,6 @@
 
 		// Check if we need to decrypt the private key for the current operation
 		if (mode === PGPMode.DECRYPT && k.isPrivate() && !k.isDecrypted()) {
-			if (!keyChanged && !messageChanged) {
-				//This is probably the user just locking the key again, so don't reset / nudge.
-				return;
-			}
 			pgpKeyComponent?.nudgeForDecryption();
 			output = '';
 			error = 'Unlock the private key to proceed.';
@@ -152,12 +157,12 @@
 				// with a stale result. But we also want to make sure we don't overwrite if the user has
 				// cleared the input.
 
-				if (keyObject === k && message === m) {
+				if (mode === currentMode && keyObject === k && message === m) {
 					output = result;
 				}
 			})
 			.catch((err) => {
-				if (keyObject === k && message === m) {
+				if (mode == currentMode && keyObject === k && message === m) {
 					error = err.message;
 				}
 			});
@@ -209,7 +214,7 @@
 									class="btn join-item {mode === availableMode ? 'btn-primary' : 'btn-outline'}"
 									onclick={() => (mode = availableMode)}
 								>
-									{availableMode === PGPMode.ENCRYPT ? 'Encrypt' : 'Decrypt'}
+									{availableMode.charAt(0).toUpperCase() + availableMode.slice(1)}
 								</button>
 							{/each}
 						</div>

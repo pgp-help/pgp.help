@@ -103,6 +103,20 @@ export async function decryptMessage(
 }
 
 /**
+ * Checks if a string is ASCII armored and returns its type.
+ * Returns null if the string is not valid ASCII armor.
+ */
+export async function getArmorType(text: string): Promise<openpgp.enums.armor | null> {
+	if (!text) return null;
+	try {
+		const result = await openpgp.unarmor(text);
+		return result.type;
+	} catch {
+		return null;
+	}
+}
+
+/**
  * Signs a text message using a private PGP key.
  */
 export async function signMessage(privateKey: openpgp.PrivateKey, text: string): Promise<string> {
