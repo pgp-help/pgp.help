@@ -31,21 +31,6 @@ describe('CSP Configuration', () => {
 		expect(cspContent).toContain("default-src 'none'");
 	});
 
-	it('should allow Google Fonts in style-src and font-src', () => {
-		// Extract CSP content from index.html
-		const cspMatch = indexHtmlContent.match(
-			/http-equiv="Content-Security-Policy"[\s\S]*?content="([\s\S]*?)"/
-		);
-		const content = cspMatch ? cspMatch[1] : '';
-
-		// Check that Google Fonts domains are allowed
-		expect(content).toContain("style-src 'self' https://fonts.googleapis.com");
-		expect(content).toContain("font-src 'self' data: https://fonts.gstatic.com");
-		expect(content).toContain(
-			"connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"
-		);
-	});
-
 	it('should allow self-hosted scripts and styles', () => {
 		const cspMatch = indexHtmlContent.match(
 			/http-equiv="Content-Security-Policy"[\s\S]*?content="([\s\S]*?)"/
@@ -145,13 +130,9 @@ describe('CSP Configuration', () => {
 		// Verify key directives exist and have expected values
 		expect(directives['default-src']).toEqual(["'none'"]);
 		expect(directives['script-src']).toEqual(["'self'"]);
-		expect(directives['style-src']).toEqual(["'self'", 'https://fonts.googleapis.com']);
-		expect(directives['font-src']).toEqual(["'self'", 'data:', 'https://fonts.gstatic.com']);
-		expect(directives['connect-src']).toEqual([
-			"'self'",
-			'https://fonts.googleapis.com',
-			'https://fonts.gstatic.com'
-		]);
+		expect(directives['style-src']).toEqual(["'self'"]);
+		expect(directives['font-src']).toEqual(["'self'"]);
+		expect(directives['connect-src']).toEqual(["'self'"]);
 		expect(directives['manifest-src']).toEqual(["'self'"]);
 	});
 });
@@ -455,41 +436,12 @@ describe('Google Fonts Integration', () => {
 });
 
 describe('HTML files validation', () => {
-	it('should have identical content except for CSP directives', () => {
-		// Read both HTML files
-		const indexHtml = readFileSync(join(__dirname, '../index.html'), 'utf-8');
-		const indexDevHtml = readFileSync(join(__dirname, '../index.dev.html'), 'utf-8');
-
-		// Extract CSP content from both files
-		const cspRegex = /<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]*)"[^>]*>/i;
-
-		const prodCspMatch = indexHtml.match(cspRegex);
-		const devCspMatch = indexDevHtml.match(cspRegex);
-
-		// Ensure both have CSP tags
-		expect(prodCspMatch).not.toBeNull();
-		expect(devCspMatch).not.toBeNull();
-
-		// Remove CSP tags and HTML comments from both and compare
-		const normalize = (html: string) => {
-			return html.replace(cspRegex, '__CSP_PLACEHOLDER__').replace(/<!--[\s\S]*?-->/g, ''); // Remove HTML comments
-		};
-
-		const indexWithoutCsp = normalize(indexHtml);
-		const indexDevWithoutCsp = normalize(indexDevHtml);
-
-		// Files should be identical after removing CSP and comments
-		expect(indexWithoutCsp).toEqual(indexDevWithoutCsp);
-	});
-
 	it('should have valid CSP syntax in both files', () => {
 		const indexHtml = readFileSync(join(__dirname, '../index.html'), 'utf-8');
-		const indexDevHtml = readFileSync(join(__dirname, '../index.dev.html'), 'utf-8');
 
 		const cspRegex = /<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]*)"[^>]*>/i;
 
 		const prodCsp = indexHtml.match(cspRegex)![1];
-		const devCsp = indexDevHtml.match(cspRegex)![1];
 
 		// Validate CSP format according to CSP spec
 		// Based on: https://www.w3.org/TR/CSP3/#grammardef-serialized-policy
@@ -534,6 +486,5 @@ describe('HTML files validation', () => {
 		};
 
 		validateCspFormat(prodCsp, 'Production');
-		validateCspFormat(devCsp, 'Development');
 	});
 });
