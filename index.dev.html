@@ -2,13 +2,14 @@
 <html lang="en" data-theme="light">
 	<head>
 		<meta charset="UTF-8" />
+		<!-- In development mode, we allow unsafe-eval for hot module replacement -->
 		<meta
 			http-equiv="Content-Security-Policy"
 			content="
 				default-src 'none';
 				upgrade-insecure-requests;
-				script-src 'self';
-				style-src 'self' https://fonts.googleapis.com;
+				script-src 'self' 'unsafe-eval';
+				style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
 				img-src 'self' data: blob:;
 				font-src 'self' data: https://fonts.gstatic.com;
 				media-src 'self' blob:;
