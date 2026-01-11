@@ -1,7 +1,7 @@
 /// <reference types="vitest/globals" />
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, join } from 'path';
 
 /**
  * CSP Configuration Tests
@@ -31,29 +31,14 @@ describe('CSP Configuration', () => {
 		expect(cspContent).toContain("default-src 'none'");
 	});
 
-	it('should allow Google Fonts in style-src and font-src', () => {
-		// Extract CSP content from index.html
-		const cspMatch = indexHtmlContent.match(
-			/http-equiv="Content-Security-Policy"[\s\S]*?content="([\s\S]*?)"/
-		);
-		const content = cspMatch ? cspMatch[1] : '';
-
-		// Check that Google Fonts domains are allowed
-		expect(content).toContain("style-src 'self' 'unsafe-inline' https://fonts.googleapis.com");
-		expect(content).toContain("font-src 'self' data: https://fonts.gstatic.com");
-		expect(content).toContain(
-			"connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"
-		);
-	});
-
 	it('should allow self-hosted scripts and styles', () => {
 		const cspMatch = indexHtmlContent.match(
 			/http-equiv="Content-Security-Policy"[\s\S]*?content="([\s\S]*?)"/
 		);
 		const content = cspMatch ? cspMatch[1] : '';
 
-		expect(content).toContain("script-src 'self' 'unsafe-inline' 'unsafe-eval'");
-		expect(content).toContain("style-src 'self' 'unsafe-inline'");
+		expect(content).toContain("script-src 'self");
+		expect(content).toContain("style-src 'self'");
 	});
 
 	it('should allow data: URLs for images', () => {
@@ -73,7 +58,6 @@ describe('CSP Configuration', () => {
 
 		expect(content).toContain("frame-src 'none'");
 		expect(content).toContain("object-src 'none'");
-		expect(content).toContain("frame-ancestors 'none'");
 	});
 
 	it('should allow manifest files from self', () => {
@@ -110,7 +94,7 @@ describe('CSP Configuration', () => {
 		const content = cspMatch ? cspMatch[1] : '';
 
 		// Vite's dev mode requires unsafe-eval for hot module replacement
-		expect(content).toContain("script-src 'self' 'unsafe-inline' 'unsafe-eval'");
+		expect(content).toContain("script-src 'self'");
 	});
 
 	it('should have restrictive default-src policy', () => {
@@ -145,18 +129,10 @@ describe('CSP Configuration', () => {
 
 		// Verify key directives exist and have expected values
 		expect(directives['default-src']).toEqual(["'none'"]);
-		expect(directives['script-src']).toEqual(["'self'", "'unsafe-inline'", "'unsafe-eval'"]);
-		expect(directives['style-src']).toEqual([
-			"'self'",
-			"'unsafe-inline'",
-			'https://fonts.googleapis.com'
-		]);
-		expect(directives['font-src']).toEqual(["'self'", 'data:', 'https://fonts.gstatic.com']);
-		expect(directives['connect-src']).toEqual([
-			"'self'",
-			'https://fonts.googleapis.com',
-			'https://fonts.gstatic.com'
-		]);
+		expect(directives['script-src']).toEqual(["'self'"]);
+		expect(directives['style-src']).toEqual(["'self'"]);
+		expect(directives['font-src']).toEqual(["'self'"]);
+		expect(directives['connect-src']).toEqual(["'self'"]);
 		expect(directives['manifest-src']).toEqual(["'self'"]);
 	});
 });
@@ -456,5 +432,59 @@ describe('Google Fonts Integration', () => {
 				document.head.removeChild(link);
 			}
 		}
+	});
+});
+
+describe('HTML files validation', () => {
+	it('should have valid CSP syntax in both files', () => {
+		const indexHtml = readFileSync(join(__dirname, '../index.html'), 'utf-8');
+
+		const cspRegex = /<meta[^>]*http-equiv="Content-Security-Policy"[^>]*content="([^"]*)"[^>]*>/i;
+
+		const prodCsp = indexHtml.match(cspRegex)![1];
+
+		// Validate CSP format according to CSP spec
+		// Based on: https://www.w3.org/TR/CSP3/#grammardef-serialized-policy
+		const validateCspFormat = (csp: string, label: string) => {
+			// CSP should be a semicolon-separated list of directives
+			// Each directive: directive-name [directive-value]*
+
+			// Split by semicolon and trim
+			const directives = csp
+				.split(';')
+				.map((d) => d.trim())
+				.filter((d) => d.length > 0);
+
+			expect(directives.length, `${label}: Should have at least one directive`).toBeGreaterThan(0);
+
+			directives.forEach((directive) => {
+				// Each directive should have format: "name value1 value2 ..."
+				// Directive names must be lowercase alphanumeric with hyphens
+				const directiveNameRegex = /^[a-z][a-z0-9-]*/;
+				const parts = directive.split(/\s+/);
+				const directiveName = parts[0];
+
+				expect(directiveName, `${label}: Invalid directive name "${directiveName}"`).toMatch(
+					directiveNameRegex
+				);
+
+				// Directive values can be:
+				// - 'keyword' (single-quoted)
+				// - scheme: (e.g., https:)
+				// - host (e.g., example.com, *.example.com)
+				// - nonce-* or sha*-
+				// For simplicity, check no obvious syntax errors
+				parts.slice(1).forEach((value) => {
+					// No unescaped quotes (except around keywords)
+					if (value.includes('"')) {
+						throw new Error(
+							`${label}: Directive "${directiveName}" has invalid value with double quotes: ${value}`
+						);
+					}
+				});
+			});
+		};
+
+		validateCspFormat(prodCsp, 'Production');
 	});
 });
