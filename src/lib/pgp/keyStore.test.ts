@@ -110,7 +110,7 @@ describe('KeyStore', () => {
 		await keyStore.addKey(key);
 		expect(keyStore.keys).toHaveLength(1);
 
-		keyStore.deleteKey(key.getFingerprint());
+		await keyStore.deleteKey(key.getFingerprint());
 		expect(keyStore.keys).toHaveLength(0);
 	});
 });

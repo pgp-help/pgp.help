@@ -1,12 +1,10 @@
 /// <reference types="vitest/globals" />
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import App from '../App.svelte';
-import { router } from '../lib/router.svelte.js';
 
 describe('Routing', () => {
 	beforeEach(() => {
 		// Reset router state before each test
-		router.raw.path = '/';
 		window.history.pushState({}, '', '/');
 	});
 
@@ -29,9 +27,7 @@ describe('Routing', () => {
 
 	it('navigates back to Home page when clicking PGP Help link', async () => {
 		// Start on Guide page
-		router.raw.path = '/Guide';
 		window.history.pushState({}, '', '/Guide');
-
 		render(App);
 
 		// Verify we are on Guide page

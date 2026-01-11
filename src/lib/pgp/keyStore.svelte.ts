@@ -7,15 +7,22 @@ import type { Key } from 'openpgp';
  */
 export class KeyStore {
 	keys = $state<Key[]>([]);
+	isLoaded = $state(false);
+	private loadPromise: Promise<void> | undefined;
+	private lastLoadedJson: string | null = null;
 
 	constructor() {
 		if (typeof window !== 'undefined') {
-			this.load();
+			this.loadPromise = this.load();
+		} else {
+			this.isLoaded = true;
 		}
 	}
 
 	private async load() {
 		const stored = localStorage.getItem('pgp-keys-simple');
+		if (this.isLoaded && stored === this.lastLoadedJson) return;
+
 		if (stored) {
 			try {
 				const rawKeys = JSON.parse(stored);
@@ -48,17 +55,28 @@ export class KeyStore {
 			} catch (e) {
 				console.error('Failed to load keys', e);
 			}
+		} else {
+			this.keys = [];
 		}
+		this.lastLoadedJson = stored;
+		this.isLoaded = true;
 	}
 
 	private save() {
+		if (!this.isLoaded) {
+			throw new Error('Cannot save before loading');
+		}
 		if (typeof window !== 'undefined') {
 			const rawKeys = this.keys.map((k) => k.armor());
-			localStorage.setItem('pgp-keys-simple', JSON.stringify(rawKeys));
+			const json = JSON.stringify(rawKeys);
+			localStorage.setItem('pgp-keys-simple', json);
+			this.lastLoadedJson = json;
 		}
 	}
 
 	async addKey(key: Key) {
+		await this.load();
+
 		const fingerprint = key.getFingerprint();
 		const isPrivate = key.isPrivate();
 
@@ -82,17 +100,22 @@ export class KeyStore {
 		this.save();
 	}
 
-	deleteKey(fingerprint: string) {
+	async deleteKey(fingerprint: string) {
+		await this.load();
 		this.keys = this.keys.filter((k) => k.getFingerprint() !== fingerprint);
 		this.save();
 	}
 
-	clear() {
+	async clear() {
+		await this.load();
 		this.keys = [];
 		this.save();
 	}
 
 	getKey(fingerprint: string, type?: 'public' | 'private') {
+		if (!this.isLoaded) {
+			throw new Error('KeyStore not loaded');
+		}
 		// TODO: This defaults to returning private key if type is not specified.
 		// We should make this more explicit!
 

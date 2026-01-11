@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import App from './App.svelte';
 import { keyStore } from './lib/pgp/keyStore.svelte';
 import { generateKeyPair } from './lib/pgp/pgp';
-import { router } from './lib/router.svelte';
 
 describe('Navigation', () => {
 	let key1: { privateKey: string; name: string };
@@ -77,14 +76,11 @@ describe('Navigation', () => {
 	});
 
 	it('handles ?key=... URL parameter', async () => {
-		// Set up URL with key parameter
+		// Simulate a user browsing to a URL with `?key=` parameter
 		const url = new URL(window.location.href);
 		url.searchParams.set('key', key1.privateKey);
-		window.history.replaceState({}, '', url.toString());
-
-		// Manually sync router state because replaceState doesn't trigger it
-		router.raw.path = url.pathname;
-		router.raw.search = url.search;
+		window.history.pushState({}, '', url.toString());
+		window.dispatchEvent(new PopStateEvent('popstate'));
 
 		render(App);
 
