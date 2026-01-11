@@ -10,14 +10,8 @@
 	import { keyStore } from './keyStore.svelte.js';
 	import { untrack } from 'svelte';
 
-	let { initialKey = '' } = $props<{
-		initialKey?: string;
-	}>();
-
 	// Derived state from router
-	let mode = $derived<PGPMode>(router.activeRoute.pgp.mode);
-	let fingerprint = $derived(router.activeRoute.pgp.fingerprint);
-	let keyParam = $derived(router.activeRoute.pgp.keyParam);
+	let mode = $state<PGPMode>(PGPMode.ENCRYPT);
 
 	// The parsed OpenPGP key object (null if invalid/empty)
 	let keyObject = $state<Key | null>(null);
@@ -33,15 +27,10 @@
 	// Any error message from the operation (e.g. decryption failure)
 	let error = $state('');
 
-	$effect(() => {
-		if (initialKey !== undefined && initialKey !== '') {
-			keyValue = initialKey;
-		}
-	});
-
 	// Sync keyValue from router state (fingerprint or keyParam)
 	$effect(() => {
 		const currentKeyValue = untrack(() => keyValue);
+		const { fingerprint, keyParam, mode: routerMode } = router.activeRoute.pgp;
 
 		if (fingerprint) {
 			// Can't handle fingerprint until store is loaded
@@ -54,12 +43,17 @@
 				console.warn('Fingerprint not found in store, navigating home:', fingerprint);
 				router.openHome();
 			} else {
-				const storedArmor = selectedKey.armor();
-				if (currentKeyValue !== storedArmor) {
-					keyValue = storedArmor;
-					keyObject = selectedKey;
-				} else if (keyObject?.getFingerprint() !== selectedKey.getFingerprint()) {
-					keyObject = selectedKey;
+				// const storedArmor = selectedKey.armor();
+				// if (currentKeyValue !== storedArmor) {
+				// 	keyValue = storedArmor;
+				// 	keyObject = selectedKey;
+				// } else if (keyObject?.getFingerprint() !== selectedKey.getFingerprint()) {
+				// 	keyObject = selectedKey;
+				// }
+				keyObject = selectedKey;
+				if (routerMode) {
+					mode = routerMode;
+					//TODO: Clear the queryparam!
 				}
 			}
 		} else if (keyParam) {
@@ -67,12 +61,8 @@
 				keyValue = keyParam;
 			}
 		} else {
-			// If we navigated to root, clear key
-			// Only clear if initialKey is not set (to avoid clearing on first load if passed via prop)
-			if (!initialKey && currentKeyValue !== '') {
-				keyValue = '';
-				keyObject = null;
-			}
+			keyValue = '';
+			keyObject = null;
 		}
 	});
 
@@ -82,27 +72,8 @@
 			const fp = keyObject.getFingerprint();
 
 			keyStore.addKey(keyObject).then(() => {
-				// If we are not already viewing this key (by fingerprint), navigate to it.
-				if (fingerprint !== fp) {
-					// Determine target mode
-					let targetMode = mode;
-					// Default to decrypt for private keys if not specified
-					if (keyObject.isPrivate() && !router.activeRoute.pgp.mode) {
-						targetMode = PGPMode.DECRYPT;
-					}
-					// Use untrack to avoid infinite loops
-					untrack(() => router.openKey(fp, targetMode));
-				}
+				router.openKey(fp);
 			});
-		}
-	});
-
-	// Update keyValue when keyObject changes (e.g. after decryption)
-	$effect(() => {
-		if (keyObject && keyObject.armor() !== keyValue) {
-			// Only update if the key object is actually different from what we have in text
-			// This happens when we decrypt a key, or when we select a key from the sidebar
-			keyValue = keyObject.armor();
 		}
 	});
 
@@ -124,14 +95,9 @@
 			// If current mode is not available, switch to first available mode
 			const newMode = availableModes[0] as PGPMode;
 			// Use untrack to avoid infinite loops if router.setMode triggers this effect again
-			untrack(() => router.setMode(newMode));
+			mode = newMode;
 		}
 	});
-
-	// Expose key state for parent to observe
-	export function getCurrentKey() {
-		return { keyObject, keyValue };
-	}
 
 	let prevKeyObject = null;
 	let prevMessage = '';
@@ -241,7 +207,7 @@
 								<button
 									type="button"
 									class="btn join-item {mode === availableMode ? 'btn-primary' : 'btn-outline'}"
-									onclick={() => router.setMode(availableMode)}
+									onclick={() => (mode = availableMode)}
 								>
 									{availableMode === PGPMode.ENCRYPT ? 'Encrypt' : 'Decrypt'}
 								</button>

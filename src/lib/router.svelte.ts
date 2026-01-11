@@ -97,6 +97,10 @@ class Router {
 		const keyParam = params.get('key');
 		const mode = (params.get('mode') as PGPMode) || PGPMode.ENCRYPT;
 
+		//Remove any query params, as they are now stored in the state and they confuse things.
+		//console.log('Router setting URL to', this.#raw.path);
+		window.history.replaceState({}, '', this.#raw.path);
+
 		return {
 			page,
 			pgp: {
