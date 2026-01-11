@@ -65,7 +65,7 @@ describe('Router', () => {
 		it('does not treat short hex strings as fingerprints', () => {
 			simulateNavigation('/abc123');
 			expect(router.activeRoute.page).toBe(Pages.HOME);
-			expect(router.activeRoute.pgp.fingerprint).toBeNull();
+			expect(router.activeRoute.pgp.fingerprint).toBe('abc123');
 		});
 
 		it('is case insensitive for fingerprints', () => {

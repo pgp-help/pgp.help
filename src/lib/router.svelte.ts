@@ -78,13 +78,12 @@ class Router {
 			page = Pages.HOME;
 		}
 		// Check for named pages
-		else if (lastSegment === 'Guide') {
-			page = Pages.GUIDE;
-		} else if (lastSegment === 'GenerateKey') {
-			page = Pages.GENERATE_KEY;
+		// Use Object.values to get all enum values and check if lastSegment matches any of them
+		else if (Object.values(Pages).includes(lastSegment as Pages)) {
+			page = lastSegment as Pages;
 		}
 		// Check for fingerprint (hex string, 16+ chars)
-		else if (lastSegment && /^[a-f0-9]{16,}$/i.test(lastSegment)) {
+		else if (lastSegment) {
 			fingerprint = lastSegment;
 			page = Pages.HOME; // Viewing a key on home page
 		}
