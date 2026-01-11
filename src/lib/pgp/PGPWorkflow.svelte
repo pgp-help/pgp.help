@@ -19,9 +19,6 @@
 	let fingerprint = $derived(router.activeRoute.pgp.fingerprint);
 	let keyParam = $derived(router.activeRoute.pgp.keyParam);
 
-	// Derived selected key from store
-	let selectedKey = $derived(fingerprint ? keyStore.getKey(fingerprint) : null);
-
 	// The parsed OpenPGP key object (null if invalid/empty)
 	let keyObject = $state<Key | null>(null);
 	// The raw armored key string (bound to the textarea/input)
@@ -46,14 +43,24 @@
 	$effect(() => {
 		const currentKeyValue = untrack(() => keyValue);
 
-		// This effect runs when fingerprint or keyParam changes
-		if (selectedKey) {
-			const storedArmor = selectedKey.armor();
-			if (currentKeyValue !== storedArmor) {
-				keyValue = storedArmor;
-				keyObject = selectedKey;
-			} else if (keyObject?.getFingerprint() !== selectedKey.getFingerprint()) {
-				keyObject = selectedKey;
+		if (fingerprint) {
+			// Can't handle fingerprint until store is loaded
+			// (when it is loaded, this effect will re-run)
+			if (!keyStore.isLoaded) return;
+			let selectedKey = keyStore.getKey(fingerprint);
+			if (!selectedKey) {
+				// If fingerprint not found, navigate back home
+				// NTH: Pop up a warning toast?
+				console.warn('Fingerprint not found in store, navigating home:', fingerprint);
+				router.openHome();
+			} else {
+				const storedArmor = selectedKey.armor();
+				if (currentKeyValue !== storedArmor) {
+					keyValue = storedArmor;
+					keyObject = selectedKey;
+				} else if (keyObject?.getFingerprint() !== selectedKey.getFingerprint()) {
+					keyObject = selectedKey;
+				}
 			}
 		} else if (keyParam) {
 			if (currentKeyValue !== keyParam) {
