@@ -3,8 +3,11 @@
 	import CopyIcon from './icons/CopyIcon.svelte';
 	import MarkdownIcon from './icons/MarkdownIcon.svelte';
 	import ShareIcon from './icons/ShareIcon.svelte';
+	import LinkIcon from './icons/LinkIcon.svelte';
 
 	let { value = '' } = $props();
+
+	let isPublicKey = $derived(value.includes('-----BEGIN PGP PUBLIC KEY BLOCK-----'));
 
 	async function copyToClipboard() {
 		try {
@@ -20,6 +23,16 @@
 			await navigator.clipboard.writeText(markdownValue);
 		} catch (err) {
 			console.error('Failed to copy text: ', err);
+		}
+	}
+
+	async function copyLink() {
+		const url = new URL(window.location.href);
+		url.searchParams.set('key', value);
+		try {
+			await navigator.clipboard.writeText(url.toString());
+		} catch (err) {
+			console.error('Failed to copy link: ', err);
 		}
 	}
 </script>
@@ -44,4 +57,11 @@
 			<MarkdownIcon />
 		</MiniActionButton>
 	</div>
+	{#if isPublicKey}
+		<div>
+			<MiniActionButton secondary label="Copy Link" feedback="Copied!" onclick={copyLink}>
+				<LinkIcon />
+			</MiniActionButton>
+		</div>
+	{/if}
 </div>

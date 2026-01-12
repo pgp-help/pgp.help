@@ -14,6 +14,7 @@
 		selectAllOnFocus = true,
 		fixed = false,
 		error = '',
+		rows = 8,
 		class: className = '',
 		buttons
 	} = $props<{
@@ -26,6 +27,7 @@
 		fixed?: boolean;
 		error?: string;
 		class?: string;
+		rows?: number;
 		buttons?: Snippet;
 	}>();
 
@@ -117,7 +119,7 @@
 		bind:this={textareaElement}
 		bind:value
 		{cols}
-		rows={8}
+		{rows}
 		readonly={readonly || fixed}
 		{placeholder}
 		class="textarea textarea-code w-full whitespace-nowrap {fixed
