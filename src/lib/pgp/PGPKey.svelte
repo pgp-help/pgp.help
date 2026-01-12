@@ -24,6 +24,8 @@
 	let decryptError = $state('');
 	let shaking = $state(false);
 
+	const KEY_PROPERTY_CLASS = 'text-xs font-mono opacity-70 flex items-start gap-1';
+
 	export function nudgeForDecryption() {
 		shaking = true;
 		decryptError = 'Please enter passphrase to unlock.';
@@ -69,21 +71,6 @@
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		if (date === (Infinity as any)) return 'Never';
 		return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-	}
-
-	function closeOnBlur(e: FocusEvent) {
-		// The element that lost focus (the collapse div)
-		const target = e.currentTarget as HTMLElement;
-
-		// Check if the new focused element (relatedTarget) is outside the collapse div.
-		// If relatedTarget is null, focus left the window/document.
-		// If relatedTarget is not contained within target, focus moved to another element on the page.
-		if (!e.relatedTarget || !target.contains(e.relatedTarget as Node)) {
-			// Find the checkbox that controls the collapse state
-			const checkbox = target.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
-			// Uncheck it to close the collapse
-			if (checkbox) checkbox.checked = false;
-		}
 	}
 
 	let properties = $derived.by(() => {
@@ -168,7 +155,7 @@
 
 			{#each properties as prop (prop.label)}
 				{#if !prop.hidden || showDetails}
-					<div class="text-xs font-mono opacity-70 flex items-start gap-1">
+					<div class={KEY_PROPERTY_CLASS}>
 						<div class="tooltip" data-tip={prop.tooltip}>
 							<span class="cursor-help">{prop.label}</span>:
 						</div>
@@ -184,14 +171,15 @@
 			{/if}
 
 			{#if showDetails}
-				<div class="mt-4 flex flex-col gap-2">
-					<div
-						class="collapse collapse-arrow border border-base-300 bg-base-100"
-						onfocusout={closeOnBlur}
-					>
-						<input type="checkbox" />
-						<div class="collapse-title text-xs font-medium">Show Public Key</div>
-						<div class="collapse-content">
+				<div class="mt-2">
+					<details class="mt-1">
+						<summary class={KEY_PROPERTY_CLASS}>
+							<span class="tooltip" data-tip="Click to show the full public key">
+								<span class="cursor-help">Public Key</span>:
+							</span>
+							<span class="opacity-60">[click to show]</span>
+						</summary>
+						<div class="mt-2 ml-0">
 							<CopyableTextarea
 								value={publicKey?.armor ? publicKey.armor() : ''}
 								class="text-xs"
@@ -199,31 +187,24 @@
 								buttons={publicKeyButtons}
 							/>
 						</div>
-					</div>
+					</details>
 
 					{#if key.isPrivate()}
-						<div
-							class="collapse collapse-arrow border border-base-300 bg-base-100"
-							onfocusout={closeOnBlur}
-						>
-							<input type="checkbox" />
-							<div class="collapse-title text-xs font-medium flex items-center gap-2">
-								Export Private Key
-								<div
-									class="tooltip tooltip-right text-warning"
-									data-tip="Warning: Never share your private key!"
-								>
-									<WarningIcon class="h-4 w-4" />
-								</div>
-							</div>
-							<div class="collapse-content">
+						<details class="text-xs font-mono mt-1">
+							<summary class={KEY_PROPERTY_CLASS}>
+								<span class="tooltip" data-tip="Warning: Never share your private key!">
+									<span class="cursor-help">Private Key</span>:
+								</span>
+								<span class="opacity-60">[click to export]</span>
+							</summary>
+							<div class="mt-2 ml-0">
 								<div class="alert alert-warning text-xs py-2 mb-2">
 									<WarningIcon class="h-4 w-4" />
 									<span>Warning: Never share your private key!</span>
 								</div>
 								<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
 							</div>
-						</div>
+						</details>
 					{/if}
 				</div>
 			{/if}
