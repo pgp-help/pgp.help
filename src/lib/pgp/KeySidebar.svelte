@@ -2,44 +2,61 @@
 	import { keyStore } from './keyStore.svelte.js';
 	import KeyListItem from './KeyListItem.svelte';
 	import { router, Pages } from '../router.svelte.js';
-	import { slide } from 'svelte/transition';
+	import { slide, fade } from 'svelte/transition';
 	import PlusIcon from '../ui/icons/PlusIcon.svelte';
 	import KeyIcon from '../ui/icons/KeyIcon.svelte';
 
 	let selectedFingerprint = $derived(router.activeRoute.pgp.fingerprint);
+	let isMobileMenuOpen = $state(false);
 
 	function handleSelectKey(fingerprint: string) {
 		router.openKey(fingerprint);
+		isMobileMenuOpen = false;
+	}
+
+	function toggleMobileMenu() {
+		isMobileMenuOpen = !isMobileMenuOpen;
 	}
 </script>
 
 <!-- Mobile FAB -->
-<div class="md:hidden fab">
-	<!-- a focusable div with tabindex is necessary to work on all browsers. role="button" is necessary for accessibility -->
-	<div tabindex="0" role="button" class="btn btn-lg btn-circle btn-primary">
-		<!-- Menu icon (keys) -->
-
-		<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				stroke-width="2"
-				d="M4 6h16M4 12h16M4 18h16"
-			/>
-		</svg>
-	</div>
-
-	<!-- close button should not be focusable so it can close the FAB when clicked. It's just a visual placeholder -->
-	<div class="fab-close">
-		Close <span class="btn btn-circle btn-lg btn-primary">✕</span>
-	</div>
-
-	<!-- Dim backdrop for mobile when menu is open -->
-	<div class="md:hidden fixed inset-0 bg-black/50 z-300" transition:slide={{ duration: 200 }}></div>
+<div class="md:hidden fixed bottom-6 right-6 z-50">
+	<button class="btn btn-lg btn-circle btn-primary" onclick={toggleMobileMenu}>
+		{#if isMobileMenuOpen}
+			<span class="text-xl">✕</span>
+		{:else}
+			<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M4 6h16M4 12h16M4 18h16"
+				/>
+			</svg>
+		{/if}
+	</button>
 </div>
 
+{#if isMobileMenuOpen}
+	<!-- Dim backdrop for mobile when menu is open -->
+	<div
+		class="md:hidden fixed inset-0 bg-black/50 z-30"
+		transition:fade={{ duration: 200 }}
+		onclick={toggleMobileMenu}
+		role="button"
+		tabindex="0"
+		onkeydown={(e) => {
+			if (e.key === 'Escape') toggleMobileMenu();
+		}}
+	></div>
+{/if}
+
 <!-- Sidebar -->
-<div class="hidden md:flex h-full flex flex-col bg-base-100 border-r border-base-300 w-64">
+<div
+	class="{isMobileMenuOpen
+		? 'fixed inset-y-0 left-0 z-40 flex'
+		: 'hidden'} md:flex md:static h-full flex-col bg-base-100 border-r border-base-300 w-64 transition-transform"
+>
 	<div class="p-4 border-b border-base-300 space-y-2">
 		<button
 			class="btn btn-primary w-full"
