@@ -111,6 +111,18 @@
 	});
 
 	let showDetails = $state(false);
+	let publicKeyOpen = $state(false);
+	let privateKeyOpen = $state(false);
+
+	function handleFocusOut(event: FocusEvent) {
+		const currentTarget = event.currentTarget as HTMLElement;
+		const relatedTarget = event.relatedTarget as Node | null;
+
+		if (!currentTarget.contains(relatedTarget)) {
+			publicKeyOpen = false;
+			privateKeyOpen = false;
+		}
+	}
 </script>
 
 {#snippet copyButtons()}
@@ -121,7 +133,10 @@
 	<PublicKeyButtons value={publicKey?.armor ? publicKey.armor() : key.armor()} />
 {/snippet}
 
-<div class="card bg-base-200 border selectable w-full max-w-full overflow-hidden">
+<div
+	class="card bg-base-200 border selectable w-full max-w-full overflow-hidden"
+	onfocusout={handleFocusOut}
+>
 	<div class="card-body p-3 sm:p-4">
 		<div>
 			<!-- to force card-body to treat this as a single item -->
@@ -172,12 +187,12 @@
 
 			{#if showDetails}
 				<div class="mt-2">
-					<details class="mt-1">
+					<details class="mt-1" bind:open={publicKeyOpen}>
 						<summary class={KEY_PROPERTY_CLASS}>
 							<span class="tooltip" data-tip="Click to show the full public key">
 								<span class="cursor-help">Public Key</span>:
 							</span>
-							<span class="opacity-60">[click to show]</span>
+							<span class="opacity-60 cursor-pointer">[click to show]</span>
 						</summary>
 						<div class="mt-2 ml-0">
 							<CopyableTextarea
@@ -190,12 +205,12 @@
 					</details>
 
 					{#if key.isPrivate()}
-						<details class="text-xs font-mono mt-1">
+						<details class="mt-1" bind:open={privateKeyOpen}>
 							<summary class={KEY_PROPERTY_CLASS}>
 								<span class="tooltip" data-tip="Warning: Never share your private key!">
 									<span class="cursor-help">Private Key</span>:
 								</span>
-								<span class="opacity-60">[click to export]</span>
+								<span class="opacity-60 cursor-pointer">[click to export]</span>
 							</summary>
 							<div class="mt-2 ml-0">
 								<div class="alert alert-warning text-xs py-2 mb-2">
