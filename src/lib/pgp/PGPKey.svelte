@@ -177,6 +177,57 @@
 				{/if}
 			{/each}
 
+			{#if key.getUserIDs().length > 1 && showDetails}
+				<div class="mt-2 text-xs opacity-60">
+					+{key.getUserIDs().length - 1} other ID(s)
+				</div>
+			{/if}
+
+			{#if showDetails}
+				<div class="mt-4 flex flex-col gap-2">
+					<div
+						class="collapse collapse-arrow border border-base-300 bg-base-100"
+						onfocusout={closeOnBlur}
+					>
+						<input type="checkbox" />
+						<div class="collapse-title text-xs font-medium">Show Public Key</div>
+						<div class="collapse-content">
+							<CopyableTextarea
+								value={publicKey?.armor ? publicKey.armor() : ''}
+								class="text-xs"
+								fixed
+								buttons={publicKeyButtons}
+							/>
+						</div>
+					</div>
+
+					{#if key.isPrivate()}
+						<div
+							class="collapse collapse-arrow border border-base-300 bg-base-100"
+							onfocusout={closeOnBlur}
+						>
+							<input type="checkbox" />
+							<div class="collapse-title text-xs font-medium flex items-center gap-2">
+								Export Private Key
+								<div
+									class="tooltip tooltip-right text-warning"
+									data-tip="Warning: Never share your private key!"
+								>
+									<WarningIcon class="h-4 w-4" />
+								</div>
+							</div>
+							<div class="collapse-content">
+								<div class="alert alert-warning text-xs py-2 mb-2">
+									<WarningIcon class="h-4 w-4" />
+									<span>Warning: Never share your private key!</span>
+								</div>
+								<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
+							</div>
+						</div>
+					{/if}
+				</div>
+			{/if}
+
 			{#if !showDetails}
 				<button
 					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
@@ -191,12 +242,6 @@
 				>
 					Show less details
 				</button>
-			{/if}
-
-			{#if key.getUserIDs().length > 1 && showDetails}
-				<div class="mt-2 text-xs opacity-60">
-					+{key.getUserIDs().length - 1} other ID(s)
-				</div>
 			{/if}
 
 			{#if key.isPrivate() && !key.isDecrypted()}
@@ -237,50 +282,7 @@
 						<div class="text-error text-xs mt-1">{decryptError}</div>
 					{/if}
 				</div>
-				<div class="divider my-2"></div>
 			{/if}
-			<div class="mt-4 flex flex-col gap-2">
-				<div
-					class="collapse collapse-arrow border border-base-300 bg-base-100"
-					onfocusout={closeOnBlur}
-				>
-					<input type="checkbox" />
-					<div class="collapse-title text-xs font-medium">Show Public Key</div>
-					<div class="collapse-content">
-						<CopyableTextarea
-							value={publicKey?.armor ? publicKey.armor() : ''}
-							class="text-xs"
-							fixed
-							buttons={publicKeyButtons}
-						/>
-					</div>
-				</div>
-
-				{#if key.isPrivate()}
-					<div
-						class="collapse collapse-arrow border border-base-300 bg-base-100"
-						onfocusout={closeOnBlur}
-					>
-						<input type="checkbox" />
-						<div class="collapse-title text-xs font-medium flex items-center gap-2">
-							Export Private Key
-							<div
-								class="tooltip tooltip-right text-warning"
-								data-tip="Warning: Never share your private key!"
-							>
-								<WarningIcon class="h-4 w-4" />
-							</div>
-						</div>
-						<div class="collapse-content">
-							<div class="alert alert-warning text-xs py-2 mb-2">
-								<WarningIcon class="h-4 w-4" />
-								<span>Warning: Never share your private key!</span>
-							</div>
-							<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
-						</div>
-					</div>
-				{/if}
-			</div>
 		</div>
 	</div>
 </div>

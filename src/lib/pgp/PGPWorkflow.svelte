@@ -200,30 +200,22 @@
 			</fieldset>
 
 			{#if availableModes.length > 1}
-				<div class="divider"></div>
-				<fieldset class="fieldset">
-					<legend class="fieldset-legend">Mode</legend>
-					<div class="form-control">
-						<div class="join w-full">
-							{#each availableModes as availableMode (availableMode)}
-								<button
-									type="button"
-									class="btn join-item flex-1 {mode === availableMode
-										? 'btn-primary'
-										: 'btn-outline'}"
-									onclick={() => {
-										mode = availableMode;
-									}}
-								>
-									{availableMode.charAt(0).toUpperCase() + availableMode.slice(1)}
-								</button>
-							{/each}
-						</div>
-					</div>
-				</fieldset>
+				<div class="join w-full">
+					{#each availableModes as availableMode (availableMode)}
+						<button
+							type="button"
+							class="btn btn-sm join-item flex-1 {mode === availableMode
+								? 'btn-primary'
+								: 'btn-outline'}"
+							onclick={() => {
+								mode = availableMode;
+							}}
+						>
+							{availableMode.charAt(0).toUpperCase() + availableMode.slice(1)}
+						</button>
+					{/each}
+				</div>
 			{/if}
-
-			<div class="divider"></div>
 
 			{#if mode === PGPMode.ENCRYPT}
 				<fieldset class="fieldset">
