@@ -34,7 +34,7 @@ describe('App', () => {
 		// Check Header
 		expect(screen.getByRole('link', { name: 'pgp.help' })).toBeInTheDocument();
 		expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
-		expect(screen.getByLabelText(/Encrypted Message/i)).toBeInTheDocument();
+		expect(screen.getByLabelText(/Encrypted Output/i)).toBeInTheDocument();
 	});
 
 	it('encrypts message with valid key', async () => {
@@ -43,7 +43,7 @@ describe('App', () => {
 
 		const keyTextarea = screen.getByLabelText(/Public Key/i);
 		const messageTextarea = screen.getByLabelText(/^Message/i);
-		const outputTextarea = screen.getByLabelText(/Encrypted Message/i);
+		const outputTextarea = screen.getByLabelText(/Encrypted Output/i);
 
 		// Use fireEvent for the key to simulate a paste/instant update
 		await fireEvent.input(keyTextarea, { target: { value: validPublicKey } });
@@ -103,7 +103,7 @@ describe('App', () => {
 
 		// Now input the encrypted message
 		const messageTextarea = screen.getByLabelText(/Encrypted Message/i);
-		const outputTextarea = screen.getByLabelText(/Decrypted Message/i);
+		const outputTextarea = screen.getByLabelText(/Decrypted Output/i);
 
 		await fireEvent.input(messageTextarea, { target: { value: encrypted } });
 

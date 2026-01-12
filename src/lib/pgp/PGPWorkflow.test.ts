@@ -36,7 +36,7 @@ describe('PGPWorkflow', () => {
 
 		const keyTextarea = screen.getByLabelText(/Public Key/i);
 		const messageTextarea = screen.getByLabelText(/^Message/i);
-		const outputTextarea = screen.getByLabelText(/Encrypted Message/i);
+		const outputTextarea = screen.getByLabelText(/Encrypted Output/i);
 
 		await fireEvent.input(keyTextarea, { target: { value: validPublicKey } });
 
@@ -88,7 +88,7 @@ describe('PGPWorkflow', () => {
 		await user.click(decryptButton);
 
 		const messageTextarea = screen.getByLabelText(/Encrypted Message/i);
-		const outputTextarea = screen.getByLabelText(/Decrypted Message/i);
+		const outputTextarea = screen.getByLabelText(/Decrypted Output/i);
 
 		await fireEvent.input(messageTextarea, { target: { value: encrypted } });
 
@@ -120,21 +120,21 @@ describe('PGPWorkflow', () => {
 
 		// Default is Encrypt
 		expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
-		expect(screen.getByLabelText(/Encrypted Message/i)).toBeInTheDocument();
+		expect(screen.getByLabelText(/Encrypted Output/i)).toBeInTheDocument();
 
 		// Switch to Decrypt
 		const decryptButton = screen.getByRole('button', { name: /Decrypt/i });
 		await user.click(decryptButton);
 
 		expect(screen.getByLabelText(/Encrypted Message/i)).toBeInTheDocument();
-		expect(screen.getByLabelText(/Decrypted Message/i)).toBeInTheDocument();
+		expect(screen.getByLabelText(/Decrypted Output/i)).toBeInTheDocument();
 
 		// Switch back to Encrypt
 		const encryptButton = screen.getByRole('button', { name: /Encrypt/i });
 		await user.click(encryptButton);
 
 		expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
-		expect(screen.getByLabelText(/Encrypted Message/i)).toBeInTheDocument();
+		expect(screen.getByLabelText(/Encrypted Output/i)).toBeInTheDocument();
 	});
 
 	it('automatically switches to decrypt mode when pasting encrypted message', async () => {
@@ -172,11 +172,11 @@ describe('PGPWorkflow', () => {
 		// In Decrypt mode, the input label becomes "Encrypted Message" and output "Decrypted Message"
 
 		await waitFor(() => {
-			expect(screen.getByLabelText(/Decrypted Message/i)).toBeInTheDocument();
+			expect(screen.getByLabelText(/Decrypted Output/i)).toBeInTheDocument();
 		});
 
 		// And it should decrypt
-		const outputTextarea = screen.getByLabelText(/Decrypted Message/i);
+		const outputTextarea = screen.getByLabelText(/Decrypted Output/i);
 		await waitFor(() => {
 			expect(outputTextarea).toHaveValue(secretMessage);
 		});
@@ -200,27 +200,35 @@ ULngoExa449ozHYCiJwbyVvXJWLgSamPDL+yGxunifP7uOyPa0wOGL5c4Ny6
 El/w
 =vbML
 -----END PGP MESSAGE-----`;
-		// Ensure we are in Encrypt mode
 		const messageTextarea = within(mainArea).getByLabelText(/^Message/i);
+
+		// Pasting a ciphertext should switch to Decrypt mode:
 		await fireEvent.input(messageTextarea, { target: { value: encrypted } });
 
 		await waitFor(() => {
 			expect(screen.getByLabelText(/Decrypted Output/i)).toBeInTheDocument();
 		});
 
-		// Find the "Encrypt" button to switch back to Encrypt mode
-		const encryptButton = within(mainArea).getByRole('button', { name: /Encrypt/i });
-		await user.click(encryptButton);
-		await waitFor(() => {
-			expect(within(mainArea).getByLabelText(/Encrypted Message/i)).toBeInTheDocument();
-		});
-
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-
 		// Check that there's an error because the key is unlocked.
-		const textarea = within(mainArea).getByRole('textbox', { name: /encrypted message/i });
+		const textarea = within(mainArea).getByRole('textbox', { name: /Encrypted Message/i });
 		screen.debug(textarea);
 		expect(textarea).toHaveAttribute('aria-invalid', 'true');
 		expect(textarea).toHaveAccessibleDescription(/Unlock the private key to proceed./i);
+
+		// Now unlock the key:
+		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
+		const unlockButton = screen.getByRole('button', { name: /Unlock/i });
+		await user.type(passwordInput, passphrase);
+		await user.click(unlockButton);
+		await screen.findByText((content, element) => {
+			return element?.tagName.toLowerCase() === 'span' && content.includes('Unlocked');
+		});
+
+		// The error should go away after unlocking
+		await waitFor(() => {
+			// PGP errors are cryptic to say the least. "No decryption key packets found" is their way of saying
+			// you have the wrong key. Whatever, just look for the basic error:
+			expect(textarea).toHaveAccessibleDescription(/Error decrypting message/);
+		});
 	});
 });
