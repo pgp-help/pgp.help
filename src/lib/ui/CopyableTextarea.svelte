@@ -13,8 +13,6 @@
 		id = '',
 		selectAllOnFocus = true,
 		fixed = false,
-		nowrap = false,
-		rows = 5,
 		error = '',
 		class: className = '',
 		buttons
@@ -26,8 +24,6 @@
 		id?: string;
 		selectAllOnFocus?: boolean;
 		fixed?: boolean;
-		nowrap?: boolean;
-		rows?: number;
 		error?: string;
 		class?: string;
 		buttons?: Snippet;
@@ -121,11 +117,11 @@
 		bind:this={textareaElement}
 		bind:value
 		{cols}
-		{rows}
+		rows={8}
 		readonly={readonly || fixed}
 		{placeholder}
-		class="textarea textarea-code w-full {fixed ? 'resize-none' : ''} {nowrap
-			? 'whitespace-nowrap'
+		class="textarea textarea-code w-full whitespace-nowrap {fixed
+			? 'resize-none'
 			: ''} {className} {error ? 'textarea-error' : ''}"
 		style={fixed ? 'height: auto; overflow-y: hidden;' : ''}
 		aria-label={label}

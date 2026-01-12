@@ -234,7 +234,6 @@
 						label="Message"
 						selectAllOnFocus={false}
 						{error}
-						rows={8}
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>
@@ -243,10 +242,8 @@
 					<CopyableTextarea
 						value={output}
 						readonly={true}
-						nowrap={true}
 						placeholder="Encrypted output will appear here..."
 						label="Encrypted Output"
-						rows={8}
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>
@@ -259,7 +256,6 @@
 						label="Encrypted Message"
 						selectAllOnFocus={false}
 						{error}
-						rows={8}
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>
@@ -270,7 +266,6 @@
 						readonly={true}
 						placeholder="Decrypted output will appear here..."
 						label="Decrypted Output"
-						rows={8}
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>

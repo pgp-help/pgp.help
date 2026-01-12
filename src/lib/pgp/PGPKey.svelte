@@ -251,7 +251,6 @@
 							value={publicKey?.armor ? publicKey.armor() : ''}
 							class="text-xs"
 							fixed
-							nowrap={true}
 							buttons={publicKeyButtons}
 						/>
 					</div>
@@ -277,13 +276,7 @@
 								<WarningIcon class="h-4 w-4" />
 								<span>Warning: Never share your private key!</span>
 							</div>
-							<CopyableTextarea
-								value={key.armor()}
-								class="text-xs"
-								fixed
-								nowrap={true}
-								buttons={copyButtons}
-							/>
+							<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
 						</div>
 					</div>
 				{/if}

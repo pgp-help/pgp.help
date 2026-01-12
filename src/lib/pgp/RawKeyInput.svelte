@@ -63,7 +63,6 @@
 	{placeholder}
 	readonly={false}
 	selectAllOnFocus={false}
-	nowrap={true}
 	{error}
 	{buttons}
 />
