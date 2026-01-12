@@ -40,11 +40,12 @@
 	// Sync keyValue from router state (fingerprint or keyParam)
 	$effect(() => {
 		const { fingerprint, keyParam, mode: routerMode } = router.activeRoute.pgp;
+		const keyStoreIsLoaded = keyStore.isLoaded;
 
 		if (fingerprint) {
 			// Can't handle fingerprint until store is loaded
 			// (when it is loaded, this effect will re-run)
-			if (!keyStore.isLoaded) return;
+			if (!keyStoreIsLoaded) return;
 			let selectedKey = keyStore.getKey(fingerprint);
 			if (!selectedKey) {
 				// If fingerprint not found, navigate back home
@@ -92,8 +93,10 @@
 		// Wrap async logic in a non-async function to comply with $effect requirements.
 		// $effect callbacks must return void or a cleanup function, not a Promise.
 		const currentMode = untrack(() => mode);
+		const currentMessage = message;
+
 		if (keyObject?.isPrivate() && currentMode !== PGPMode.DECRYPT) {
-			console.log('Checking armor type for mode auto-switch...', message.substring(0, 30));
+			//console.log('Checking armor type for mode auto-switch...', message.substring(0, 30));
 			// Fire off the async check without awaiting at the effect level
 			// getArmorType(message).then((armorType) => {
 			// 	console.log('Armor type check for mode auto-switch:', armorType);
@@ -102,17 +105,10 @@
 			// 		output = '';
 			// 	}
 			// });
-			if (message.startsWith('-----BEGIN PGP MESSAGE-----')) {
-				console.log('Auto-switching to DECRYPT mode based on armor type.');
+			if (currentMessage.trim().startsWith('-----BEGIN PGP MESSAGE-----')) {
 				mode = PGPMode.DECRYPT;
 				output = '';
 			}
-		} else {
-			console.log(
-				'No armor type check needed for mode auto-switch.',
-				keyObject?.isPrivate(),
-				currentMode
-			);
 		}
 	});
 
@@ -212,7 +208,9 @@
 								<button
 									type="button"
 									class="btn join-item {mode === availableMode ? 'btn-primary' : 'btn-outline'}"
-									onclick={() => (mode = availableMode)}
+									onclick={() => {
+										mode = availableMode;
+									}}
 								>
 									{availableMode.charAt(0).toUpperCase() + availableMode.slice(1)}
 								</button>
@@ -237,12 +235,12 @@
 					/>
 				</fieldset>
 				<fieldset class="fieldset">
-					<legend class="fieldset-legend">Encrypted Message</legend>
+					<legend class="fieldset-legend">Encrypted Output</legend>
 					<CopyableTextarea
 						value={output}
 						readonly={true}
 						placeholder="Encrypted output will appear here..."
-						label="Encrypted Message"
+						label="Encrypted Output"
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>
@@ -259,12 +257,12 @@
 					/>
 				</fieldset>
 				<fieldset class="fieldset">
-					<legend class="fieldset-legend">Decrypted Message</legend>
+					<legend class="fieldset-legend">Decrypted Output</legend>
 					<CopyableTextarea
 						value={output}
 						readonly={true}
 						placeholder="Decrypted output will appear here..."
-						label="Decrypted Message"
+						label="Decrypted Output"
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>

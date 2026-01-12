@@ -30,6 +30,8 @@
 		buttons?: Snippet;
 	}>();
 
+	let errorId = $derived(error ? `${id || 'textarea'}-error` : undefined);
+
 	let textareaElement = $state<HTMLTextAreaElement>();
 	let resizeObserver: ResizeObserver;
 
@@ -115,13 +117,15 @@
 			: ''}"
 		style={fixed ? 'height: auto; overflow-y: hidden;' : ''}
 		aria-label={label}
+		aria-invalid={error ? 'true' : undefined}
+		aria-describedby={errorId}
 		onfocus={handleFocus}
 		onmousedown={handleMouseDown}
 		onmouseup={handleMouseUp}
 	></textarea>
 	{#if error}
 		<div class="label">
-			<span class="label-text-alt text-error">{error}</span>
+			<span id={errorId} class="label-text-alt text-error">{error}</span>
 		</div>
 	{/if}
 	{#if buttons && value}
