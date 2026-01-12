@@ -3,7 +3,6 @@
 	// It also includes logic to auto-select all text when the textarea is focused,
 	// making it easier for users to copy the content manually if needed.
 
-	import { onMount, onDestroy } from 'svelte';
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -33,32 +32,40 @@
 	let errorId = $derived(error ? `${id || 'textarea'}-error` : undefined);
 
 	let textareaElement = $state<HTMLTextAreaElement>();
-	let resizeObserver: ResizeObserver;
 
 	let cols = $derived(
 		fixed && value ? Math.max(...value.split('\n').map((l) => l.length)) + 0 : undefined
 	);
 
-	onMount(() => {
-		if (fixed && textareaElement) {
-			// Need to find the right hook to calculate the size after Svelte has rendered the value
-			// Feel this is overkill, but at least it works.
-			// I'm told that `field-sizing: content` would be ideal here, but it's not widely supported yet.
-			resizeObserver = new ResizeObserver(() => {
-				adjustHeight();
-			});
-			resizeObserver.observe(textareaElement);
-		}
+	$effect(() => {
+		// Watch for visibility changes:
+		if (!fixed || !textareaElement) return;
+
+		const observer = new ResizeObserver(() => {
+			// Fires when:
+			// - Value changes (content grows)
+			// - Collapse opens (element becomes visible)
+			// - Window resizes
+			adjustHeight();
+		});
+
+		observer.observe(textareaElement);
+		return () => observer.disconnect();
 	});
 
-	onDestroy(() => {
-		if (resizeObserver) {
-			resizeObserver.disconnect();
-		}
+	$effect(() => {
+		// Adjust height when value changes:
+		if (!fixed || !textareaElement) return;
+		if (value === undefined) return;
+		adjustHeight();
 	});
 
 	function adjustHeight() {
-		if (!textareaElement) return;
+		if (!textareaElement) return; //defensive
+
+		// Skip if element or any ancestor has display: none
+		if (textareaElement.offsetParent === null) return;
+
 		textareaElement.style.height = 'auto';
 		textareaElement.style.height = textareaElement.scrollHeight + 'px';
 	}

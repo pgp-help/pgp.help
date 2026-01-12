@@ -185,6 +185,7 @@
 					{/if}
 				</legend>
 				{#if keyObject}
+					<!-- force remount when key changes so the textfields size correctly -->
 					<PGPKey bind:this={pgpKeyComponent} bind:key={keyObject} />
 				{:else}
 					<RawKeyInput
