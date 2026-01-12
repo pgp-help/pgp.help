@@ -34,6 +34,7 @@
 		{#each keyStore.keys as key (key.getFingerprint())}
 			<div class="flex flex-col" transition:slide={{ duration: 200 }}>
 				<div
+					class="group"
 					role="link"
 					tabindex="0"
 					onclick={() => handleSelectKey(key.getFingerprint())}
