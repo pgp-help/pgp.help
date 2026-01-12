@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { keyStore } from './keyStore.svelte.js';
-	import MiniActionButton from '../ui/MiniActionButton.svelte';
 	import TrashIcon from '../ui/icons/TrashIcon.svelte';
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
 	import type { Key } from 'openpgp';
@@ -55,9 +54,15 @@
 		{/if}
 	</div>
 
-	<MiniActionButton label="Delete key" onclick={handleDelete} feedback="Delete key">
+	<button
+		type="button"
+		class="btn-mini opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+		onclick={handleDelete}
+		aria-label="Delete key"
+		title="Delete key"
+	>
 		<TrashIcon />
-	</MiniActionButton>
+	</button>
 </div>
 
 <dialog bind:this={dialog} class="modal" onclick={(e) => e.stopPropagation()}>

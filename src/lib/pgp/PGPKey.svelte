@@ -24,6 +24,8 @@
 	let decryptError = $state('');
 	let shaking = $state(false);
 
+	const KEY_PROPERTY_CLASS = 'text-xs font-mono opacity-70 flex items-start gap-1';
+
 	export function nudgeForDecryption() {
 		shaking = true;
 		decryptError = 'Please enter passphrase to unlock.';
@@ -71,21 +73,6 @@
 		return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 	}
 
-	function closeOnBlur(e: FocusEvent) {
-		// The element that lost focus (the collapse div)
-		const target = e.currentTarget as HTMLElement;
-
-		// Check if the new focused element (relatedTarget) is outside the collapse div.
-		// If relatedTarget is null, focus left the window/document.
-		// If relatedTarget is not contained within target, focus moved to another element on the page.
-		if (!e.relatedTarget || !target.contains(e.relatedTarget as Node)) {
-			// Find the checkbox that controls the collapse state
-			const checkbox = target.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
-			// Uncheck it to close the collapse
-			if (checkbox) checkbox.checked = false;
-		}
-	}
-
 	let properties = $derived.by(() => {
 		if (!key) return [];
 
@@ -105,20 +92,37 @@
 			{
 				label: 'FP',
 				value: key.getFingerprint(),
-				tooltip: 'The full unique fingerprint of the key'
+				tooltip: 'The full unique fingerprint of the key',
+				hidden: true
 			},
 			{
 				label: 'Created',
 				value: validity,
-				tooltip: 'Key creation and expiration dates'
+				tooltip: 'Key creation and expiration dates',
+				hidden: true
 			},
 			{
 				label: 'Type',
 				value: `${key.getAlgorithmInfo().algorithm.toUpperCase()} ${key.getAlgorithmInfo().bits ? `(${key.getAlgorithmInfo().bits} bit)` : ''}`,
-				tooltip: 'The cryptographic algorithm and key size'
+				tooltip: 'The cryptographic algorithm and key size',
+				hidden: true
 			}
 		];
 	});
+
+	let showDetails = $state(false);
+	let publicKeyOpen = $state(false);
+	let privateKeyOpen = $state(false);
+
+	function handleFocusOut(event: FocusEvent) {
+		const currentTarget = event.currentTarget as HTMLElement;
+		const relatedTarget = event.relatedTarget as Node | null;
+
+		if (!currentTarget.contains(relatedTarget)) {
+			publicKeyOpen = false;
+			privateKeyOpen = false;
+		}
+	}
 </script>
 
 {#snippet copyButtons()}
@@ -129,49 +133,111 @@
 	<PublicKeyButtons value={publicKey?.armor ? publicKey.armor() : key.armor()} />
 {/snippet}
 
-<div class="card bg-base-200 border selectable">
-	<div class="card-body">
+<div
+	class="card bg-base-200 border selectable w-full max-w-full overflow-hidden"
+	onfocusout={handleFocusOut}
+>
+	<div class="card-body p-3 sm:p-4">
 		<div>
 			<!-- to force card-body to treat this as a single item -->
-			<div class="flex items-center gap-2 mb-1">
-				<h4 class="font-bold text-lg">{key.getUserIDs()[0] || 'Unknown User'}</h4>
-				<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
-					{key.isPrivate() ? 'Private Key' : 'Public Key'}
-				</span>
-				{#if key.isPrivate()}
-					{#if key.isDecrypted()}
-						<span class="badge badge-success badge-sm">Unlocked</span>
-						<button
-							type="button"
-							class="btn btn-xs btn-ghost btn-circle"
-							onclick={(e) => {
-								e.preventDefault();
-								lockKey();
-							}}
-							aria-label="Lock key"
-							title="Lock key"
-						>
-							<LockIcon class="h-3 w-3" />
-						</button>
-					{:else}
-						<span class="badge badge-warning badge-sm">Locked</span>
+			<div class="flex flex-wrap items-center gap-2 mb-1">
+				<h4 class="font-bold text-lg break-all">{key.getUserIDs()[0] || 'Unknown User'}</h4>
+				<div class="flex gap-1 shrink-0">
+					<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
+						{key.isPrivate() ? 'Private' : 'Public'}
+					</span>
+					{#if key.isPrivate()}
+						{#if key.isDecrypted()}
+							<span class="badge badge-success badge-sm">Unlocked</span>
+							<button
+								type="button"
+								class="btn btn-xs btn-ghost btn-circle"
+								onclick={(e) => {
+									e.preventDefault();
+									lockKey();
+								}}
+								aria-label="Lock key"
+								title="Lock key"
+							>
+								<LockIcon class="h-3 w-3" />
+							</button>
+						{:else}
+							<span class="badge badge-warning badge-sm">Locked</span>
+						{/if}
 					{/if}
-				{/if}
+				</div>
 			</div>
 
 			{#each properties as prop (prop.label)}
-				<div class="text-xs font-mono opacity-70 flex items-start gap-1">
-					<div class="tooltip" data-tip={prop.tooltip}>
-						<span class="cursor-help">{prop.label}</span>:
+				{#if !prop.hidden || showDetails}
+					<div class={KEY_PROPERTY_CLASS}>
+						<div class="tooltip" data-tip={prop.tooltip}>
+							<span class="cursor-help">{prop.label}</span>:
+						</div>
+						<span class="break-all">{prop.value}</span>
 					</div>
-					<span class="break-all">{prop.value}</span>
-				</div>
+				{/if}
 			{/each}
 
-			{#if key.getUserIDs().length > 1}
+			{#if key.getUserIDs().length > 1 && showDetails}
 				<div class="mt-2 text-xs opacity-60">
 					+{key.getUserIDs().length - 1} other ID(s)
 				</div>
+			{/if}
+
+			{#if showDetails}
+				<div class="mt-2">
+					<details class="mt-1" bind:open={publicKeyOpen}>
+						<summary class={KEY_PROPERTY_CLASS}>
+							<span class="tooltip" data-tip="Click to show the full public key">
+								<span class="cursor-help">Public Key</span>:
+							</span>
+							<span class="opacity-60 cursor-pointer">[click to show]</span>
+						</summary>
+						<div class="mt-2 ml-0">
+							<CopyableTextarea
+								value={publicKey?.armor ? publicKey.armor() : ''}
+								class="text-xs"
+								fixed
+								buttons={publicKeyButtons}
+							/>
+						</div>
+					</details>
+
+					{#if key.isPrivate()}
+						<details class="mt-1" bind:open={privateKeyOpen}>
+							<summary class={KEY_PROPERTY_CLASS}>
+								<span class="tooltip" data-tip="Warning: Never share your private key!">
+									<span class="cursor-help">Private Key</span>:
+								</span>
+								<span class="opacity-60 cursor-pointer">[click to export]</span>
+							</summary>
+							<div class="mt-2 ml-0">
+								<div class="alert alert-warning text-xs py-2 mb-2">
+									<WarningIcon class="h-4 w-4" />
+									<span>Warning: Never share your private key!</span>
+								</div>
+								<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
+							</div>
+						</details>
+					{/if}
+				</div>
+			{/if}
+
+			{#if !showDetails}
+				<button
+					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
+					onclick={() => (showDetails = true)}
+				>
+					Show more details...
+				</button>
+			{:else}
+				<button
+					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
+					onclick={() => (showDetails = false)}
+				>
+					Show less details
+				</button>
 			{/if}
 
 			{#if key.isPrivate() && !key.isDecrypted()}
@@ -212,50 +278,7 @@
 						<div class="text-error text-xs mt-1">{decryptError}</div>
 					{/if}
 				</div>
-				<div class="divider my-2"></div>
 			{/if}
-			<div class="mt-4 flex flex-col gap-2">
-				<div
-					class="collapse collapse-arrow border border-base-300 bg-base-100"
-					onfocusout={closeOnBlur}
-				>
-					<input type="checkbox" />
-					<div class="collapse-title text-xs font-medium">Show Public Key</div>
-					<div class="collapse-content">
-						<CopyableTextarea
-							value={publicKey?.armor ? publicKey.armor() : ''}
-							class="text-xs"
-							fixed
-							buttons={publicKeyButtons}
-						/>
-					</div>
-				</div>
-
-				{#if key.isPrivate()}
-					<div
-						class="collapse collapse-arrow border border-base-300 bg-base-100"
-						onfocusout={closeOnBlur}
-					>
-						<input type="checkbox" />
-						<div class="collapse-title text-xs font-medium flex items-center gap-2">
-							Export Private Key
-							<div
-								class="tooltip tooltip-right text-warning"
-								data-tip="Warning: Never share your private key!"
-							>
-								<WarningIcon class="h-4 w-4" />
-							</div>
-						</div>
-						<div class="collapse-content">
-							<div class="alert alert-warning text-xs py-2 mb-2">
-								<WarningIcon class="h-4 w-4" />
-								<span>Warning: Never share your private key!</span>
-							</div>
-							<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
-						</div>
-					</div>
-				{/if}
-			</div>
 		</div>
 	</div>
 </div>

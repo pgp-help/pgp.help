@@ -130,6 +130,11 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		});
 
 		expect(getByText('23fd9f3e9b067569')).toBeTruthy();
+
+		// Click show details to reveal hidden fields
+		const showDetailsBtn = getByText('Show more details...');
+		await fireEvent.click(showDetailsBtn);
+
 		expect(getByText('1dfa77312bac1781f699e78223fd9f3e9b067569')).toBeTruthy();
 		expect(getByText('Public Key')).toBeTruthy();
 		expect(getByText('RSAENCRYPTSIGN (2048 bit)')).toBeTruthy();
@@ -184,6 +189,10 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 				key: testPrivateKey
 			}
 		});
+
+		// Click show details to reveal hidden fields
+		const showDetailsBtn = getByText('Show more details...');
+		await fireEvent.click(showDetailsBtn);
 
 		await waitFor(() => {
 			expect(getByText('Private Key')).toBeTruthy();

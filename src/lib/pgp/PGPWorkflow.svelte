@@ -200,28 +200,22 @@
 			</fieldset>
 
 			{#if availableModes.length > 1}
-				<div class="divider"></div>
-				<fieldset class="fieldset">
-					<legend class="fieldset-legend">Mode</legend>
-					<div class="form-control">
-						<div class="join">
-							{#each availableModes as availableMode (availableMode)}
-								<button
-									type="button"
-									class="btn join-item {mode === availableMode ? 'btn-primary' : 'btn-outline'}"
-									onclick={() => {
-										mode = availableMode;
-									}}
-								>
-									{availableMode.charAt(0).toUpperCase() + availableMode.slice(1)}
-								</button>
-							{/each}
-						</div>
-					</div>
-				</fieldset>
+				<div class="join w-full">
+					{#each availableModes as availableMode (availableMode)}
+						<button
+							type="button"
+							class="btn btn-sm join-item flex-1 {mode === availableMode
+								? 'btn-primary'
+								: 'btn-outline'}"
+							onclick={() => {
+								mode = availableMode;
+							}}
+						>
+							{availableMode.charAt(0).toUpperCase() + availableMode.slice(1)}
+						</button>
+					{/each}
+				</div>
 			{/if}
-
-			<div class="divider"></div>
 
 			{#if mode === PGPMode.ENCRYPT}
 				<fieldset class="fieldset">
@@ -235,7 +229,7 @@
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>
-				<fieldset class="fieldset">
+				<fieldset class="fieldset mt-4">
 					<legend class="fieldset-legend">Encrypted Output</legend>
 					<CopyableTextarea
 						value={output}
@@ -257,7 +251,7 @@
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>
-				<fieldset class="fieldset">
+				<fieldset class="fieldset mt-4">
 					<legend class="fieldset-legend">Decrypted Output</legend>
 					<CopyableTextarea
 						value={output}

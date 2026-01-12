@@ -1,6 +1,26 @@
 import { getKeyDetails } from './pgp';
 import type { Key } from 'openpgp';
 
+const assetKeysModules = import.meta.glob('../../assets/keys/*', {
+	query: '?raw',
+	import: 'default',
+	eager: true
+});
+const assetKeysRaw = Object.values(assetKeysModules) as string[];
+let assetKeysCache: Key[] | null = null;
+
+async function getAssetKeys() {
+	if (assetKeysCache) return assetKeysCache;
+	const promises = assetKeysRaw.map((armor) =>
+		getKeyDetails(armor).catch((e) => {
+			console.error('Failed to parse asset key', e);
+			return null;
+		})
+	);
+	assetKeysCache = (await Promise.all(promises)).filter((k): k is Key => k !== null);
+	return assetKeysCache;
+}
+
 /**
  * A simplified key store that persists a list of armored keys strings.
  * It maintains a cache of parsed Key objects.
@@ -23,6 +43,8 @@ export class KeyStore {
 		const stored = localStorage.getItem('pgp-keys-simple');
 		if (this.isLoaded && stored === this.lastLoadedJson) return;
 
+		let results: Key[] = [];
+
 		if (stored) {
 			try {
 				const rawKeys = JSON.parse(stored);
@@ -38,26 +60,33 @@ export class KeyStore {
 					})
 				);
 
-				const results = (await Promise.all(promises)).filter((k): k is Key => k !== null);
-
-				// Deduplicate
-				const uniqueKeys: Key[] = [];
-				// eslint-disable-next-line svelte/prefer-svelte-reactivity
-				const seen = new Set<string>();
-
-				for (const key of results) {
-					const fingerprint = key.getFingerprint();
-					if (seen.has(fingerprint)) continue;
-					seen.add(fingerprint);
-					uniqueKeys.push(key);
-				}
-				this.keys = uniqueKeys;
+				results = (await Promise.all(promises)).filter((k): k is Key => k !== null);
 			} catch (e) {
 				console.error('Failed to load keys', e);
 			}
-		} else {
-			this.keys = [];
 		}
+
+		const assetKeys = await getAssetKeys();
+		results = [...results, ...assetKeys];
+
+		// Deduplicate, preferring private keys
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
+		const keyMap = new Map<string, Key>();
+
+		for (const key of results) {
+			const fingerprint = key.getFingerprint();
+			const existing = keyMap.get(fingerprint);
+
+			if (existing) {
+				if (key.isPrivate() && !existing.isPrivate()) {
+					keyMap.set(fingerprint, key);
+				}
+			} else {
+				keyMap.set(fingerprint, key);
+			}
+		}
+
+		this.keys = Array.from(keyMap.values());
 		this.lastLoadedJson = stored;
 		this.isLoaded = true;
 	}

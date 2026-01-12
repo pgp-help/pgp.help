@@ -111,17 +111,18 @@
 	}
 </script>
 
-<div class="relative {fixed ? 'w-fit' : 'w-full'}">
+<div class="relative w-full">
 	<textarea
 		{id}
 		bind:this={textareaElement}
 		bind:value
 		{cols}
+		rows={8}
 		readonly={readonly || fixed}
 		{placeholder}
-		class="textarea textarea-code w-full {fixed ? 'resize-none' : ''} {className} {error
-			? 'textarea-error'
-			: ''}"
+		class="textarea textarea-code w-full whitespace-nowrap {fixed
+			? 'resize-none'
+			: ''} {className} {error ? 'textarea-error' : ''}"
 		style={fixed ? 'height: auto; overflow-y: hidden;' : ''}
 		aria-label={label}
 		aria-invalid={error ? 'true' : undefined}
@@ -143,6 +144,5 @@
 <style>
 	.textarea-code {
 		font-family: monospace;
-		height: 256px;
 	}
 </style>
