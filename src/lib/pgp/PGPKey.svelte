@@ -105,20 +105,25 @@
 			{
 				label: 'FP',
 				value: key.getFingerprint(),
-				tooltip: 'The full unique fingerprint of the key'
+				tooltip: 'The full unique fingerprint of the key',
+				hidden: true
 			},
 			{
 				label: 'Created',
 				value: validity,
-				tooltip: 'Key creation and expiration dates'
+				tooltip: 'Key creation and expiration dates',
+				hidden: true
 			},
 			{
 				label: 'Type',
 				value: `${key.getAlgorithmInfo().algorithm.toUpperCase()} ${key.getAlgorithmInfo().bits ? `(${key.getAlgorithmInfo().bits} bit)` : ''}`,
-				tooltip: 'The cryptographic algorithm and key size'
+				tooltip: 'The cryptographic algorithm and key size',
+				hidden: true
 			}
 		];
 	});
+
+	let showDetails = $state(false);
 </script>
 
 {#snippet copyButtons()}
@@ -129,46 +134,66 @@
 	<PublicKeyButtons value={publicKey?.armor ? publicKey.armor() : key.armor()} />
 {/snippet}
 
-<div class="card bg-base-200 border selectable">
-	<div class="card-body">
+<div class="card bg-base-200 border selectable w-full max-w-full overflow-hidden">
+	<div class="card-body p-3 sm:p-4">
 		<div>
 			<!-- to force card-body to treat this as a single item -->
-			<div class="flex items-center gap-2 mb-1">
-				<h4 class="font-bold text-lg">{key.getUserIDs()[0] || 'Unknown User'}</h4>
-				<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
-					{key.isPrivate() ? 'Private Key' : 'Public Key'}
-				</span>
-				{#if key.isPrivate()}
-					{#if key.isDecrypted()}
-						<span class="badge badge-success badge-sm">Unlocked</span>
-						<button
-							type="button"
-							class="btn btn-xs btn-ghost btn-circle"
-							onclick={(e) => {
-								e.preventDefault();
-								lockKey();
-							}}
-							aria-label="Lock key"
-							title="Lock key"
-						>
-							<LockIcon class="h-3 w-3" />
-						</button>
-					{:else}
-						<span class="badge badge-warning badge-sm">Locked</span>
+			<div class="flex flex-wrap items-center gap-2 mb-1">
+				<h4 class="font-bold text-lg break-all">{key.getUserIDs()[0] || 'Unknown User'}</h4>
+				<div class="flex gap-1 shrink-0">
+					<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
+						{key.isPrivate() ? 'Private' : 'Public'}
+					</span>
+					{#if key.isPrivate()}
+						{#if key.isDecrypted()}
+							<span class="badge badge-success badge-sm">Unlocked</span>
+							<button
+								type="button"
+								class="btn btn-xs btn-ghost btn-circle"
+								onclick={(e) => {
+									e.preventDefault();
+									lockKey();
+								}}
+								aria-label="Lock key"
+								title="Lock key"
+							>
+								<LockIcon class="h-3 w-3" />
+							</button>
+						{:else}
+							<span class="badge badge-warning badge-sm">Locked</span>
+						{/if}
 					{/if}
-				{/if}
+				</div>
 			</div>
 
 			{#each properties as prop (prop.label)}
-				<div class="text-xs font-mono opacity-70 flex items-start gap-1">
-					<div class="tooltip" data-tip={prop.tooltip}>
-						<span class="cursor-help">{prop.label}</span>:
+				{#if !prop.hidden || showDetails}
+					<div class="text-xs font-mono opacity-70 flex items-start gap-1">
+						<div class="tooltip" data-tip={prop.tooltip}>
+							<span class="cursor-help">{prop.label}</span>:
+						</div>
+						<span class="break-all">{prop.value}</span>
 					</div>
-					<span class="break-all">{prop.value}</span>
-				</div>
+				{/if}
 			{/each}
 
-			{#if key.getUserIDs().length > 1}
+			{#if !showDetails}
+				<button
+					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
+					onclick={() => (showDetails = true)}
+				>
+					Show more details...
+				</button>
+			{:else}
+				<button
+					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
+					onclick={() => (showDetails = false)}
+				>
+					Show less details
+				</button>
+			{/if}
+
+			{#if key.getUserIDs().length > 1 && showDetails}
 				<div class="mt-2 text-xs opacity-60">
 					+{key.getUserIDs().length - 1} other ID(s)
 				</div>
@@ -226,6 +251,7 @@
 							value={publicKey?.armor ? publicKey.armor() : ''}
 							class="text-xs"
 							fixed
+							nowrap={true}
 							buttons={publicKeyButtons}
 						/>
 					</div>
@@ -251,7 +277,13 @@
 								<WarningIcon class="h-4 w-4" />
 								<span>Warning: Never share your private key!</span>
 							</div>
-							<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
+							<CopyableTextarea
+								value={key.armor()}
+								class="text-xs"
+								fixed
+								nowrap={true}
+								buttons={copyButtons}
+							/>
 						</div>
 					</div>
 				{/if}

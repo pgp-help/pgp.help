@@ -13,6 +13,8 @@
 		id = '',
 		selectAllOnFocus = true,
 		fixed = false,
+		nowrap = false,
+		rows = 5,
 		error = '',
 		class: className = '',
 		buttons
@@ -24,6 +26,8 @@
 		id?: string;
 		selectAllOnFocus?: boolean;
 		fixed?: boolean;
+		nowrap?: boolean;
+		rows?: number;
 		error?: string;
 		class?: string;
 		buttons?: Snippet;
@@ -111,17 +115,18 @@
 	}
 </script>
 
-<div class="relative {fixed ? 'w-fit' : 'w-full'}">
+<div class="relative w-full">
 	<textarea
 		{id}
 		bind:this={textareaElement}
 		bind:value
 		{cols}
+		{rows}
 		readonly={readonly || fixed}
 		{placeholder}
-		class="textarea textarea-code w-full {fixed ? 'resize-none' : ''} {className} {error
-			? 'textarea-error'
-			: ''}"
+		class="textarea textarea-code w-full {fixed ? 'resize-none' : ''} {nowrap
+			? 'whitespace-nowrap'
+			: ''} {className} {error ? 'textarea-error' : ''}"
 		style={fixed ? 'height: auto; overflow-y: hidden;' : ''}
 		aria-label={label}
 		aria-invalid={error ? 'true' : undefined}
@@ -143,6 +148,5 @@
 <style>
 	.textarea-code {
 		font-family: monospace;
-		height: 256px;
 	}
 </style>

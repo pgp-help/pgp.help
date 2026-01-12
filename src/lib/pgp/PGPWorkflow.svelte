@@ -204,11 +204,13 @@
 				<fieldset class="fieldset">
 					<legend class="fieldset-legend">Mode</legend>
 					<div class="form-control">
-						<div class="join">
+						<div class="join w-full">
 							{#each availableModes as availableMode (availableMode)}
 								<button
 									type="button"
-									class="btn join-item {mode === availableMode ? 'btn-primary' : 'btn-outline'}"
+									class="btn join-item flex-1 {mode === availableMode
+										? 'btn-primary'
+										: 'btn-outline'}"
 									onclick={() => {
 										mode = availableMode;
 									}}
@@ -232,16 +234,19 @@
 						label="Message"
 						selectAllOnFocus={false}
 						{error}
+						rows={8}
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>
-				<fieldset class="fieldset">
+				<fieldset class="fieldset mt-4">
 					<legend class="fieldset-legend">Encrypted Output</legend>
 					<CopyableTextarea
 						value={output}
 						readonly={true}
+						nowrap={true}
 						placeholder="Encrypted output will appear here..."
 						label="Encrypted Output"
+						rows={8}
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>
@@ -254,16 +259,18 @@
 						label="Encrypted Message"
 						selectAllOnFocus={false}
 						{error}
+						rows={8}
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>
-				<fieldset class="fieldset">
+				<fieldset class="fieldset mt-4">
 					<legend class="fieldset-legend">Decrypted Output</legend>
 					<CopyableTextarea
 						value={output}
 						readonly={true}
 						placeholder="Decrypted output will appear here..."
 						label="Decrypted Output"
+						rows={8}
 						buttons={copyButtonsSnippet}
 					/>
 				</fieldset>

@@ -56,7 +56,7 @@
 
 	<button
 		type="button"
-		class="btn-mini opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100 transition-opacity"
+		class="btn-mini opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
 		onclick={handleDelete}
 		aria-label="Delete key"
 		title="Delete key"
