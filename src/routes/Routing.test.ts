@@ -12,10 +12,7 @@ describe('Routing', () => {
 		render(App);
 
 		// Initially on PGP Workflow page
-		// The PGP Workflow page now has a sidebar with "Import Key" and "Generate Private Key"
-		// and a main area with "Public Key" input.
-		// However, the "Public Key" input might be inside a fieldset or have a different label.
-		// Let's check for something more robust, or just check that Guide text is NOT there.
+		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();
 		expect(screen.queryByText('What is PGP?')).not.toBeInTheDocument();
 
 		// Click Guide link
@@ -46,7 +43,7 @@ describe('Routing', () => {
 		await fireEvent.click(navbarHomeLink);
 
 		// Should now be on PGP Workflow page
-		expect(screen.getByLabelText(/Public Key/i)).toBeInTheDocument();
+		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();
 		expect(screen.queryByText('What is PGP?')).not.toBeInTheDocument();
 		expect(window.location.pathname).toBe('/');
 	});

@@ -1,0 +1,6 @@
+The tests in `src/routes/Routing.test.ts` were failing for two reasons:
+
+1.  **Ambiguous "Public Key" Label:** The test checked for the absence of "Public Key" to verify navigation to the Guide page. However, the Guide page *also* contains a "PGP Public Key" section (displaying the site's key), causing the check to fail. I updated the test to look for the unique placeholder text "Paste PGP Key" instead, which only appears on the Home page.
+2.  **Multiple "pgp.help" Links:** On the Guide page, there are two links to the home page with the text "pgp.help" (one in the navbar, one in the content). The test failed because `getByRole` expects a single match. I updated it to use `getAllByRole` and click the first one.
+
+All tests are now passing.
