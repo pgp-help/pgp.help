@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { getKeyDetails } from './pgp';
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
-	import CopyButtons from '../ui/CopyButtons.svelte';
 	import type { Key } from 'openpgp';
 
 	let {
@@ -37,10 +36,6 @@
 	});
 </script>
 
-{#snippet buttons()}
-	<CopyButtons {value} />
-{/snippet}
-
 <CopyableTextarea
 	bind:value
 	{label}
@@ -48,5 +43,5 @@
 	readonly={false}
 	selectAllOnFocus={false}
 	{error}
-	{buttons}
+	buttons={false}
 />

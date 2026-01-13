@@ -2,7 +2,6 @@
 	import { decryptPrivateKey } from './pgp';
 	import type { KeyWrapper } from './keyStore.svelte.js';
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
-	import CopyButtons from '../ui/CopyButtons.svelte';
 	import PublicKeyButtons from './PublicKeyButtons.svelte';
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
@@ -116,10 +115,6 @@
 	}
 </script>
 
-{#snippet copyButtons()}
-	<CopyButtons value={key.armor()} />
-{/snippet}
-
 {#snippet publicKeyButtons()}
 	<PublicKeyButtons value={publicKey?.armor ? publicKey.armor() : key.armor()} />
 {/snippet}
@@ -187,7 +182,7 @@
 									<WarningIcon class="h-4 w-4" />
 									<span>Warning: Never share your private key!</span>
 								</div>
-								<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={copyButtons} />
+								<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={true} />
 							</div>
 						</details>
 					{/if}
