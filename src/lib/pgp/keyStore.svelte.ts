@@ -11,19 +11,27 @@ let assetKeysCache: Key[] | null = null;
 
 async function getAssetKeys() {
 	if (assetKeysCache) return assetKeysCache;
-	const promises = assetKeysRaw.map((armor) =>
-		getKeyDetails(armor).catch((e) => {
+	const promises = assetKeysRaw.map(async (armor) => {
+		try {
+			return await getKeyDetails(armor);
+		} catch (e) {
 			console.error('Failed to parse asset key', e);
 			return null;
-		})
-	);
+		}
+	});
 	assetKeysCache = (await Promise.all(promises)).filter((k): k is Key => k !== null);
 	return assetKeysCache;
 }
 
+export enum PersistenceType {
+	ASSET = 'asset',
+	LOCAL_STORAGE = 'localstorage',
+	MEMORY = 'memory'
+}
+
 export interface KeyWrapper {
 	key: Key;
-	isPersisted: boolean;
+	persisted: PersistenceType;
 	hasNoPassword?: boolean;
 }
 
@@ -80,17 +88,19 @@ export class KeyStore {
 				);
 
 				const parsed = (await Promise.all(promises)).filter((k): k is Key => k !== null);
-				storedKeys = parsed.map((key) => ({ key, isPersisted: true }));
+				storedKeys = parsed.map((key) => ({ key, persisted: PersistenceType.LOCAL_STORAGE }));
 			} catch (e) {
 				console.error('Failed to load keys', e);
 			}
 		}
 
 		const assetKeys = await getAssetKeys();
-		const assetKeyWrappers: KeyWrapper[] = assetKeys.map((key) => ({
-			key,
-			isPersisted: false
-		}));
+		const assetKeyWrappers: KeyWrapper[] = assetKeys
+			.filter((k) => k !== null)
+			.map((key) => ({
+				key,
+				persisted: PersistenceType.ASSET
+			}));
 
 		const allKeys = [...storedKeys, ...assetKeyWrappers];
 
@@ -99,6 +109,7 @@ export class KeyStore {
 		const keyMap = new Map<string, KeyWrapper>();
 
 		for (const wrapper of allKeys) {
+			if (!wrapper.key) continue;
 			const fingerprint = wrapper.key.getFingerprint();
 			const existing = keyMap.get(fingerprint);
 
@@ -127,7 +138,9 @@ export class KeyStore {
 			throw new Error('Cannot save before loading');
 		}
 		if (typeof window !== 'undefined') {
-			const rawKeys = this.keys.filter((k) => k.isPersisted).map((k) => k.key.armor());
+			const rawKeys = this.keys
+				.filter((k) => k.persisted === PersistenceType.LOCAL_STORAGE)
+				.map((k) => k.key.armor());
 			const json = JSON.stringify(rawKeys);
 			localStorage.setItem('pgp-keys-simple', json);
 			this.lastLoadedJson = json;
@@ -139,6 +152,7 @@ export class KeyStore {
 
 		const fingerprint = key.getFingerprint();
 		const isPrivate = key.isPrivate();
+		const persistenceType = persist ? PersistenceType.LOCAL_STORAGE : PersistenceType.MEMORY;
 
 		const existingIndex = this.keys.findIndex((k) => k.key.getFingerprint() === fingerprint);
 
@@ -147,11 +161,11 @@ export class KeyStore {
 
 			if (!existing.key.isPrivate() && isPrivate) {
 				// Upgrade to private
-				this.keys[existingIndex] = { key, isPersisted: persist, hasNoPassword };
+				this.keys[existingIndex] = { key, persisted: persistenceType, hasNoPassword };
 			} else {
 				// If key exists, we might want to update persistence status
-				if (persist && !existing.isPersisted) {
-					existing.isPersisted = true;
+				if (persist && existing.persisted !== PersistenceType.LOCAL_STORAGE) {
+					existing.persisted = PersistenceType.LOCAL_STORAGE;
 				}
 				// Update hasNoPassword if provided
 				if (hasNoPassword !== undefined) {
@@ -160,7 +174,7 @@ export class KeyStore {
 				// If persist is false, we don't change existing persistence (don't un-persist)
 			}
 		} else {
-			this.keys.push({ key, isPersisted: persist, hasNoPassword });
+			this.keys.push({ key, persisted: persistenceType, hasNoPassword });
 		}
 
 		this.save();
@@ -188,7 +202,7 @@ export class KeyStore {
 			// Return a wrapper with the public key
 			return {
 				key: wrapper.key.toPublic(),
-				isPersisted: wrapper.isPersisted,
+				persisted: wrapper.persisted,
 				hasNoPassword: wrapper.hasNoPassword
 			};
 		}

@@ -6,7 +6,7 @@
 	import CopyButtons from '../ui/CopyButtons.svelte';
 	import KeySidebar from './KeySidebar.svelte';
 	import { PGPMode, router } from '../router.svelte.js';
-	import { keyStore, type KeyWrapper } from './keyStore.svelte.js';
+	import { keyStore, type KeyWrapper, PersistenceType } from './keyStore.svelte.js';
 	import { untrack } from 'svelte';
 
 	// Derived state from router
@@ -194,7 +194,12 @@
 						placeholder="Paste PGP Key (Armored)..."
 						onKeyParsed={(k) => {
 							// Temporary wrapper until it's added to store
-							keyWrapper = { key: k, isPersisted: keyStore.shouldPersistByDefault };
+							keyWrapper = {
+								key: k,
+								persisted: keyStore.shouldPersistByDefault
+									? PersistenceType.LOCAL_STORAGE
+									: PersistenceType.MEMORY
+							};
 						}}
 					/>
 				{/if}
