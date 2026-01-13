@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getKeyDetails, decryptPrivateKey } from './pgp';
+	import { getKeyDetails } from './pgp';
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import CopyButtons from '../ui/CopyButtons.svelte';
 	import type { Key } from 'openpgp';
@@ -27,23 +27,7 @@
 
 		getKeyDetails(k)
 			.then(async (details) => {
-				if (value === k) {
-					let finalKey = details;
-					error = '';
-
-					// Try to decrypt with empty password
-					if (details.isPrivate() && !details.isDecrypted()) {
-						try {
-							const decryptedKey = await decryptPrivateKey(details, '');
-							if (value === k) {
-								finalKey = decryptedKey;
-							}
-						} catch {
-							// Ignore error
-						}
-					}
-					onKeyParsed?.(finalKey);
-				}
+				onKeyParsed?.(details);
 			})
 			.catch((err) => {
 				if (value === k) {

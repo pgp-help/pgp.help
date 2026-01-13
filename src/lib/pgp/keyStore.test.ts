@@ -25,7 +25,7 @@ describe('KeyStore', () => {
 		const key = await getKeyDetails(publicKeyArmor);
 		await keyStore.addKey(key);
 		expect(keyStore.keys).toHaveLength(1);
-		expect(keyStore.keys[0].getFingerprint()).toBe(key.getFingerprint());
+		expect(keyStore.keys[0].key.getFingerprint()).toBe(key.getFingerprint());
 	});
 
 	it('prevents duplicates when adding same key twice', async () => {
@@ -40,11 +40,11 @@ describe('KeyStore', () => {
 		const priv = await getKeyDetails(privateKeyArmor);
 
 		await keyStore.addKey(pub);
-		expect(keyStore.keys[0].isPrivate()).toBe(false);
+		expect(keyStore.keys[0].key.isPrivate()).toBe(false);
 
 		await keyStore.addKey(priv);
 		expect(keyStore.keys).toHaveLength(1);
-		expect(keyStore.keys[0].isPrivate()).toBe(true);
+		expect(keyStore.keys[0].key.isPrivate()).toBe(true);
 	});
 
 	it('ignores public key if private key exists', async () => {
@@ -52,11 +52,11 @@ describe('KeyStore', () => {
 		const priv = await getKeyDetails(privateKeyArmor);
 
 		await keyStore.addKey(priv);
-		expect(keyStore.keys[0].isPrivate()).toBe(true);
+		expect(keyStore.keys[0].key.isPrivate()).toBe(true);
 
 		await keyStore.addKey(pub);
 		expect(keyStore.keys).toHaveLength(1);
-		expect(keyStore.keys[0].isPrivate()).toBe(true);
+		expect(keyStore.keys[0].key.isPrivate()).toBe(true);
 	});
 
 	it('handles multiple distinct keys', async () => {
@@ -86,7 +86,7 @@ describe('KeyStore', () => {
 		// and we know there is one key in assets/keys/pgphelp.pem.
 
 		// Let's check if the keys are deduplicated by fingerprint.
-		const fingerprints = newStore.keys.map((k) => k.getFingerprint());
+		const fingerprints = newStore.keys.map((k) => k.key.getFingerprint());
 		const uniqueFingerprints = new Set(fingerprints);
 		expect(uniqueFingerprints.size).toBe(newStore.keys.length);
 
@@ -103,18 +103,18 @@ describe('KeyStore', () => {
 
 		// Default behavior (returns private)
 		const k1 = keyStore.getKey(fp);
-		expect(k1?.isPrivate()).toBe(true);
-		expect(k1?.getFingerprint()).toBe(fp);
+		expect(k1?.key.isPrivate()).toBe(true);
+		expect(k1?.key.getFingerprint()).toBe(fp);
 
 		// Request public
 		const k2 = keyStore.getKey(fp, 'public');
-		expect(k2?.isPrivate()).toBe(false);
-		expect(k2?.getFingerprint()).toBe(fp);
+		expect(k2?.key.isPrivate()).toBe(false);
+		expect(k2?.key.getFingerprint()).toBe(fp);
 
 		// Request private (explicit)
 		const k3 = keyStore.getKey(fp, 'private');
-		expect(k3?.isPrivate()).toBe(true);
-		expect(k3?.getFingerprint()).toBe(fp);
+		expect(k3?.key.isPrivate()).toBe(true);
+		expect(k3?.key.getFingerprint()).toBe(fp);
 	});
 
 	it('deletes a key', async () => {

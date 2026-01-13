@@ -83,22 +83,38 @@
 				No keys found. Create or import one to get started.
 			</div>
 		{/if}
-		{#each keyStore.keys as key (key.getFingerprint())}
+		{#each keyStore.keys as wrapper (wrapper.key.getFingerprint())}
 			<div class="flex flex-col" transition:slide={{ duration: 200 }}>
 				<div
 					class="group"
 					role="link"
 					tabindex="0"
-					onclick={() => handleSelectKey(key.getFingerprint())}
+					onclick={() => handleSelectKey(wrapper.key.getFingerprint())}
 					onkeydown={(e) => {
 						if (e.key === 'Enter' || e.key === ' ') {
-							handleSelectKey(key.getFingerprint());
+							handleSelectKey(wrapper.key.getFingerprint());
 						}
 					}}
 				>
-					<KeyListItem {key} isSelected={selectedFingerprint === key.getFingerprint()} />
+					<KeyListItem
+						keyWrapper={wrapper}
+						isSelected={selectedFingerprint === wrapper.key.getFingerprint()}
+					/>
 				</div>
 			</div>
 		{/each}
+	</div>
+	<div class="p-4 border-t border-base-300">
+		<div class="form-control">
+			<label class="label cursor-pointer justify-start gap-2">
+				<input
+					type="checkbox"
+					class="toggle toggle-sm"
+					checked={keyStore.shouldPersistByDefault}
+					onchange={(e) => keyStore.setPersistDefault(e.currentTarget.checked)}
+				/>
+				<span class="label-text text-sm">Persist new keys</span>
+			</label>
+		</div>
 	</div>
 </div>

@@ -1,10 +1,12 @@
 <script lang="ts">
-	import { keyStore } from './keyStore.svelte.js';
+	import { keyStore, type KeyWrapper } from './keyStore.svelte.js';
 	import TrashIcon from '../ui/icons/TrashIcon.svelte';
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
-	import type { Key } from 'openpgp';
+	import PGPKeyBadges from './PGPKeyBadges.svelte';
 
-	let { key, isSelected } = $props<{ key: Key; isSelected: boolean }>();
+	let { keyWrapper, isSelected } = $props<{ keyWrapper: KeyWrapper; isSelected: boolean }>();
+
+	let key = $derived(keyWrapper.key);
 
 	let name = $state('Loading...');
 	let email = $state('');
@@ -43,11 +45,7 @@
 	<div class="flex-1 min-w-0 mr-2">
 		<div class="flex items-center gap-2">
 			<span class="font-medium truncate text-sm" title={name}>{name}</span>
-			{#if key.isPrivate()}
-				<span class="badge badge-xs badge-secondary" title="Private Key">Private Key</span>
-			{:else}
-				<span class="badge badge-xs badge-primary" title="Public Key">Public Key</span>
-			{/if}
+			<PGPKeyBadges {keyWrapper} />
 		</div>
 		{#if email}
 			<div class="text-xs text-base-content/70 truncate" title={email}>{email}</div>

@@ -21,7 +21,9 @@ describe('Routing', () => {
 
 		// Should now be on Guide page
 		expect(screen.getByText('What is PGP?')).toBeInTheDocument();
-		expect(screen.queryByPlaceholderText(/Paste PGP Key/i)).not.toBeInTheDocument();
+		// The PGP Workflow components should be gone
+		// The "Public Key" label is dynamic based on isPrivate, but "Paste PGP Key (Armored)..." placeholder is constant in RawKeyInput
+		expect(screen.queryByPlaceholderText('Paste PGP Key (Armored)...')).not.toBeInTheDocument();
 		expect(window.location.pathname).toBe('/Guide');
 	});
 
@@ -34,8 +36,11 @@ describe('Routing', () => {
 		expect(screen.getByText('What is PGP?')).toBeInTheDocument();
 
 		// Click Home link
+		// There are multiple links with name 'pgp.help' (one in navbar, one in footer/content)
+		// We want the one in the navbar.
 		const homeLinks = screen.getAllByRole('link', { name: 'pgp.help' });
-		await fireEvent.click(homeLinks[0]);
+		const navbarHomeLink = homeLinks[0]; // Assuming the first one is in the navbar
+		await fireEvent.click(navbarHomeLink);
 
 		// Should now be on PGP Workflow page
 		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();

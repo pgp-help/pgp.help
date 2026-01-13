@@ -11,14 +11,28 @@ let assetKeysCache: Key[] | null = null;
 
 async function getAssetKeys() {
 	if (assetKeysCache) return assetKeysCache;
-	const promises = assetKeysRaw.map((armor) =>
-		getKeyDetails(armor).catch((e) => {
+	const promises = assetKeysRaw.map(async (armor) => {
+		try {
+			return await getKeyDetails(armor);
+		} catch (e) {
 			console.error('Failed to parse asset key', e);
 			return null;
-		})
-	);
+		}
+	});
 	assetKeysCache = (await Promise.all(promises)).filter((k): k is Key => k !== null);
 	return assetKeysCache;
+}
+
+export enum PersistenceType {
+	ASSET = 'asset',
+	LOCAL_STORAGE = 'localstorage',
+	MEMORY = 'memory'
+}
+
+export interface KeyWrapper {
+	key: Key;
+	persisted: PersistenceType;
+	hasNoPassword?: boolean;
 }
 
 /**
@@ -26,16 +40,29 @@ async function getAssetKeys() {
  * It maintains a cache of parsed Key objects.
  */
 export class KeyStore {
-	keys = $state<Key[]>([]);
+	keys = $state<KeyWrapper[]>([]);
 	isLoaded = $state(false);
+	shouldPersistByDefault = $state(true);
+
 	private loadPromise: Promise<void> | undefined;
 	private lastLoadedJson: string | null = null;
 
 	constructor() {
 		if (typeof window !== 'undefined') {
 			this.loadPromise = this.load();
+			const pref = localStorage.getItem('pgp-persist-default');
+			if (pref !== null) {
+				this.shouldPersistByDefault = pref === 'true';
+			}
 		} else {
 			this.isLoaded = true;
+		}
+	}
+
+	setPersistDefault(value: boolean) {
+		this.shouldPersistByDefault = value;
+		if (typeof window !== 'undefined') {
+			localStorage.setItem('pgp-persist-default', String(value));
 		}
 	}
 
@@ -43,7 +70,7 @@ export class KeyStore {
 		const stored = localStorage.getItem('pgp-keys-simple');
 		if (this.isLoaded && stored === this.lastLoadedJson) return;
 
-		let results: Key[] = [];
+		let storedKeys: KeyWrapper[] = [];
 
 		if (stored) {
 			try {
@@ -60,29 +87,44 @@ export class KeyStore {
 					})
 				);
 
-				results = (await Promise.all(promises)).filter((k): k is Key => k !== null);
+				const parsed = (await Promise.all(promises)).filter((k): k is Key => k !== null);
+				storedKeys = parsed.map((key) => ({ key, persisted: PersistenceType.LOCAL_STORAGE }));
 			} catch (e) {
 				console.error('Failed to load keys', e);
 			}
 		}
 
 		const assetKeys = await getAssetKeys();
-		results = [...results, ...assetKeys];
+		const assetKeyWrappers: KeyWrapper[] = assetKeys
+			.filter((k) => k !== null)
+			.map((key) => ({
+				key,
+				persisted: PersistenceType.ASSET
+			}));
+
+		const allKeys = [...storedKeys, ...assetKeyWrappers];
 
 		// Deduplicate, preferring private keys
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
-		const keyMap = new Map<string, Key>();
+		const keyMap = new Map<string, KeyWrapper>();
 
-		for (const key of results) {
-			const fingerprint = key.getFingerprint();
+		for (const wrapper of allKeys) {
+			if (!wrapper.key) continue;
+			const fingerprint = wrapper.key.getFingerprint();
 			const existing = keyMap.get(fingerprint);
 
 			if (existing) {
-				if (key.isPrivate() && !existing.isPrivate()) {
-					keyMap.set(fingerprint, key);
+				if (wrapper.key.isPrivate() && !existing.key.isPrivate()) {
+					// Upgrade to private key
+					// If we are upgrading from a persisted public key to a non-persisted private key (asset),
+					// we keep the non-persisted wrapper (so it won't be saved to localStorage, but is available).
+					// If the user wants to persist it, they can add it explicitly.
+					keyMap.set(fingerprint, wrapper);
 				}
+				// If existing is private, we keep it.
+				// If both are public, we keep existing (which comes from storage first, so persisted one wins).
 			} else {
-				keyMap.set(fingerprint, key);
+				keyMap.set(fingerprint, wrapper);
 			}
 		}
 
@@ -96,7 +138,9 @@ export class KeyStore {
 			throw new Error('Cannot save before loading');
 		}
 		if (typeof window !== 'undefined') {
-			const rawKeys = this.keys.map((k) => k.armor());
+			const rawKeys = this.keys
+				.filter((k) => k.persisted === PersistenceType.LOCAL_STORAGE)
+				.map((k) => k.key.armor());
 			const json = JSON.stringify(rawKeys);
 			localStorage.setItem('pgp-keys-simple', json);
 			this.lastLoadedJson = json;
@@ -109,21 +153,22 @@ export class KeyStore {
 		const fingerprint = key.getFingerprint();
 		const isPrivate = key.isPrivate();
 
-		const existingIndex = this.keys.findIndex((k) => k.getFingerprint() === fingerprint);
+		const existingIndex = this.keys.findIndex((k) => k.key.getFingerprint() === fingerprint);
 
 		if (existingIndex !== -1) {
 			const existing = this.keys[existingIndex];
-			// Generally if we already habe a key with this fingerprint there's nothing to do.
-			// But if existing is public and new is private, we upgrade.
 
-			if (!existing.isPrivate() && isPrivate) {
-				// Upgrade
-				this.keys[existingIndex] = key;
-			} else {
-				return; // Skip.
+			if (!existing.key.isPrivate() && isPrivate) {
+				// Upgrade to private
+				this.keys[existingIndex] = { key, persisted: existing.persisted };
 			}
 		} else {
-			this.keys.push(key);
+			this.keys.push({
+				key,
+				persisted: this.shouldPersistByDefault
+					? PersistenceType.LOCAL_STORAGE
+					: PersistenceType.MEMORY
+			});
 		}
 
 		this.save();
@@ -131,7 +176,7 @@ export class KeyStore {
 
 	async deleteKey(fingerprint: string) {
 		await this.load();
-		this.keys = this.keys.filter((k) => k.getFingerprint() !== fingerprint);
+		this.keys = this.keys.filter((k) => k.key.getFingerprint() !== fingerprint);
 		this.save();
 	}
 
@@ -141,18 +186,22 @@ export class KeyStore {
 		this.save();
 	}
 
-	getKey(fingerprint: string, type?: 'public' | 'private') {
+	getKey(fingerprint: string, type?: 'public' | 'private'): KeyWrapper {
 		if (!this.isLoaded) {
 			throw new Error('KeyStore not loaded');
 		}
-		// TODO: This defaults to returning private key if type is not specified.
-		// We should make this more explicit!
 
-		const key = this.keys.find((k) => k.getFingerprint() === fingerprint);
-		if (key && type === 'public' && key.isPrivate()) {
-			return key.toPublic();
+		const wrapper = this.keys.find((k) => k.key.getFingerprint() === fingerprint);
+		if (wrapper && type === 'public' && wrapper.key.isPrivate()) {
+			// This demote-to-public functionality is probably unused?
+			// Return a wrapper with the public key
+			return {
+				key: wrapper.key.toPublic(),
+				persisted: wrapper.persisted,
+				hasNoPassword: wrapper.hasNoPassword
+			};
 		}
-		return key;
+		return wrapper;
 	}
 }
 

@@ -93,7 +93,7 @@ describe('App', () => {
 		await user.click(unlockButton);
 
 		// Wait for unlock to complete (Unlocked badge appears)
-		await screen.findByText((content, element) => {
+		await screen.findAllByText((content, element) => {
 			return element?.tagName.toLowerCase() === 'span' && content.includes('Unlocked');
 		});
 

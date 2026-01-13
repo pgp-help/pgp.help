@@ -1,17 +1,19 @@
 <script lang="ts">
-	import { getKeyDetails, decryptPrivateKey } from './pgp';
-	import type { Key } from 'openpgp';
+	import { decryptPrivateKey } from './pgp';
+	import type { KeyWrapper } from './keyStore.svelte.js';
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import CopyButtons from '../ui/CopyButtons.svelte';
 	import PublicKeyButtons from './PublicKeyButtons.svelte';
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
-	import LockIcon from '../ui/icons/LockIcon.svelte';
+	import PGPKeyBadges from './PGPKeyBadges.svelte';
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
 	// parent component to see the updated value.
-	let { key = $bindable<Key>() } = $props<{
-		key: Key;
+	let { keyWrapper = $bindable<KeyWrapper>() } = $props<{
+		keyWrapper: KeyWrapper;
 	}>();
+
+	let key = $derived(keyWrapper.key);
 
 	let publicKey = $derived.by(() => {
 		if (key.isPrivate()) {
@@ -49,20 +51,9 @@
 
 		try {
 			const decryptedKey = await decryptPrivateKey(key, pass);
-			key = decryptedKey;
+			keyWrapper.key = decryptedKey;
 		} catch (err) {
 			decryptError = (err as Error).message;
-		}
-	}
-
-	async function lockKey() {
-		try {
-			const details = await getKeyDetails(key.armor());
-			key = details;
-			decryptError = '';
-		} catch (e) {
-			// Should not happen if value was valid before, but good to be safe
-			console.error('Failed to re-parse key', e);
 		}
 	}
 
@@ -143,28 +134,7 @@
 			<div class="flex flex-wrap items-center gap-2 mb-1">
 				<h4 class="font-bold text-lg break-all">{key.getUserIDs()[0] || 'Unknown User'}</h4>
 				<div class="flex gap-1 shrink-0">
-					<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
-						{key.isPrivate() ? 'Private' : 'Public'}
-					</span>
-					{#if key.isPrivate()}
-						{#if key.isDecrypted()}
-							<span class="badge badge-success badge-sm">Unlocked</span>
-							<button
-								type="button"
-								class="btn btn-xs btn-ghost btn-circle"
-								onclick={(e) => {
-									e.preventDefault();
-									lockKey();
-								}}
-								aria-label="Lock key"
-								title="Lock key"
-							>
-								<LockIcon class="h-3 w-3" />
-							</button>
-						{:else}
-							<span class="badge badge-warning badge-sm">Locked</span>
-						{/if}
-					{/if}
+					<PGPKeyBadges {keyWrapper} />
 				</div>
 			</div>
 
