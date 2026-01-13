@@ -120,7 +120,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 
 		const { getByText, queryByPlaceholderText } = render(PGPKey, {
 			props: {
-				key: testKey
+				keyWrapper: { key: testKey, isPersisted: true }
 			}
 		});
 
@@ -149,7 +149,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 
 		const { component, container } = render(PGPKey, {
 			props: {
-				key: testPrivateKey
+				keyWrapper: { key: testPrivateKey, isPersisted: true }
 			}
 		});
 
@@ -186,7 +186,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 
 		const { getByText } = render(PGPKey, {
 			props: {
-				key: testPrivateKey
+				keyWrapper: { key: testPrivateKey, isPersisted: true }
 			}
 		});
 

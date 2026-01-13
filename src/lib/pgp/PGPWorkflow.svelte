@@ -3,18 +3,18 @@
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import PGPKey from './PGPKey.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
-	import { type Key } from 'openpgp';
 	import CopyButtons from '../ui/CopyButtons.svelte';
 	import KeySidebar from './KeySidebar.svelte';
 	import { PGPMode, router } from '../router.svelte.js';
-	import { keyStore } from './keyStore.svelte.js';
+	import { keyStore, type KeyWrapper } from './keyStore.svelte.js';
 	import { untrack } from 'svelte';
 
 	// Derived state from router
 	let mode = $state<PGPMode>(PGPMode.ENCRYPT);
 
 	// The parsed OpenPGP key object (null if invalid/empty)
-	let keyObject = $state<Key | null>(null);
+	let keyWrapper = $state<KeyWrapper | null>(null);
+	let keyObject = $derived(keyWrapper?.key ?? null);
 	// The raw armored key string (bound to the textarea/input)
 	// Initialize to empty string; will be updated by effect when initialKey changes
 	let keyValue = $state('');
@@ -46,14 +46,14 @@
 			// Can't handle fingerprint until store is loaded
 			// (when it is loaded, this effect will re-run)
 			if (!keyStoreIsLoaded) return;
-			let selectedKey = keyStore.getKey(fingerprint);
-			if (!selectedKey) {
+			let selectedKeyWrapper = keyStore.getKey(fingerprint);
+			if (!selectedKeyWrapper) {
 				// If fingerprint not found, navigate back home
 				// NTH: Pop up a warning toast?
 				console.warn('Fingerprint not found in store, navigating home:', fingerprint);
 				router.openHome();
 			} else {
-				keyObject = selectedKey;
+				keyWrapper = selectedKeyWrapper;
 				if (routerMode) {
 					mode = routerMode;
 				}
@@ -62,7 +62,7 @@
 			keyValue = keyParam;
 		} else {
 			keyValue = '';
-			keyObject = null;
+			keyWrapper = null;
 		}
 	});
 
@@ -184,16 +184,17 @@
 						Public Key
 					{/if}
 				</legend>
-				{#if keyObject}
+				{#if keyWrapper}
 					<!-- force remount when key changes so the textfields size correctly -->
-					<PGPKey bind:this={pgpKeyComponent} bind:key={keyObject} />
+					<PGPKey bind:this={pgpKeyComponent} bind:keyWrapper />
 				{:else}
 					<RawKeyInput
 						bind:value={keyValue}
 						label={isPrivate ? 'Private Key' : 'Public Key'}
 						placeholder="Paste PGP Key (Armored)..."
 						onKeyParsed={(k) => {
-							keyObject = k;
+							// Temporary wrapper until it's added to store
+							keyWrapper = { key: k, isPersisted: keyStore.shouldPersistByDefault };
 						}}
 					/>
 				{/if}

@@ -57,4 +57,21 @@ describe('KeySidebar', () => {
 			expect(screen.queryByText('Test User')).not.toBeInTheDocument();
 		});
 	});
+
+	it('toggles persistence setting', async () => {
+		render(KeySidebar);
+		const checkbox = screen.getByLabelText('Persist new keys');
+		expect(checkbox).toBeInTheDocument();
+
+		// Initial state (default is true)
+		expect(checkbox).toBeChecked();
+
+		// Toggle
+		await fireEvent.click(checkbox);
+		expect(keyStore.shouldPersistByDefault).toBe(false);
+
+		// Toggle back
+		await fireEvent.click(checkbox);
+		expect(keyStore.shouldPersistByDefault).toBe(true);
+	});
 });
