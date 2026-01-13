@@ -92,9 +92,9 @@ describe('App', () => {
 		await user.type(passwordInput, passphrase);
 		await user.click(unlockButton);
 
-		// Wait for unlock to complete (Unlocked badge appears)
-		await screen.findAllByText((content, element) => {
-			return element?.tagName.toLowerCase() === 'span' && content.includes('Unlocked');
+		// Wait for the unlockButton to go away
+		await vi.waitFor(() => {
+			expect(unlockButton).not.toBeInTheDocument();
 		});
 
 		// Switch to decrypt mode using the mode switching widget

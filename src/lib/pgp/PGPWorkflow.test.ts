@@ -79,8 +79,9 @@ describe('PGPWorkflow', () => {
 		await user.type(passwordInput, passphrase);
 		await user.click(unlockButton);
 
-		await screen.findAllByText((content, element) => {
-			return element?.tagName.toLowerCase() === 'span' && content.includes('Unlocked');
+		// Wait for the unlockButton to go away
+		await vi.waitFor(() => {
+			expect(unlockButton).not.toBeInTheDocument();
 		});
 
 		// Switch to decrypt mode
@@ -114,8 +115,9 @@ describe('PGPWorkflow', () => {
 		const unlockButton = screen.getByRole('button', { name: /Unlock/i });
 		await user.type(passwordInput, passphrase);
 		await user.click(unlockButton);
-		await screen.findAllByText((content, element) => {
-			return element?.tagName.toLowerCase() === 'span' && content.includes('Unlocked');
+		// Wait for the unlockButton to go away
+		await vi.waitFor(() => {
+			expect(unlockButton).not.toBeInTheDocument();
 		});
 
 		// Default is Encrypt
@@ -159,13 +161,9 @@ describe('PGPWorkflow', () => {
 		await user.type(passwordInput, passphrase);
 		await user.click(unlockButton);
 
-		// Wait for unlocked badge
-		// Since there might be multiple "Unlocked" badges (one in sidebar, one in main view),
-		// we should look for all of them or scope it.
-		// But findByText throws if multiple found.
-		// Let's use findAllByText and check if at least one exists.
-		await screen.findAllByText((content, element) => {
-			return element?.tagName.toLowerCase() === 'span' && content.includes('Unlocked');
+		// Wait for the unlockButton to go away
+		await vi.waitFor(() => {
+			expect(unlockButton).not.toBeInTheDocument();
 		});
 
 		// Ensure we are in Encrypt mode
@@ -226,9 +224,6 @@ El/w
 		const unlockButton = screen.getByRole('button', { name: /Unlock/i });
 		await user.type(passwordInput, passphrase);
 		await user.click(unlockButton);
-		await screen.findAllByText((content, element) => {
-			return element?.tagName.toLowerCase() === 'span' && content.includes('Unlocked');
-		});
 
 		// The error should go away after unlocking
 		await waitFor(() => {

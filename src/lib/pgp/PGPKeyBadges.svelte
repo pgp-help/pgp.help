@@ -20,8 +20,10 @@
 	{#if key.isPrivate()}
 		{#if hasNoPassword}
 			<span class="badge badge-success badge-sm">No Password</span>
+			<!--
 		{:else if key.isDecrypted()}
 			<span class="badge badge-success badge-sm">Unlocked</span>
+		-->
 		{/if}
 	{/if}
 </div>

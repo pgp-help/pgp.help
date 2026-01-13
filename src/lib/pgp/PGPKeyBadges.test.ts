@@ -56,16 +56,6 @@ describe('PGPKeyBadges', () => {
 		expect(screen.queryByText('Locked')).not.toBeInTheDocument();
 	});
 
-	it('renders Unlocked badge for unlocked private key', async () => {
-		const { decryptPrivateKey } = await import('./pgp');
-		const decrypted = await decryptPrivateKey(privateKey, 'password');
-
-		render(PGPKeyBadges, {
-			keyWrapper: { key: decrypted, persisted: PersistenceType.LOCAL_STORAGE }
-		});
-		expect(screen.getByText('Unlocked')).toBeInTheDocument();
-	});
-
 	it('renders No Password badge for unlocked private key without onLock callback', async () => {
 		const { decryptPrivateKey } = await import('./pgp');
 		const decrypted = await decryptPrivateKey(privateKey, 'password');
