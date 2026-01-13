@@ -3,7 +3,6 @@
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import PGPKey from './PGPKey.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
-	import KeySidebar from './KeySidebar.svelte';
 	import { PGPMode, router } from '../router.svelte.js';
 	import { keyStore, type KeyWrapper, PersistenceType } from './keyStore.svelte.js';
 	import { untrack } from 'svelte';
@@ -164,102 +163,96 @@
 	});
 </script>
 
-<aside aria-label="Sidebar">
-	<KeySidebar />
-</aside>
-
-<main class="flex-1 overflow-y-auto p-4 sm:p-8" aria-label="PGP Workflow">
-	<div class="container mx-auto max-w-4xl">
-		<form class="space-y-6">
-			<fieldset class="fieldset">
-				<legend class="fieldset-legend">
-					{#if isPrivate}
-						Private Key
-					{:else}
-						Public Key
-					{/if}
-				</legend>
-				{#if keyWrapper}
-					<PGPKey bind:this={pgpKeyComponent} bind:keyWrapper />
+<div class="container mx-auto max-w-4xl">
+	<form class="space-y-6">
+		<fieldset class="fieldset">
+			<legend class="fieldset-legend">
+				{#if isPrivate}
+					Private Key
 				{:else}
-					<RawKeyInput
-						bind:value={keyValue}
-						label={isPrivate ? 'Private Key' : 'Public Key'}
-						placeholder="Paste PGP Key (Armored)..."
-						onKeyParsed={(k) => {
-							// Temporary wrapper until it's added to store
-							keyWrapper = {
-								key: k,
-								persisted: PersistenceType.MEMORY
-							};
-						}}
-					/>
+					Public Key
 				{/if}
+			</legend>
+			{#if keyWrapper}
+				<PGPKey bind:this={pgpKeyComponent} bind:keyWrapper />
+			{:else}
+				<RawKeyInput
+					bind:value={keyValue}
+					label={isPrivate ? 'Private Key' : 'Public Key'}
+					placeholder="Paste PGP Key (Armored)..."
+					onKeyParsed={(k) => {
+						// Temporary wrapper until it's added to store
+						keyWrapper = {
+							key: k,
+							persisted: PersistenceType.MEMORY
+						};
+					}}
+				/>
+			{/if}
+		</fieldset>
+
+		{#if availableModes.length > 1}
+			<div class="join w-full">
+				{#each availableModes as availableMode (availableMode)}
+					<button
+						type="button"
+						class="btn btn-sm join-item flex-1 {mode === availableMode
+							? 'btn-primary'
+							: 'btn-outline'}"
+						onclick={() => {
+							mode = availableMode;
+						}}
+					>
+						{availableMode.charAt(0).toUpperCase() + availableMode.slice(1)}
+					</button>
+				{/each}
+			</div>
+		{/if}
+
+		{#if mode === PGPMode.ENCRYPT}
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Message</legend>
+				<CopyableTextarea
+					bind:value={message}
+					placeholder="Type your secret message..."
+					label="Message"
+					selectAllOnFocus={false}
+					{error}
+					buttons={true}
+				/>
 			</fieldset>
-
-			{#if availableModes.length > 1}
-				<div class="join w-full">
-					{#each availableModes as availableMode (availableMode)}
-						<button
-							type="button"
-							class="btn btn-sm join-item flex-1 {mode === availableMode
-								? 'btn-primary'
-								: 'btn-outline'}"
-							onclick={() => {
-								mode = availableMode;
-							}}
-						>
-							{availableMode.charAt(0).toUpperCase() + availableMode.slice(1)}
-						</button>
-					{/each}
-				</div>
-			{/if}
-
-			{#if mode === PGPMode.ENCRYPT}
-				<fieldset class="fieldset">
-					<legend class="fieldset-legend">Message</legend>
-					<CopyableTextarea
-						bind:value={message}
-						placeholder="Type your secret message..."
-						label="Message"
-						selectAllOnFocus={false}
-						{error}
-						buttons={true}
-					/>
-				</fieldset>
-				<fieldset class="fieldset mt-4">
-					<legend class="fieldset-legend">Encrypted Output</legend>
-					<CopyableTextarea
-						value={output}
-						readonly={true}
-						placeholder="Encrypted output will appear here..."
-						label="Encrypted Output"
-						buttons={true}
-					/>
-				</fieldset>
-			{:else if mode === PGPMode.DECRYPT}
-				<fieldset class="fieldset">
-					<legend class="fieldset-legend">Encrypted Message</legend>
-					<CopyableTextarea
-						bind:value={message}
-						placeholder="Paste encrypted message..."
-						label="Encrypted Message"
-						selectAllOnFocus={false}
-						{error}
-						buttons={true}
-					/>
-				</fieldset>
-				<fieldset class="fieldset mt-4">
-					<legend class="fieldset-legend">Decrypted Output</legend>
-					<CopyableTextarea
-						value={output}
-						readonly={true}
-						placeholder="Decrypted output will appear here..."
-						label="Decrypted Output"
-						buttons={true}
-					/>
-				</fieldset>
-			{/if}
-		</form>
-	</div>
-</main>
+			<fieldset class="fieldset mt-4">
+				<legend class="fieldset-legend">Encrypted Output</legend>
+				<CopyableTextarea
+					value={output}
+					readonly={true}
+					placeholder="Encrypted output will appear here..."
+					label="Encrypted Output"
+					buttons={true}
+				/>
+			</fieldset>
+		{:else if mode === PGPMode.DECRYPT}
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Encrypted Message</legend>
+				<CopyableTextarea
+					bind:value={message}
+					placeholder="Paste encrypted message..."
+					label="Encrypted Message"
+					selectAllOnFocus={false}
+					{error}
+					buttons={true}
+				/>
+			</fieldset>
+			<fieldset class="fieldset mt-4">
+				<legend class="fieldset-legend">Decrypted Output</legend>
+				<CopyableTextarea
+					value={output}
+					readonly={true}
+					placeholder="Decrypted output will appear here..."
+					label="Decrypted Output"
+					buttons={true}
+				/>
+			</fieldset>
+		{/if}
+	</form>
+</div>
