@@ -1,6 +1,5 @@
 <script lang="ts">
 	import CopyableTextarea from '../lib/ui/CopyableTextarea.svelte';
-	import CopyButtons from '../lib/ui/CopyButtons.svelte';
 	import publicKey from '../assets/keys/pgphelp.pem?raw';
 </script>
 
@@ -168,11 +167,13 @@
 				<div class="divider">Our Public Key</div>
 
 				<div class="form-control">
-					<CopyableTextarea value={publicKey} readonly={true} fixed={true} label="PGP Public Key">
-						{#snippet buttons()}
-							<CopyButtons value={publicKey} />
-						{/snippet}
-					</CopyableTextarea>
+					<CopyableTextarea
+						value={publicKey}
+						readonly={true}
+						fixed={true}
+						label="PGP Public Key"
+						buttons={true}
+					/>
 				</div>
 			</div>
 		</div>

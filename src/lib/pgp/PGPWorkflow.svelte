@@ -3,7 +3,6 @@
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import PGPKey from './PGPKey.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
-	import CopyButtons from '../ui/CopyButtons.svelte';
 	import KeySidebar from './KeySidebar.svelte';
 	import { PGPMode, router } from '../router.svelte.js';
 	import { keyStore, type KeyWrapper, PersistenceType } from './keyStore.svelte.js';
@@ -165,10 +164,6 @@
 	});
 </script>
 
-{#snippet copyButtonsSnippet()}
-	<CopyButtons value={message} />
-{/snippet}
-
 <aside aria-label="Sidebar">
 	<KeySidebar />
 </aside>
@@ -229,7 +224,7 @@
 						label="Message"
 						selectAllOnFocus={false}
 						{error}
-						buttons={copyButtonsSnippet}
+						buttons={true}
 					/>
 				</fieldset>
 				<fieldset class="fieldset mt-4">
@@ -239,7 +234,7 @@
 						readonly={true}
 						placeholder="Encrypted output will appear here..."
 						label="Encrypted Output"
-						buttons={copyButtonsSnippet}
+						buttons={true}
 					/>
 				</fieldset>
 			{:else if mode === PGPMode.DECRYPT}
@@ -251,7 +246,7 @@
 						label="Encrypted Message"
 						selectAllOnFocus={false}
 						{error}
-						buttons={copyButtonsSnippet}
+						buttons={true}
 					/>
 				</fieldset>
 				<fieldset class="fieldset mt-4">
@@ -261,7 +256,7 @@
 						readonly={true}
 						placeholder="Decrypted output will appear here..."
 						label="Decrypted Output"
-						buttons={copyButtonsSnippet}
+						buttons={true}
 					/>
 				</fieldset>
 			{/if}
