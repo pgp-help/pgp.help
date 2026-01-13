@@ -109,7 +109,7 @@
 			<label class="label cursor-pointer justify-start gap-2">
 				<input
 					type="checkbox"
-					class="checkbox checkbox-sm"
+					class="toggle toggle-sm"
 					checked={keyStore.shouldPersistByDefault}
 					onchange={(e) => keyStore.setPersistDefault(e.currentTarget.checked)}
 				/>

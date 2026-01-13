@@ -95,7 +95,7 @@
 		const currentMode = untrack(() => mode);
 		const currentMessage = message;
 
-		if (keyObject?.isPrivate() && currentMode !== PGPMode.DECRYPT) {
+		if (isPrivate && currentMode !== PGPMode.DECRYPT) {
 			//console.log('Checking armor type for mode auto-switch...', message.substring(0, 30));
 			// Fire off the async check without awaiting at the effect level
 			// getArmorType(message).then((armorType) => {
@@ -185,7 +185,6 @@
 					{/if}
 				</legend>
 				{#if keyWrapper}
-					<!-- force remount when key changes so the textfields size correctly -->
 					<PGPKey bind:this={pgpKeyComponent} bind:keyWrapper />
 				{:else}
 					<RawKeyInput
@@ -196,9 +195,7 @@
 							// Temporary wrapper until it's added to store
 							keyWrapper = {
 								key: k,
-								persisted: keyStore.shouldPersistByDefault
-									? PersistenceType.LOCAL_STORAGE
-									: PersistenceType.MEMORY
+								persisted: PersistenceType.MEMORY
 							};
 						}}
 					/>

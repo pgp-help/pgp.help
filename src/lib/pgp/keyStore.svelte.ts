@@ -147,12 +147,11 @@ export class KeyStore {
 		}
 	}
 
-	async addKey(key: Key, persist: boolean = this.shouldPersistByDefault, hasNoPassword?: boolean) {
+	async addKey(key: Key) {
 		await this.load();
 
 		const fingerprint = key.getFingerprint();
 		const isPrivate = key.isPrivate();
-		const persistenceType = persist ? PersistenceType.LOCAL_STORAGE : PersistenceType.MEMORY;
 
 		const existingIndex = this.keys.findIndex((k) => k.key.getFingerprint() === fingerprint);
 
@@ -161,20 +160,15 @@ export class KeyStore {
 
 			if (!existing.key.isPrivate() && isPrivate) {
 				// Upgrade to private
-				this.keys[existingIndex] = { key, persisted: persistenceType, hasNoPassword };
-			} else {
-				// If key exists, we might want to update persistence status
-				if (persist && existing.persisted !== PersistenceType.LOCAL_STORAGE) {
-					existing.persisted = PersistenceType.LOCAL_STORAGE;
-				}
-				// Update hasNoPassword if provided
-				if (hasNoPassword !== undefined) {
-					existing.hasNoPassword = hasNoPassword;
-				}
-				// If persist is false, we don't change existing persistence (don't un-persist)
+				this.keys[existingIndex] = { key, persisted: existing.persisted };
 			}
 		} else {
-			this.keys.push({ key, persisted: persistenceType, hasNoPassword });
+			this.keys.push({
+				key,
+				persisted: this.shouldPersistByDefault
+					? PersistenceType.LOCAL_STORAGE
+					: PersistenceType.MEMORY
+			});
 		}
 
 		this.save();
@@ -192,13 +186,14 @@ export class KeyStore {
 		this.save();
 	}
 
-	getKey(fingerprint: string, type?: 'public' | 'private'): KeyWrapper | undefined {
+	getKey(fingerprint: string, type?: 'public' | 'private'): KeyWrapper {
 		if (!this.isLoaded) {
 			throw new Error('KeyStore not loaded');
 		}
 
 		const wrapper = this.keys.find((k) => k.key.getFingerprint() === fingerprint);
 		if (wrapper && type === 'public' && wrapper.key.isPrivate()) {
+			// This demote-to-public functionality is probably unused?
 			// Return a wrapper with the public key
 			return {
 				key: wrapper.key.toPublic(),

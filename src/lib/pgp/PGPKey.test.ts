@@ -3,6 +3,7 @@ import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import PGPKey from './PGPKey.svelte';
 import * as pgp from './pgp';
 import * as openpgp from 'openpgp';
+import { PersistenceType } from './keyStore.svelte';
 
 // Mock the getKeyDetails function to avoid expensive key parsing in UI tests
 vi.mock('./pgp', async (importOriginal) => {
@@ -120,7 +121,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 
 		const { getByText, queryByPlaceholderText } = render(PGPKey, {
 			props: {
-				keyWrapper: { key: testKey, isPersisted: true }
+				keyWrapper: { key: testKey, persisted: PersistenceType.MEMORY }
 			}
 		});
 
@@ -149,7 +150,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 
 		const { component, container } = render(PGPKey, {
 			props: {
-				keyWrapper: { key: testPrivateKey, isPersisted: true }
+				keyWrapper: { key: testPrivateKey, persisted: PersistenceType.MEMORY }
 			}
 		});
 
@@ -186,7 +187,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 
 		const { getByText } = render(PGPKey, {
 			props: {
-				keyWrapper: { key: testPrivateKey, isPersisted: true }
+				keyWrapper: { key: testPrivateKey, persisted: PersistenceType.MEMORY }
 			}
 		});
 

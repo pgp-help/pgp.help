@@ -34,9 +34,9 @@ describe('PGPKeyBadges', () => {
 		expect(screen.getByText('Unsaved')).toBeInTheDocument();
 	});
 
-	it('renders Unsaved badge when persisted is ASSET', () => {
+	it('does not render Unsaved badge when persisted is ASSET', () => {
 		render(PGPKeyBadges, { keyWrapper: { key: publicKey, persisted: PersistenceType.ASSET } });
-		expect(screen.getByText('Unsaved')).toBeInTheDocument();
+		expect(screen.queryByText('Unsaved')).not.toBeInTheDocument();
 	});
 
 	it('does not render Unsaved badge when persisted is LOCAL_STORAGE', () => {
