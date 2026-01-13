@@ -3,6 +3,7 @@
 	// It also includes logic to auto-select all text when the textarea is focused,
 	// making it easier for users to copy the content manually if needed.
 
+	const BASE_PATH = import.meta.env.BASE_URL || '/';
 	import MiniActionButton from './MiniActionButton.svelte';
 	import CopyIcon from './icons/CopyIcon.svelte';
 	import MarkdownIcon from './icons/MarkdownIcon.svelte';
@@ -63,7 +64,8 @@
 	}
 
 	async function copyLink() {
-		const url = new URL(window.location.href);
+		const baseUrl = window.location.origin + BASE_PATH; // See also router.svelte.ts
+		const url = new URL(baseUrl);
 		if (value) url.searchParams.set('key', value);
 		try {
 			await navigator.clipboard.writeText(url.toString());
