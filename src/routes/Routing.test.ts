@@ -12,7 +12,7 @@ describe('Routing', () => {
 		render(App);
 
 		// Initially on PGP Workflow page
-		expect(screen.getByLabelText(/Public Key/i)).toBeInTheDocument();
+		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();
 		expect(screen.queryByText('What is PGP?')).not.toBeInTheDocument();
 
 		// Click Guide link
@@ -21,7 +21,7 @@ describe('Routing', () => {
 
 		// Should now be on Guide page
 		expect(screen.getByText('What is PGP?')).toBeInTheDocument();
-		expect(screen.queryByLabelText(/Public Key/i)).not.toBeInTheDocument();
+		expect(screen.queryByPlaceholderText(/Paste PGP Key/i)).not.toBeInTheDocument();
 		expect(window.location.pathname).toBe('/Guide');
 	});
 
@@ -34,11 +34,11 @@ describe('Routing', () => {
 		expect(screen.getByText('What is PGP?')).toBeInTheDocument();
 
 		// Click Home link
-		const homeLink = screen.getByRole('link', { name: 'pgp.help' });
-		await fireEvent.click(homeLink);
+		const homeLinks = screen.getAllByRole('link', { name: 'pgp.help' });
+		await fireEvent.click(homeLinks[0]);
 
 		// Should now be on PGP Workflow page
-		expect(screen.getByLabelText(/Public Key/i)).toBeInTheDocument();
+		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();
 		expect(screen.queryByText('What is PGP?')).not.toBeInTheDocument();
 		expect(window.location.pathname).toBe('/');
 	});
