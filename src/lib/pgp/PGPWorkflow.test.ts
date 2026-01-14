@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import * as openpgp from 'openpgp';
 import PGPPage from '../../routes/PGPPage.svelte';
 import { keyStore } from './keyStore.svelte';
-import { router } from '../router.svelte';
+import { router } from '../../routes/router.svelte';
 
 describe('PGPWorkflow', () => {
 	let validPublicKey: string;

@@ -3,7 +3,7 @@
 	import PGPWorkflow from '../lib/pgp/PGPWorkflow.svelte';
 	import GenerateKey from '../lib/pgp/GenerateKey.svelte';
 	import { keyStore, type KeyWrapper } from '../lib/pgp/keyStore.svelte.js';
-	import { router, Pages } from '../lib/router.svelte.js';
+	import { router, Pages } from './router.svelte.js';
 	import type { Key } from 'openpgp';
 	import { fade } from 'svelte/transition';
 	import PlusIcon from '../lib/ui/icons/PlusIcon.svelte';

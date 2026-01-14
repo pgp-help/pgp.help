@@ -3,7 +3,7 @@
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import PGPKey from './PGPKey.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
-	import { PGPMode } from '../router.svelte.js';
+	import { PGPMode } from '../../routes/router.svelte.js';
 	import { type KeyWrapper } from './keyStore.svelte.js';
 	import { untrack } from 'svelte';
 	import type { Key } from 'openpgp';

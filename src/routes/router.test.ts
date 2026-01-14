@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { router, Pages } from './router.svelte';
+import { router, Pages, PGPMode } from './router.svelte';
+import { render, screen, fireEvent } from '@testing-library/svelte';
+import App from '../App.svelte';
 
 // Helper to simulate user entering a URL
 function simulateNavigation(path: string) {
@@ -103,5 +105,86 @@ describe('Router', () => {
 			simulateNavigation('/unknown-page');
 			expect(router.activeRoute.page).toBe(Pages.HOME);
 		});
+	});
+});
+
+// This is a bit of a noddy test (thanks Claude) but it does help teach me how enums work!
+
+describe('PGPMode enum', () => {
+	it('should have correct enum values', () => {
+		expect(PGPMode.ENCRYPT).toBe('encrypt');
+		expect(PGPMode.DECRYPT).toBe('decrypt');
+	});
+
+	it('should be compatible with string literals', () => {
+		// This tests that our enum values match the expected string literals
+		const encryptMode: string = PGPMode.ENCRYPT;
+		const decryptMode: string = PGPMode.DECRYPT;
+
+		expect(encryptMode).toBe('encrypt');
+		expect(decryptMode).toBe('decrypt');
+	});
+
+	it('should work in switch statements', () => {
+		function getModeDescription(mode: PGPMode): string {
+			switch (mode) {
+				case PGPMode.ENCRYPT:
+					return 'Encryption mode';
+				case PGPMode.DECRYPT:
+					return 'Decryption mode';
+				default:
+					return 'Unknown mode';
+			}
+		}
+
+		expect(getModeDescription(PGPMode.ENCRYPT)).toBe('Encryption mode');
+		expect(getModeDescription(PGPMode.DECRYPT)).toBe('Decryption mode');
+	});
+});
+
+describe('Routing', () => {
+	beforeEach(() => {
+		// Reset router state before each test
+		window.location.hash = '';
+	});
+
+	it('navigates to Guide page when clicking Guide link', async () => {
+		render(App);
+
+		// Initially on PGP Workflow page
+		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();
+		expect(screen.queryByText('What is PGP?')).not.toBeInTheDocument();
+
+		// Click Guide link
+		const guideLink = screen.getByRole('link', { name: 'Guide' });
+		await fireEvent.click(guideLink);
+
+		// Should now be on Guide page
+		expect(screen.getByText('What is PGP?')).toBeInTheDocument();
+		// The PGP Workflow components should be gone
+		// The "Public Key" label is dynamic based on isPrivate, but "Paste PGP Key (Armored)..." placeholder is constant in RawKeyInput
+		expect(screen.queryByPlaceholderText('Paste PGP Key (Armored)...')).not.toBeInTheDocument();
+		expect(window.location.hash).toBe('#/Guide');
+	});
+
+	it('navigates back to Home page when clicking PGP Help link', async () => {
+		// Start on Guide page
+		window.location.hash = '#/Guide';
+		render(App);
+
+		// Verify we are on Guide page
+		expect(screen.getByText('What is PGP?')).toBeInTheDocument();
+
+		// Click Home link
+		// There are multiple links with name 'pgp.help' (one in navbar, one in footer/content)
+		// We want the one in the navbar.
+		const homeLinks = screen.getAllByRole('link', { name: 'pgp.help' });
+		const navbarHomeLink = homeLinks[0]; // Assuming the first one is in the navbar
+		await fireEvent.click(navbarHomeLink);
+
+		// Should now be on PGP Workflow page
+		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();
+		expect(screen.queryByText('What is PGP?')).not.toBeInTheDocument();
+		expect(window.location.hash).toBe('#/');
 	});
 });

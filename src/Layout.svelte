@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { router, Pages } from './lib/router.svelte.js';
+	import { router, Pages } from './routes/router.svelte.js';
 
 	function handleHome(e: MouseEvent) {
 		e.preventDefault();

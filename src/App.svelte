@@ -2,7 +2,7 @@
 	import Layout from './Layout.svelte';
 	import PGPPage from './routes/PGPPage.svelte';
 	import Guide from './routes/Guide.svelte';
-	import { router, Pages } from './lib/router.svelte.js';
+	import { router, Pages } from './routes/router.svelte.js';
 </script>
 
 <Layout>
