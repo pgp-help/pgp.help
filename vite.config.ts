@@ -78,7 +78,7 @@ export default defineConfig(({ mode }) => {
 
 	return {
 		appType: 'mpa', // So we can 404.html as a separate page
-		base: '/pgp.help/',
+		base: '/',
 		plugins,
 		resolve: {
 			conditions: ['browser']
