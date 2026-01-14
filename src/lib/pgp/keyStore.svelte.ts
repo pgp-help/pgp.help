@@ -41,6 +41,7 @@ async function getOldKeyrings() {
 				keys.push({ key, persisted: PersistenceType.LEGACY });
 			} catch (e) {
 				console.error('Failed to parse old public key', e);
+				console.log('Key data:', keyData);
 			}
 		}
 	}
@@ -55,6 +56,7 @@ async function getOldKeyrings() {
 				keys.push({ key, persisted: PersistenceType.LEGACY });
 			} catch (e) {
 				console.error('Failed to parse old private key', e);
+				console.log('Key data:', keyData);
 			}
 		}
 	}
