@@ -51,6 +51,16 @@ class Router {
 
 	constructor() {
 		if (typeof window !== 'undefined') {
+			// Check for redirect from 404.html
+			const redirect = sessionStorage.redirect;
+			if (redirect) {
+				delete sessionStorage.redirect;
+				window.history.replaceState(null, '', redirect);
+				// Update internal state immediately
+				this.#raw.path = window.location.pathname;
+				this.#raw.search = window.location.search;
+			}
+
 			const updateState = () => {
 				this.#raw.path = window.location.pathname;
 				this.#raw.search = window.location.search;
@@ -70,21 +80,17 @@ class Router {
 		let page: Pages = Pages.HOME;
 		let fingerprint: string | null = null;
 
-		// Handle special case: /Home redirects to /
-		if (lastSegment === Pages.HOME) {
+		if (Object.values(Pages).includes(lastSegment as Pages) && lastSegment !== Pages.HOME) {
+			page = lastSegment as Pages;
+		} else if (lastSegment && lastSegment === '') {
+			// Assume it's a fingerprint for PGP operations
+			page = Pages.HOME;
+		} else {
+			// We're somewhere odd. Remove the last segment and redirect to root.
 			setTimeout(() => {
 				this.#navigate('/', true);
 			});
 			// Still return HOME page while redirect is pending
-			page = Pages.HOME;
-		}
-		// Check for named pages
-		// Use Object.values to get all enum values and check if lastSegment matches any of them
-		else if (Object.values(Pages).includes(lastSegment as Pages)) {
-			page = lastSegment as Pages;
-		}
-		// Otherwise, we're at root/home
-		else {
 			page = Pages.HOME;
 		}
 
