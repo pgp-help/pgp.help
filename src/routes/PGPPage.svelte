@@ -129,7 +129,10 @@
 				<input
 					type="checkbox"
 					class="toggle toggle-sm"
-					bind:checked={keyStore.shouldPersistByDefault}
+					checked={keyStore.shouldPersistByDefault}
+					onchange={(e) => {
+						keyStore.setPersistDefault(e.currentTarget.checked);
+					}}
 				/>
 				<span class="label-text text-sm">Persist new keys</span>
 			</label>
