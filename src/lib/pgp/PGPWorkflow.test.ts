@@ -2,7 +2,7 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import * as openpgp from 'openpgp';
-import PGPPage from './PGPPage.svelte';
+import PGPPage from '../../routes/PGPPage.svelte';
 import { keyStore } from './keyStore.svelte';
 import { router } from '../router.svelte';
 

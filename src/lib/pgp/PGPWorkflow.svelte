@@ -3,19 +3,29 @@
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import PGPKey from './PGPKey.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
-	import { PGPMode, router } from '../router.svelte.js';
-	import { keyStore, type KeyWrapper, PersistenceType } from './keyStore.svelte.js';
+	import { PGPMode } from '../router.svelte.js';
+	import { type KeyWrapper } from './keyStore.svelte.js';
 	import { untrack } from 'svelte';
+	import type { Key } from 'openpgp';
+
+	interface Props {
+		keyWrapper: KeyWrapper | null;
+		onKeyParsed: (key: Key) => void;
+		keyValue?: string;
+	}
+	let { keyWrapper = $bindable(), onKeyParsed, keyValue = $bindable('') }: Props = $props();
 
 	// Derived state from router
 	let mode = $state<PGPMode>(PGPMode.ENCRYPT);
 
-	// The parsed OpenPGP key object (null if invalid/empty)
-	let keyWrapper = $state<KeyWrapper | null>(null);
 	let keyObject = $derived(keyWrapper?.key ?? null);
-	// The raw armored key string (bound to the textarea/input)
-	// Initialize to empty string; will be updated by effect when initialKey changes
-	let keyValue = $state('');
+
+	$effect(() => {
+		if (keyWrapper) {
+			keyValue = '';
+		}
+	});
+
 	// Reference to the PGPKey component instance (for calling methods like nudgeForDecryption)
 	let pgpKeyComponent = $state<PGPKey | null>(null);
 	// The input message to be encrypted or decrypted
@@ -32,46 +42,6 @@
 			return [PGPMode.ENCRYPT, PGPMode.DECRYPT]; //, PGPMode.SIGN, PGPMode.VERIFY];
 		} else {
 			return [PGPMode.ENCRYPT]; //, PGPMode.VERIFY];
-		}
-	});
-
-	// Sync keyValue from router state (fingerprint or keyParam)
-	$effect(() => {
-		const { fingerprint, keyParam, mode: routerMode } = router.activeRoute.pgp;
-		const keyStoreIsLoaded = keyStore.isLoaded;
-
-		if (fingerprint) {
-			// Can't handle fingerprint until store is loaded
-			// (when it is loaded, this effect will re-run)
-			if (!keyStoreIsLoaded) return;
-			let selectedKeyWrapper = keyStore.getKey(fingerprint);
-			if (!selectedKeyWrapper) {
-				// If fingerprint not found, navigate back home
-				// NTH: Pop up a warning toast?
-				console.warn('Fingerprint not found in store, navigating home:', fingerprint);
-				router.openHome();
-			} else {
-				keyWrapper = selectedKeyWrapper;
-				if (routerMode) {
-					mode = routerMode;
-				}
-			}
-		} else if (keyParam) {
-			keyValue = keyParam;
-		} else {
-			keyValue = '';
-			keyWrapper = null;
-		}
-	});
-
-	// When a valid key is parsed, save it and update URL if needed
-	$effect(() => {
-		if (keyObject) {
-			const fp = keyObject.getFingerprint();
-
-			keyStore.addKey(keyObject).then(() => {
-				router.openKey(fp);
-			});
 		}
 	});
 
@@ -180,13 +150,7 @@
 					bind:value={keyValue}
 					label={isPrivate ? 'Private Key' : 'Public Key'}
 					placeholder="Paste PGP Key (Armored)..."
-					onKeyParsed={(k) => {
-						// Temporary wrapper until it's added to store
-						keyWrapper = {
-							key: k,
-							persisted: PersistenceType.MEMORY
-						};
-					}}
+					{onKeyParsed}
 				/>
 			{/if}
 		</fieldset>
