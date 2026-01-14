@@ -8,10 +8,9 @@
 	interface Props {
 		keys: KeyWrapper[];
 		selectedWrapper?: KeyWrapper | null;
-		onSelectKey: (wrapper: KeyWrapper) => void;
 	}
 
-	let { keys, selectedWrapper = $bindable(), onSelectKey }: Props = $props();
+	let { keys, selectedWrapper = $bindable() }: Props = $props();
 
 	let keyToDelete = $state<KeyWrapper | null>(null);
 	let deleteDialog: HTMLDialogElement;
@@ -61,10 +60,10 @@
 					: ''}"
 				role="link"
 				tabindex="0"
-				onclick={() => onSelectKey(wrapper)}
+				onclick={() => (selectedWrapper = wrapper)}
 				onkeydown={(e) => {
 					if (e.key === 'Enter' || e.key === ' ') {
-						onSelectKey(wrapper);
+						selectedWrapper = wrapper;
 					}
 				}}
 			>

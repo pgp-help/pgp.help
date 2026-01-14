@@ -15,6 +15,12 @@
 	let keyValue = $state<string>('');
 
 	$effect(() => {
+		// Access selectedKeyWrapper to register it as a dependency so the menu closes when it changes
+		void selectedKeyWrapper;
+		isMobileMenuOpen = false;
+	});
+
+	$effect(() => {
 		const keyParam = router.activeRoute.pgp.keyParam;
 		const selectedFingerprint = router.activeRoute.pgp.fingerprint;
 
@@ -34,16 +40,11 @@
 		}
 	});
 
-	function handleSelectKey(wrapper: KeyWrapper) {
-		//router.openKey(wrapper.key.getFingerprint());
-		selectedKeyWrapper = wrapper;
-		isMobileMenuOpen = false;
-	}
-
 	function handleNewKey(key: Key) {
 		const fp = key.getFingerprint();
 		keyStore.addKey(key).then(() => {
-			router.openKey(fp);
+			const wrapper = keyStore.getKey(fp);
+			selectedKeyWrapper = wrapper;
 		});
 	}
 
@@ -94,8 +95,7 @@
 		<button
 			class="btn btn-primary w-full"
 			onclick={() => {
-				router.openPage(Pages.HOME);
-				isMobileMenuOpen = false;
+				selectedKeyWrapper = null;
 			}}
 		>
 			<PlusIcon className="h-5 w-5 mr-2" />
@@ -113,11 +113,7 @@
 		</button>
 	</div>
 
-	<KeyList
-		keys={keyStore.keys}
-		selectedWrapper={selectedKeyWrapper}
-		onSelectKey={handleSelectKey}
-	/>
+	<KeyList keys={keyStore.keys} bind:selectedWrapper={selectedKeyWrapper} />
 
 	<div class="p-4 border-t border-base-300">
 		<div class="form-control">
