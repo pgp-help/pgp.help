@@ -34,8 +34,9 @@
 		}
 	});
 
-	function handleSelectKey(fingerprint: string) {
-		router.openKey(fingerprint);
+	function handleSelectKey(wrapper: KeyWrapper) {
+		//router.openKey(wrapper.key.getFingerprint());
+		selectedKeyWrapper = wrapper;
 		isMobileMenuOpen = false;
 	}
 

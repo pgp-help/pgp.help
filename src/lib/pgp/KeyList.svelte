@@ -8,10 +8,10 @@
 	interface Props {
 		keys: KeyWrapper[];
 		selectedWrapper?: KeyWrapper | null;
-		onSelectKey: (fingerprint: string) => void;
+		onSelectKey: (wrapper: KeyWrapper) => void;
 	}
 
-	let { keys, selectedWrapper, onSelectKey }: Props = $props();
+	let { keys, selectedWrapper = $bindable(), onSelectKey }: Props = $props();
 
 	let keyToDelete = $state<KeyWrapper | null>(null);
 	let deleteDialog: HTMLDialogElement;
@@ -61,10 +61,10 @@
 					: ''}"
 				role="link"
 				tabindex="0"
-				onclick={() => onSelectKey(wrapper.key.getFingerprint())}
+				onclick={() => onSelectKey(wrapper)}
 				onkeydown={(e) => {
 					if (e.key === 'Enter' || e.key === ' ') {
-						onSelectKey(wrapper.key.getFingerprint());
+						onSelectKey(wrapper);
 					}
 				}}
 			>
