@@ -83,11 +83,6 @@ class Router {
 		else if (Object.values(Pages).includes(lastSegment as Pages)) {
 			page = lastSegment as Pages;
 		}
-		// Check for fingerprint (hex string, 16+ chars)
-		else if (lastSegment) {
-			fingerprint = lastSegment;
-			page = Pages.HOME; // Viewing a key on home page
-		}
 		// Otherwise, we're at root/home
 		else {
 			page = Pages.HOME;
@@ -96,7 +91,7 @@ class Router {
 		// Parse query params
 		const params = new SvelteURLSearchParams(this.#raw.search);
 		const keyParam = params.get('key');
-		const mode = (params.get('mode') as PGPMode) || PGPMode.ENCRYPT;
+		fingerprint = params.get('fp');
 
 		//Remove any query params, as they are now stored in the state and they confuse things.
 		//console.log('Router setting URL to', this.#raw.path);
@@ -106,8 +101,7 @@ class Router {
 			page,
 			pgp: {
 				fingerprint,
-				keyParam,
-				mode
+				keyParam
 			}
 		};
 	});

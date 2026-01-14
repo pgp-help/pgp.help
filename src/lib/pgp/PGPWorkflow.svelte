@@ -15,7 +15,7 @@
 	}
 	let { keyWrapper = $bindable(), onKeyParsed, keyValue = $bindable('') }: Props = $props();
 
-	// Derived state from router
+	// Local state for mode
 	let mode = $state<PGPMode>(PGPMode.ENCRYPT);
 
 	let keyObject = $derived(keyWrapper?.key ?? null);

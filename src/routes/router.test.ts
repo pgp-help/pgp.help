@@ -7,9 +7,11 @@ import App from '../App.svelte';
 function simulateNavigation(path: string) {
 	// For hash routing, we update the hash
 	// If path starts with /, treat it as hash path
-	const hash = path.startsWith('/') ? path : '/' + path;
-	window.location.hash = hash;
-	window.dispatchEvent(new HashChangeEvent('hashchange'));
+	// const hash = path.startsWith('/') ? path : '/' + path;
+	// window.location.hash = hash;
+	// window.dispatchEvent(new HashChangeEvent('hashchange'));
+	window.history.pushState({}, '', path);
+	window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
 describe('Router', () => {
@@ -51,7 +53,7 @@ describe('Router', () => {
 			// After timeout, should redirect to /
 			vi.runAllTimers();
 			// Check hash instead of pathname
-			expect(window.location.hash).toBe('#/');
+			expect(window.location.pathname).toBe('/');
 
 			vi.useRealTimers();
 		});
@@ -79,13 +81,13 @@ describe('Router', () => {
 	describe('Navigation Methods', () => {
 		it('openPage navigates to Guide', () => {
 			router.openPage(Pages.GUIDE);
-			expect(window.location.hash).toBe('#/Guide');
+			expect(window.location.pathname).toBe('/Guide');
 			expect(router.activeRoute.page).toBe(Pages.GUIDE);
 		});
 
 		it('openPage navigates to home', () => {
 			router.openPage(Pages.HOME);
-			expect(window.location.hash).toBe('#/');
+			expect(window.location.pathname).toBe('/');
 			expect(router.activeRoute.page).toBe(Pages.HOME);
 		});
 	});
