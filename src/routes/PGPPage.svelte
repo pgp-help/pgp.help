@@ -8,6 +8,7 @@
 	import { fade } from 'svelte/transition';
 	import PlusIcon from '../lib/ui/icons/PlusIcon.svelte';
 	import KeyIcon from '../lib/ui/icons/KeyIcon.svelte';
+	import { untrack } from 'svelte';
 
 	let selectedKeyWrapper = $state<KeyWrapper | null>(null);
 	let isMobileMenuOpen = $state(false);
@@ -18,6 +19,11 @@
 		// Whenever a key is selected (or nullified), close the mobile menu
 		void selectedKeyWrapper;
 		isMobileMenuOpen = false;
+		const igkp = untrack(() => isGenerateKeyPage);
+		if (igkp && selectedKeyWrapper) {
+			// Frig so that if a key is selected while the generate key page is open, we navigate home
+			router.openHome();
+		}
 	});
 
 	$effect(() => {
@@ -105,8 +111,9 @@
 		<button
 			class="btn btn-outline w-full"
 			onclick={() => {
-				router.openPage(Pages.GENERATE_KEY);
+				selectedKeyWrapper = null;
 				isMobileMenuOpen = false;
+				router.openPage(Pages.GENERATE_KEY);
 			}}
 		>
 			<KeyIcon className="h-5 w-5 mr-2" />

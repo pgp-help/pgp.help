@@ -78,15 +78,14 @@ class Router {
 		const lastSegment = pathParts[pathParts.length - 1];
 
 		let page: Pages = Pages.HOME;
-		let fingerprint: string | null = null;
 
-		if (Object.values(Pages).includes(lastSegment as Pages) && lastSegment !== Pages.HOME) {
-			page = lastSegment as Pages;
-		} else if (lastSegment && lastSegment === '') {
-			// Assume it's a fingerprint for PGP operations
+		if (lastSegment == undefined) {
 			page = Pages.HOME;
+		} else if (Object.values(Pages).includes(lastSegment as Pages) && lastSegment !== Pages.HOME) {
+			page = lastSegment as Pages;
 		} else {
 			// We're somewhere odd. Remove the last segment and redirect to root.
+			console.log('Router: Unrecognized path segment:', lastSegment, ' - redirecting to root.');
 			setTimeout(() => {
 				this.#navigate('/', true);
 			});
@@ -97,7 +96,7 @@ class Router {
 		// Parse query params
 		const params = new SvelteURLSearchParams(this.#raw.search);
 		const keyParam = params.get('key');
-		fingerprint = params.get('fp');
+		const fingerprint = params.get('fp');
 
 		//Remove any query params, as they are now stored in the state and they confuse things.
 		//console.log('Router setting URL to', this.#raw.path);
@@ -118,6 +117,8 @@ class Router {
 	 * @param replace - Whether to replace history instead of push
 	 */
 	#navigate(appPath: string, replace: boolean = false) {
+		// console.trace('Router navigating to', appPath, 'replace=', replace);
+
 		// Convert app-relative path to full pathname
 		const fullPath = addBasePath(appPath);
 
