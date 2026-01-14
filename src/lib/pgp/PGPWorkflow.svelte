@@ -3,20 +3,29 @@
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import PGPKey from './PGPKey.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
-	import KeySidebar from './KeySidebar.svelte';
-	import { PGPMode, router } from '../router.svelte.js';
-	import { keyStore, type KeyWrapper, PersistenceType } from './keyStore.svelte.js';
+	import { PGPMode } from '../../routes/router.svelte.js';
+	import { type KeyWrapper } from './keyStore.svelte.js';
 	import { untrack } from 'svelte';
+	import type { Key } from 'openpgp';
 
-	// Derived state from router
+	interface Props {
+		keyWrapper: KeyWrapper | null;
+		onKeyParsed: (key: Key) => void;
+		keyValue?: string;
+	}
+	let { keyWrapper = $bindable(), onKeyParsed, keyValue = $bindable('') }: Props = $props();
+
+	// Local state for mode
 	let mode = $state<PGPMode>(PGPMode.ENCRYPT);
 
-	// The parsed OpenPGP key object (null if invalid/empty)
-	let keyWrapper = $state<KeyWrapper | null>(null);
 	let keyObject = $derived(keyWrapper?.key ?? null);
-	// The raw armored key string (bound to the textarea/input)
-	// Initialize to empty string; will be updated by effect when initialKey changes
-	let keyValue = $state('');
+
+	$effect(() => {
+		if (keyWrapper) {
+			keyValue = '';
+		}
+	});
+
 	// Reference to the PGPKey component instance (for calling methods like nudgeForDecryption)
 	let pgpKeyComponent = $state<PGPKey | null>(null);
 	// The input message to be encrypted or decrypted
@@ -33,46 +42,6 @@
 			return [PGPMode.ENCRYPT, PGPMode.DECRYPT]; //, PGPMode.SIGN, PGPMode.VERIFY];
 		} else {
 			return [PGPMode.ENCRYPT]; //, PGPMode.VERIFY];
-		}
-	});
-
-	// Sync keyValue from router state (fingerprint or keyParam)
-	$effect(() => {
-		const { fingerprint, keyParam, mode: routerMode } = router.activeRoute.pgp;
-		const keyStoreIsLoaded = keyStore.isLoaded;
-
-		if (fingerprint) {
-			// Can't handle fingerprint until store is loaded
-			// (when it is loaded, this effect will re-run)
-			if (!keyStoreIsLoaded) return;
-			let selectedKeyWrapper = keyStore.getKey(fingerprint);
-			if (!selectedKeyWrapper) {
-				// If fingerprint not found, navigate back home
-				// NTH: Pop up a warning toast?
-				console.warn('Fingerprint not found in store, navigating home:', fingerprint);
-				router.openHome();
-			} else {
-				keyWrapper = selectedKeyWrapper;
-				if (routerMode) {
-					mode = routerMode;
-				}
-			}
-		} else if (keyParam) {
-			keyValue = keyParam;
-		} else {
-			keyValue = '';
-			keyWrapper = null;
-		}
-	});
-
-	// When a valid key is parsed, save it and update URL if needed
-	$effect(() => {
-		if (keyObject) {
-			const fp = keyObject.getFingerprint();
-
-			keyStore.addKey(keyObject).then(() => {
-				router.openKey(fp);
-			});
 		}
 	});
 
@@ -164,102 +133,90 @@
 	});
 </script>
 
-<aside aria-label="Sidebar">
-	<KeySidebar />
-</aside>
-
-<main class="flex-1 overflow-y-auto p-4 sm:p-8" aria-label="PGP Workflow">
-	<div class="container mx-auto max-w-4xl">
-		<form class="space-y-6">
-			<fieldset class="fieldset">
-				<legend class="fieldset-legend">
-					{#if isPrivate}
-						Private Key
-					{:else}
-						Public Key
-					{/if}
-				</legend>
-				{#if keyWrapper}
-					<PGPKey bind:this={pgpKeyComponent} bind:keyWrapper />
+<div class="container mx-auto max-w-4xl">
+	<form class="space-y-6">
+		<fieldset class="fieldset">
+			<legend class="fieldset-legend">
+				{#if isPrivate}
+					Private Key
 				{:else}
-					<RawKeyInput
-						bind:value={keyValue}
-						label={isPrivate ? 'Private Key' : 'Public Key'}
-						placeholder="Paste PGP Key (Armored)..."
-						onKeyParsed={(k) => {
-							// Temporary wrapper until it's added to store
-							keyWrapper = {
-								key: k,
-								persisted: PersistenceType.MEMORY
-							};
-						}}
-					/>
+					Public Key
 				{/if}
+			</legend>
+			{#if keyWrapper}
+				<PGPKey bind:this={pgpKeyComponent} bind:keyWrapper />
+			{:else}
+				<RawKeyInput
+					bind:value={keyValue}
+					label={isPrivate ? 'Private Key' : 'Public Key'}
+					placeholder="Paste PGP Key (Armored)..."
+					{onKeyParsed}
+				/>
+			{/if}
+		</fieldset>
+
+		{#if availableModes.length > 1}
+			<div class="join w-full">
+				{#each availableModes as availableMode (availableMode)}
+					<button
+						type="button"
+						class="btn btn-sm join-item flex-1 {mode === availableMode
+							? 'btn-primary'
+							: 'btn-outline'}"
+						onclick={() => {
+							mode = availableMode;
+						}}
+					>
+						{availableMode.charAt(0).toUpperCase() + availableMode.slice(1)}
+					</button>
+				{/each}
+			</div>
+		{/if}
+
+		{#if mode === PGPMode.ENCRYPT}
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Message</legend>
+				<CopyableTextarea
+					bind:value={message}
+					placeholder="Type your secret message..."
+					label="Message"
+					selectAllOnFocus={false}
+					{error}
+					buttons={true}
+				/>
 			</fieldset>
-
-			{#if availableModes.length > 1}
-				<div class="join w-full">
-					{#each availableModes as availableMode (availableMode)}
-						<button
-							type="button"
-							class="btn btn-sm join-item flex-1 {mode === availableMode
-								? 'btn-primary'
-								: 'btn-outline'}"
-							onclick={() => {
-								mode = availableMode;
-							}}
-						>
-							{availableMode.charAt(0).toUpperCase() + availableMode.slice(1)}
-						</button>
-					{/each}
-				</div>
-			{/if}
-
-			{#if mode === PGPMode.ENCRYPT}
-				<fieldset class="fieldset">
-					<legend class="fieldset-legend">Message</legend>
-					<CopyableTextarea
-						bind:value={message}
-						placeholder="Type your secret message..."
-						label="Message"
-						selectAllOnFocus={false}
-						{error}
-						buttons={true}
-					/>
-				</fieldset>
-				<fieldset class="fieldset mt-4">
-					<legend class="fieldset-legend">Encrypted Output</legend>
-					<CopyableTextarea
-						value={output}
-						readonly={true}
-						placeholder="Encrypted output will appear here..."
-						label="Encrypted Output"
-						buttons={true}
-					/>
-				</fieldset>
-			{:else if mode === PGPMode.DECRYPT}
-				<fieldset class="fieldset">
-					<legend class="fieldset-legend">Encrypted Message</legend>
-					<CopyableTextarea
-						bind:value={message}
-						placeholder="Paste encrypted message..."
-						label="Encrypted Message"
-						selectAllOnFocus={false}
-						{error}
-						buttons={true}
-					/>
-				</fieldset>
-				<fieldset class="fieldset mt-4">
-					<legend class="fieldset-legend">Decrypted Output</legend>
-					<CopyableTextarea
-						value={output}
-						readonly={true}
-						placeholder="Decrypted output will appear here..."
-						label="Decrypted Output"
-						buttons={true}
-					/>
-				</fieldset>
-			{/if}
-		</form>
-	</div>
-</main>
+			<fieldset class="fieldset mt-4">
+				<legend class="fieldset-legend">Encrypted Output</legend>
+				<CopyableTextarea
+					value={output}
+					readonly={true}
+					placeholder="Encrypted output will appear here..."
+					label="Encrypted Output"
+					buttons={true}
+				/>
+			</fieldset>
+		{:else if mode === PGPMode.DECRYPT}
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Encrypted Message</legend>
+				<CopyableTextarea
+					bind:value={message}
+					placeholder="Paste encrypted message..."
+					label="Encrypted Message"
+					selectAllOnFocus={false}
+					{error}
+					buttons={true}
+				/>
+			</fieldset>
+			<fieldset class="fieldset mt-4">
+				<legend class="fieldset-legend">Decrypted Output</legend>
+				<CopyableTextarea
+					value={output}
+					readonly={true}
+					placeholder="Decrypted output will appear here..."
+					label="Decrypted Output"
+					buttons={true}
+				/>
+			</fieldset>
+		{/if}
+	</form>
+</div>

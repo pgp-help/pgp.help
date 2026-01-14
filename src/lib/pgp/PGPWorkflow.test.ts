@@ -2,9 +2,9 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import * as openpgp from 'openpgp';
-import PGPWorkflow from './PGPWorkflow.svelte';
+import PGPPage from '../../routes/PGPPage.svelte';
 import { keyStore } from './keyStore.svelte';
-import { router } from '../router.svelte';
+import { router } from '../../routes/router.svelte';
 
 describe('PGPWorkflow', () => {
 	let validPublicKey: string;
@@ -32,7 +32,7 @@ describe('PGPWorkflow', () => {
 
 	it('encrypts message with public key', async () => {
 		const user = userEvent.setup();
-		render(PGPWorkflow);
+		render(PGPPage);
 
 		const keyTextarea = screen.getByLabelText(/Public Key/i);
 		const messageTextarea = screen.getByLabelText(/^Message/i);
@@ -57,7 +57,7 @@ describe('PGPWorkflow', () => {
 
 	it('decrypts message with private key', async () => {
 		const user = userEvent.setup();
-		render(PGPWorkflow);
+		render(PGPPage);
 
 		const secretMessage = 'Top Secret Data';
 		const encrypted = (await openpgp.encrypt({
@@ -103,7 +103,7 @@ describe('PGPWorkflow', () => {
 
 	it('allows switching modes with private key', async () => {
 		const user = userEvent.setup();
-		render(PGPWorkflow);
+		render(PGPPage);
 
 		const keyTextarea = screen.getByLabelText(/Public Key/i);
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
@@ -141,7 +141,7 @@ describe('PGPWorkflow', () => {
 
 	it('automatically switches to decrypt mode when pasting encrypted message', async () => {
 		const user = userEvent.setup();
-		render(PGPWorkflow);
+		render(PGPPage);
 
 		// Encrypt a message
 		const secretMessage = 'Auto Switch Test';
@@ -188,7 +188,7 @@ describe('PGPWorkflow', () => {
 
 	it('should render errors', async () => {
 		const user = userEvent.setup();
-		render(PGPWorkflow);
+		render(PGPPage);
 
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
 		const keyTextarea = within(mainArea).getByLabelText(/Public Key/i);

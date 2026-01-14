@@ -1,22 +1,5 @@
 import { SvelteURLSearchParams } from 'svelte/reactivity';
-
 const BASE_PATH = import.meta.env.BASE_URL || '/';
-
-/**
- * Enum for PGP operation modes
- */
-export enum PGPMode {
-	ENCRYPT = 'encrypt',
-	DECRYPT = 'decrypt',
-	SIGN = 'sign',
-	VERIFY = 'verify'
-}
-
-export enum Pages {
-	HOME = 'Home',
-	GUIDE = 'Guide',
-	GENERATE_KEY = 'GenerateKey'
-}
 
 /**
  * Strip BASE_PATH from a full pathname, returning the app-relative path
@@ -43,19 +26,47 @@ function addBasePath(appPath: string): string {
 	return base + path;
 }
 
+/**
+ * Enum for PGP operation modes
+ */
+export enum PGPMode {
+	ENCRYPT = 'encrypt',
+	DECRYPT = 'decrypt',
+	SIGN = 'sign',
+	VERIFY = 'verify'
+}
+
+export enum Pages {
+	HOME = 'Home',
+	GUIDE = 'Guide',
+	GENERATE_KEY = 'GenerateKey'
+}
+
 class Router {
 	// Raw state tracking window location (source of truth)
 	#raw = $state({
-		path: window.location.pathname,
-		search: window.location.search
+		path: typeof window !== 'undefined' ? window.location.pathname : '',
+		search: typeof window !== 'undefined' ? window.location.search : ''
 	});
 
 	constructor() {
 		if (typeof window !== 'undefined') {
-			window.addEventListener('popstate', () => {
+			// Check for redirect from 404.html
+			const redirect = sessionStorage.redirect;
+			if (redirect) {
+				delete sessionStorage.redirect;
+				window.history.replaceState(null, '', redirect);
+				// Update internal state immediately
 				this.#raw.path = window.location.pathname;
 				this.#raw.search = window.location.search;
-			});
+			}
+
+			const updateState = () => {
+				this.#raw.path = window.location.pathname;
+				this.#raw.search = window.location.search;
+			};
+
+			window.addEventListener('popstate', updateState);
 		}
 	}
 
@@ -67,35 +78,25 @@ class Router {
 		const lastSegment = pathParts[pathParts.length - 1];
 
 		let page: Pages = Pages.HOME;
-		let fingerprint: string | null = null;
 
-		// Handle special case: /Home redirects to /
-		if (lastSegment === Pages.HOME) {
+		if (lastSegment == undefined) {
+			page = Pages.HOME;
+		} else if (Object.values(Pages).includes(lastSegment as Pages) && lastSegment !== Pages.HOME) {
+			page = lastSegment as Pages;
+		} else {
+			// We're somewhere odd. Remove the last segment and redirect to root.
+			console.log('Router: Unrecognized path segment:', lastSegment, ' - redirecting to root.');
 			setTimeout(() => {
 				this.#navigate('/', true);
 			});
 			// Still return HOME page while redirect is pending
 			page = Pages.HOME;
 		}
-		// Check for named pages
-		// Use Object.values to get all enum values and check if lastSegment matches any of them
-		else if (Object.values(Pages).includes(lastSegment as Pages)) {
-			page = lastSegment as Pages;
-		}
-		// Check for fingerprint (hex string, 16+ chars)
-		else if (lastSegment) {
-			fingerprint = lastSegment;
-			page = Pages.HOME; // Viewing a key on home page
-		}
-		// Otherwise, we're at root/home
-		else {
-			page = Pages.HOME;
-		}
 
 		// Parse query params
 		const params = new SvelteURLSearchParams(this.#raw.search);
 		const keyParam = params.get('key');
-		const mode = (params.get('mode') as PGPMode) || PGPMode.ENCRYPT;
+		const fingerprint = params.get('fp');
 
 		//Remove any query params, as they are now stored in the state and they confuse things.
 		//console.log('Router setting URL to', this.#raw.path);
@@ -105,8 +106,7 @@ class Router {
 			page,
 			pgp: {
 				fingerprint,
-				keyParam,
-				mode
+				keyParam
 			}
 		};
 	});
@@ -117,6 +117,8 @@ class Router {
 	 * @param replace - Whether to replace history instead of push
 	 */
 	#navigate(appPath: string, replace: boolean = false) {
+		// console.trace('Router navigating to', appPath, 'replace=', replace);
+
 		// Convert app-relative path to full pathname
 		const fullPath = addBasePath(appPath);
 
@@ -145,40 +147,6 @@ class Router {
 
 	openHome() {
 		this.openPage(Pages.HOME);
-	}
-
-	/**
-	 * Navigate to a specific key by fingerprint
-	 */
-	openKey(fingerprint: string, mode?: PGPMode) {
-		const currentMode = this.activeRoute.pgp.mode;
-		const targetMode = mode || currentMode;
-
-		const search = new SvelteURLSearchParams();
-		if (targetMode !== PGPMode.ENCRYPT) {
-			search.set('mode', targetMode);
-		}
-
-		const searchStr = search.toString();
-		this.#navigate(`/${fingerprint}${searchStr ? '?' + searchStr : ''}`);
-	}
-
-	/**
-	 * Change the mode for the current view
-	 */
-	setMode(mode: PGPMode) {
-		if (this.activeRoute.page !== Pages.HOME) return;
-
-		const { fingerprint, keyParam } = this.activeRoute.pgp;
-		const search = new SvelteURLSearchParams();
-
-		if (keyParam) search.set('key', keyParam);
-		if (mode !== PGPMode.ENCRYPT) search.set('mode', mode);
-
-		const path = fingerprint ? `/${fingerprint}` : '/';
-		const searchStr = search.toString();
-
-		this.#navigate(`${path}${searchStr ? '?' + searchStr : ''}`);
 	}
 }
 

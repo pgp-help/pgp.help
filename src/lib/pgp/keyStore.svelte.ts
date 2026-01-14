@@ -23,10 +23,40 @@ async function getAssetKeys() {
 	return assetKeysCache;
 }
 
+async function getOldKeyrings() {
+	// I have no real idea if this works!
+	const keys = [] as KeyWrapper[];
+
+	// Get stored key data from localStorage
+	const publicKeysData = localStorage.getItem('openpgp-public-keys');
+	const privateKeysData = localStorage.getItem('openpgp-private-keys');
+
+	// Parse and read public keys
+	if (publicKeysData) {
+		const publicKeys = JSON.parse(publicKeysData);
+		for (const keyData of publicKeys) {
+			const key = await getKeyDetails(keyData.armored);
+			keys.push({ key, persisted: PersistenceType.LEGACY });
+		}
+	}
+
+	// Parse and read private keys
+	if (privateKeysData) {
+		const privateKeys = JSON.parse(privateKeysData);
+		for (const keyData of privateKeys) {
+			const key = await getKeyDetails(keyData.armored);
+			keys.push({ key, persisted: PersistenceType.LEGACY });
+		}
+	}
+
+	return keys;
+}
+
 export enum PersistenceType {
 	ASSET = 'asset',
 	LOCAL_STORAGE = 'localstorage',
-	MEMORY = 'memory'
+	MEMORY = 'memory',
+	LEGACY = 'legacy'
 }
 
 export interface KeyWrapper {
@@ -101,8 +131,9 @@ export class KeyStore {
 				key,
 				persisted: PersistenceType.ASSET
 			}));
+		const oldKeyWrappers = await getOldKeyrings();
 
-		const allKeys = [...storedKeys, ...assetKeyWrappers];
+		const allKeys = [...storedKeys, ...assetKeyWrappers, ...oldKeyWrappers];
 
 		// Deduplicate, preferring private keys
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
