@@ -171,7 +171,9 @@ export async function getKeyDetails(armoredKey: string): Promise<openpgp.Key> {
 		const cleanedKey = cleanKey(armoredKey);
 		return await openpgp.readKey({ armoredKey: cleanedKey });
 	} catch (error) {
-		console.error('Key parsing error:', error);
+		if (!error.message?.includes('Missing PGP header/footer')) {
+			console.error('Key parsing error:', error);
+		}
 		throw error;
 	}
 }

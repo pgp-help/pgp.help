@@ -87,6 +87,9 @@ export default defineConfig(({ mode }) => {
 			environment: 'happy-dom',
 			globals: true,
 			setupFiles: './src/setupTests.ts'
+		},
+		build: {
+			sourcemap: true // Generates .map files
 		}
 	};
 });
