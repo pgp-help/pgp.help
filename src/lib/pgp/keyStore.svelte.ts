@@ -33,30 +33,28 @@ async function getOldKeyrings() {
 
 	// Parse and read public keys
 	if (publicKeysData) {
-		console.log('Found old public keys data in localStorage: ', publicKeysData);
 		const publicKeys = JSON.parse(publicKeysData);
 		for (const keyData of publicKeys) {
 			try {
-				const key = await getKeyDetails(keyData.armored);
+				const key = await getKeyDetails(keyData);
 				keys.push({ key, persisted: PersistenceType.LEGACY });
 			} catch (e) {
 				console.error('Failed to parse old public key', e);
-				console.log('Key data:', keyData);
+				console.log(keyData);
 			}
 		}
 	}
 
 	// Parse and read private keys
 	if (privateKeysData) {
-		console.log('Found old private keys data in localStorage: ', privateKeysData);
 		const privateKeys = JSON.parse(privateKeysData);
 		for (const keyData of privateKeys) {
 			try {
-				const key = await getKeyDetails(keyData.armored);
+				const key = await getKeyDetails(keyData);
 				keys.push({ key, persisted: PersistenceType.LEGACY });
 			} catch (e) {
 				console.error('Failed to parse old private key', e);
-				console.log('Key data:', keyData);
+				console.log(keyData);
 			}
 		}
 	}
@@ -84,7 +82,7 @@ export interface KeyWrapper {
 export class KeyStore {
 	keys = $state<KeyWrapper[]>([]);
 	isLoaded = $state(false);
-	shouldPersistByDefault = $state(true);
+	shouldPersistByDefault = $state(false);
 
 	private loadPromise: Promise<void> | undefined;
 	private lastLoadedJson: string | null = null;

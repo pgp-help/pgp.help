@@ -1,58 +1,27 @@
-# PGP Svelte
+# pgp.help
 
-A simple, client-side PGP encryption web app built with Svelte and Vite. Encrypt messages using public keys directly in your browser—no server required, ensuring privacy and security.
+A simple, client-side PGP encryption web app built with Svelte and Vite. Encrypt messages using public keys directly in your browser. Data never leaves your browser (the webpage blocks all communication), ensuring privacy and security.
 
 ## Features
 
 - **Client-Side Encryption**: All PGP operations happen locally using OpenPGP.js.
-- **Simple Interface**: Clean, responsive UI inspired by pgp.help, with a header, footer, and easy-to-use form.
-- **Real-Time Encryption**: Encrypt messages as you type, with live updates.
-- **Custom Styling**: Uses Pico CSS with custom overrides for a professional look, including Inter font and a trust-inspired color scheme.
-- **Testing**: Comprehensive unit tests with Vitest and Testing Library.
+- **Simple Interface**: Clean, responsive UI inspired by pgp.help with an easy-to-use form.
 - **Modern Stack**: Built with Svelte 5 (runes), Vite, and TypeScript support.
-
-## Installation
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/yourusername/pgp-svelte-wsl.git
-   cd pgp-svelte-wsl
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-3. Start the development server:
-
-   ```bash
-   npm run dev
-   ```
-
-   Open [http://localhost:5173](http://localhost:5173) in your browser.
+- **Testing**: Comprehensive unit tests with Vitest and Testing Library.
 
 ## Usage
 
 1. **Paste a Public Key**: Enter an armored PGP public key in the "Public Key" field.
 2. **Type Your Message**: Input the secret message in the "Message" field.
 3. **View Encrypted Output**: The encrypted message appears automatically in the "Encrypted Message" textarea.
-4. **Help & Source**: Use the "Help" link in the header for guidance, or view the source on GitHub via the footer.
 
-All encryption is performed client-side—your data never leaves your device.
+That's it!
 
-## Development
+## Contributing / Development
 
-### Scripts
+If you're interested in studying / adding features, or just want to lift stuff for your own usage, it's all cool. Please reach out!
 
-- `npm run dev`: Start the development server with hot reloading.
-- `npm run build`: Build the app for production.
-- `npm run preview`: Preview the production build locally.
-- `npm run test`: Run unit tests with Vitest.
-- `npm run lint`: Lint the code with ESLint.
-- `npm run format`: Format code with Prettier.
+I would recomend you use devcontainers to do work here!
 
 ### Project Structure
 
@@ -76,26 +45,6 @@ src/
 - **OpenPGP.js**: JavaScript implementation of PGP.
 - **Vitest**: Unit testing framework.
 - **ESLint + Prettier**: Code quality and formatting.
-
-## Testing
-
-Run tests with:
-
-```bash
-npm test
-```
-
-Tests cover PGP functions (encryption, signing/verification) and UI behavior (form rendering, error handling).
-
-## Contributing
-
-1. Fork the repository.
-2. Create a feature branch: `git checkout -b feature/your-feature`.
-3. Commit changes: `git commit -m 'Add your feature'`.
-4. Push to the branch: `git push origin feature/your-feature`.
-5. Open a pull request.
-
-Please ensure tests pass and code is linted before submitting.
 
 ## License
 
