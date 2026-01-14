@@ -15,7 +15,7 @@
 	let keyValue = $state<string>('');
 
 	$effect(() => {
-		// Access selectedKeyWrapper to register it as a dependency so the menu closes when it changes
+		// Whenever a key is selected (or nullified), close the mobile menu
 		void selectedKeyWrapper;
 		isMobileMenuOpen = false;
 	});
@@ -96,6 +96,7 @@
 			class="btn btn-primary w-full"
 			onclick={() => {
 				selectedKeyWrapper = null;
+				router.openPage(Pages.HOME);
 			}}
 		>
 			<PlusIcon className="h-5 w-5 mr-2" />

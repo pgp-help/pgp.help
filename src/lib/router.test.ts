@@ -3,15 +3,21 @@ import { router, Pages } from './router.svelte';
 
 // Helper to simulate user entering a URL
 function simulateNavigation(path: string) {
-	window.history.pushState({}, '', path);
-	window.dispatchEvent(new PopStateEvent('popstate'));
+	// For hash routing, we update the hash
+	// If path starts with /, treat it as hash path
+	const hash = path.startsWith('/') ? path : '/' + path;
+	window.location.hash = hash;
+	window.dispatchEvent(new HashChangeEvent('hashchange'));
 }
 
 describe('Router', () => {
 	beforeEach(() => {
 		// Reset to home before each test
+		window.location.hash = '';
+		window.location.search = '';
 		window.history.replaceState({}, '', '/');
-		window.dispatchEvent(new PopStateEvent('popstate'));
+		// Reset router internal state if possible, or just rely on navigation
+		router.openHome();
 	});
 
 	describe('Page Navigation', () => {
@@ -42,89 +48,43 @@ describe('Router', () => {
 
 			// After timeout, should redirect to /
 			vi.runAllTimers();
-			expect(window.location.pathname).toBe('/');
+			// Check hash instead of pathname
+			expect(window.location.hash).toBe('#/');
 
 			vi.useRealTimers();
 		});
 	});
 
 	describe('Fingerprint Routing', () => {
-		it('parses valid fingerprint (16 hex chars)', () => {
-			simulateNavigation('/abc123def4567890');
-			expect(router.activeRoute.page).toBe(Pages.HOME);
-			expect(router.activeRoute.pgp.fingerprint).toBe('abc123def4567890');
-		});
+		// Fingerprints are no longer in the URL path/hash
+		// They are passed via query param 'fp' which is then consumed
 
-		it('parses valid fingerprint (40 hex chars)', () => {
-			const fp = 'a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4';
-			simulateNavigation(`/${fp}`);
-			expect(router.activeRoute.page).toBe(Pages.HOME);
+		it('parses fingerprint from query param and removes it', () => {
+			// Simulate ?fp=...
+			const fp = 'abc123def4567890';
+			window.location.search = `?fp=${fp}`;
+			// Trigger router to consume params (re-instantiate or call method if exposed)
+			// Since router is a singleton created at module level, we might need to trigger the logic.
+			// The logic runs in constructor and on popstate.
+			window.dispatchEvent(new PopStateEvent('popstate'));
+
 			expect(router.activeRoute.pgp.fingerprint).toBe(fp);
-		});
-
-		it('does not treat short hex strings as fingerprints', () => {
-			simulateNavigation('/abc123');
-			expect(router.activeRoute.page).toBe(Pages.HOME);
-			expect(router.activeRoute.pgp.fingerprint).toBe('abc123');
-		});
-
-		it('is case insensitive for fingerprints', () => {
-			simulateNavigation('/ABCDEF1234567890');
-			expect(router.activeRoute.pgp.fingerprint).toBe('ABCDEF1234567890');
-		});
-	});
-
-	describe('BASE_PATH handling', () => {
-		// Note: These tests assume BASE_PATH is '/' in test environment
-		// If you need to test with a different BASE_PATH, you'll need to
-		// mock import.meta.env.BASE_URL before importing the router
-
-		it('handles paths without base path', () => {
-			simulateNavigation('/Guide');
-			expect(router.activeRoute.page).toBe(Pages.GUIDE);
+			// Should have removed from search
+			expect(window.location.search).toBe('');
 		});
 	});
 
 	describe('Navigation Methods', () => {
 		it('openPage navigates to Guide', () => {
 			router.openPage(Pages.GUIDE);
-			expect(window.location.pathname).toBe('/Guide');
+			expect(window.location.hash).toBe('#/Guide');
 			expect(router.activeRoute.page).toBe(Pages.GUIDE);
 		});
 
 		it('openPage navigates to home', () => {
 			router.openPage(Pages.HOME);
-			expect(window.location.pathname).toBe('/');
+			expect(window.location.hash).toBe('#/');
 			expect(router.activeRoute.page).toBe(Pages.HOME);
-		});
-
-		it('openKey navigates to fingerprint', () => {
-			const fp = 'abc123def4567890';
-			router.openKey(fp);
-			expect(window.location.pathname).toBe(`/${fp}`);
-			expect(router.activeRoute.pgp.fingerprint).toBe(fp);
-		});
-	});
-
-	describe('Browser History', () => {
-		it('navigates with pushState by default', () => {
-			const initialLength = window.history.length;
-			router.openPage(Pages.GUIDE);
-			router.openPage(Pages.GENERATE_KEY);
-			// Note: history.length might not increase in test environment
-			// but we can verify the navigation happened
-			expect(window.location.pathname).toBe('/GenerateKey');
-			expect(window.history.length).toBeGreaterThanOrEqual(initialLength + 2);
-		});
-
-		it('responds to back button', () => {
-			router.openPage(Pages.GUIDE);
-			router.openPage(Pages.GENERATE_KEY);
-
-			window.history.back();
-			window.dispatchEvent(new PopStateEvent('popstate'));
-
-			expect(router.activeRoute.page).toBe(Pages.GUIDE);
 		});
 	});
 

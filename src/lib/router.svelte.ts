@@ -1,7 +1,5 @@
 import { SvelteURLSearchParams } from 'svelte/reactivity';
 
-const BASE_PATH = import.meta.env.BASE_URL || '/';
-
 /**
  * Enum for PGP operation modes
  */
@@ -18,118 +16,117 @@ export enum Pages {
 	GENERATE_KEY = 'GenerateKey'
 }
 
-/**
- * Strip BASE_PATH from a full pathname, returning the app-relative path
- */
-function stripBasePath(fullPath: string): string {
-	if (BASE_PATH === '/' || !fullPath.startsWith(BASE_PATH)) {
-		return fullPath;
-	}
-	const stripped = fullPath.slice(BASE_PATH.length);
-	return stripped || '/';
-}
-
-/**
- * Add BASE_PATH to an app-relative path, returning the full pathname
- */
-function addBasePath(appPath: string): string {
-	if (BASE_PATH === '/') {
-		return appPath;
-	}
-	// Remove trailing slash from BASE_PATH for consistency
-	const base = BASE_PATH.endsWith('/') ? BASE_PATH.slice(0, -1) : BASE_PATH;
-	// Ensure appPath starts with /
-	const path = appPath.startsWith('/') ? appPath : '/' + appPath;
-	return base + path;
-}
-
 class Router {
 	// Raw state tracking window location (source of truth)
 	#raw = $state({
-		path: window.location.pathname,
-		search: window.location.search
+		hash: typeof window !== 'undefined' ? window.location.hash : '',
+		search: typeof window !== 'undefined' ? window.location.search : ''
 	});
+
+	// Internal state for routing parameters that are no longer in URL
+	#internalFingerprint = $state<string | null>(null);
+	#internalKeyParam = $state<string | null>(null);
+	#internalMode = $state<PGPMode>(PGPMode.ENCRYPT);
 
 	constructor() {
 		if (typeof window !== 'undefined') {
-			window.addEventListener('popstate', () => {
-				this.#raw.path = window.location.pathname;
-				this.#raw.search = window.location.search;
+			// Initial check for query params
+			this.#consumeQueryParams();
+
+			window.addEventListener('hashchange', () => {
+				this.#raw.hash = window.location.hash;
 			});
+
+			// Also listen to popstate for back/forward navigation
+			window.addEventListener('popstate', () => {
+				this.#raw.hash = window.location.hash;
+				this.#raw.search = window.location.search;
+				this.#consumeQueryParams();
+			});
+		}
+	}
+
+	/**
+	 * Checks for routing parameters in the query string (fp, key, mode),
+	 * stores them internally, and removes them from the URL.
+	 */
+	#consumeQueryParams() {
+		const params = new SvelteURLSearchParams(window.location.search);
+		let changed = false;
+
+		const fp = params.get('fp');
+		if (fp) {
+			this.#internalFingerprint = fp;
+			params.delete('fp');
+			changed = true;
+		}
+
+		const key = params.get('key');
+		if (key) {
+			this.#internalKeyParam = key;
+			params.delete('key');
+			changed = true;
+		}
+
+		const mode = params.get('mode');
+		if (mode && Object.values(PGPMode).includes(mode as PGPMode)) {
+			this.#internalMode = mode as PGPMode;
+			params.delete('mode');
+			changed = true;
+		}
+
+		if (changed) {
+			const newSearch = params.toString();
+			// Reconstruct URL: pathname + newSearch + hash
+			const newUrl =
+				window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash;
+			window.history.replaceState({}, '', newUrl);
+			this.#raw.search = newSearch;
 		}
 	}
 
 	// Derived state for high-level routing
 	activeRoute = $derived.by(() => {
-		// Strip BASE_PATH to get app-relative path
-		const appPath = stripBasePath(this.#raw.path);
-		const pathParts = appPath.split('/').filter(Boolean);
-		const lastSegment = pathParts[pathParts.length - 1];
+		// Parse hash
+		let hash = this.#raw.hash;
+		// Remove leading # and /
+		if (hash.startsWith('#')) hash = hash.slice(1);
+		if (hash.startsWith('/')) hash = hash.slice(1);
+		if (hash.endsWith('/')) hash = hash.slice(0, -1);
 
 		let page: Pages = Pages.HOME;
-		let fingerprint: string | null = null;
 
-		// Handle special case: /Home redirects to /
-		if (lastSegment === Pages.HOME) {
+		// Handle special case: #/Home redirects to #/
+		if (hash === Pages.HOME) {
 			setTimeout(() => {
-				this.#navigate('/', true);
+				this.#navigate('/');
 			});
-			// Still return HOME page while redirect is pending
+			page = Pages.HOME;
+		} else if (Object.values(Pages).includes(hash as Pages)) {
+			page = hash as Pages;
+		} else {
 			page = Pages.HOME;
 		}
-		// Check for named pages
-		// Use Object.values to get all enum values and check if lastSegment matches any of them
-		else if (Object.values(Pages).includes(lastSegment as Pages)) {
-			page = lastSegment as Pages;
-		}
-		// Check for fingerprint (hex string, 16+ chars)
-		else if (lastSegment) {
-			fingerprint = lastSegment;
-			page = Pages.HOME; // Viewing a key on home page
-		}
-		// Otherwise, we're at root/home
-		else {
-			page = Pages.HOME;
-		}
-
-		// Parse query params
-		const params = new SvelteURLSearchParams(this.#raw.search);
-		const keyParam = params.get('key');
-		const mode = (params.get('mode') as PGPMode) || PGPMode.ENCRYPT;
-
-		//Remove any query params, as they are now stored in the state and they confuse things.
-		//console.log('Router setting URL to', this.#raw.path);
-		window.history.replaceState({}, '', this.#raw.path);
 
 		return {
 			page,
 			pgp: {
-				fingerprint,
-				keyParam,
-				mode
+				fingerprint: this.#internalFingerprint,
+				keyParam: this.#internalKeyParam,
+				mode: this.#internalMode
 			}
 		};
 	});
 
 	/**
-	 * Internal navigation method
-	 * @param appPath - App-relative path (e.g., "/Guide" or "/abc123")
-	 * @param replace - Whether to replace history instead of push
+	 * Internal navigation method using hash
+	 * @param path - App-relative path (e.g., "/Guide")
 	 */
-	#navigate(appPath: string, replace: boolean = false) {
-		// Convert app-relative path to full pathname
-		const fullPath = addBasePath(appPath);
-
-		const url = new URL(fullPath, window.location.origin);
-
-		if (replace) {
-			window.history.replaceState({}, '', url.toString());
-		} else {
-			window.history.pushState({}, '', url.toString());
-		}
-
-		this.#raw.path = url.pathname;
-		this.#raw.search = url.search;
+	#navigate(path: string) {
+		// Ensure path starts with /
+		const hashPath = path.startsWith('/') ? path : '/' + path;
+		window.location.hash = hashPath;
+		this.#raw.hash = window.location.hash;
 	}
 
 	/**
@@ -145,40 +142,6 @@ class Router {
 
 	openHome() {
 		this.openPage(Pages.HOME);
-	}
-
-	/**
-	 * Navigate to a specific key by fingerprint
-	 */
-	openKey(fingerprint: string, mode?: PGPMode) {
-		const currentMode = this.activeRoute.pgp.mode;
-		const targetMode = mode || currentMode;
-
-		const search = new SvelteURLSearchParams();
-		if (targetMode !== PGPMode.ENCRYPT) {
-			search.set('mode', targetMode);
-		}
-
-		const searchStr = search.toString();
-		this.#navigate(`/${fingerprint}${searchStr ? '?' + searchStr : ''}`);
-	}
-
-	/**
-	 * Change the mode for the current view
-	 */
-	setMode(mode: PGPMode) {
-		if (this.activeRoute.page !== Pages.HOME) return;
-
-		const { fingerprint, keyParam } = this.activeRoute.pgp;
-		const search = new SvelteURLSearchParams();
-
-		if (keyParam) search.set('key', keyParam);
-		if (mode !== PGPMode.ENCRYPT) search.set('mode', mode);
-
-		const path = fingerprint ? `/${fingerprint}` : '/';
-		const searchStr = search.toString();
-
-		this.#navigate(`${path}${searchStr ? '?' + searchStr : ''}`);
 	}
 }
 

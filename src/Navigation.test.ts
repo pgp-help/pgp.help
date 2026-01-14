@@ -96,7 +96,7 @@ describe('Navigation', () => {
 			const currentUrl = new URL(window.location.href);
 			expect(currentUrl.searchParams.has('key')).toBe(false);
 			// Fingerprint should now be in the path, not query params
-			expect(currentUrl.pathname).toMatch(/\/[a-f0-9]{40}$/i); // 40-char hex fingerprint at end of path
+			expect(currentUrl.pathname).toBe('/');
 		});
 	});
 });

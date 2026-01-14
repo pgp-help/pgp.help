@@ -5,7 +5,7 @@ import App from '../App.svelte';
 describe('Routing', () => {
 	beforeEach(() => {
 		// Reset router state before each test
-		window.history.pushState({}, '', '/');
+		window.location.hash = '';
 	});
 
 	it('navigates to Guide page when clicking Guide link', async () => {
@@ -24,12 +24,12 @@ describe('Routing', () => {
 		// The PGP Workflow components should be gone
 		// The "Public Key" label is dynamic based on isPrivate, but "Paste PGP Key (Armored)..." placeholder is constant in RawKeyInput
 		expect(screen.queryByPlaceholderText('Paste PGP Key (Armored)...')).not.toBeInTheDocument();
-		expect(window.location.pathname).toBe('/Guide');
+		expect(window.location.hash).toBe('#/Guide');
 	});
 
 	it('navigates back to Home page when clicking PGP Help link', async () => {
 		// Start on Guide page
-		window.history.pushState({}, '', '/Guide');
+		window.location.hash = '#/Guide';
 		render(App);
 
 		// Verify we are on Guide page
@@ -45,6 +45,6 @@ describe('Routing', () => {
 		// Should now be on PGP Workflow page
 		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();
 		expect(screen.queryByText('What is PGP?')).not.toBeInTheDocument();
-		expect(window.location.pathname).toBe('/');
+		expect(window.location.hash).toBe('#/');
 	});
 });
