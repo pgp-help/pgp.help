@@ -97,10 +97,7 @@ describe('App', () => {
 			expect(unlockButton).not.toBeInTheDocument();
 		});
 
-		// Switch to decrypt mode using the mode switching widget
-		const decryptButton = screen.getByRole('button', { name: /Decrypt/i });
-		await user.click(decryptButton);
-
+		// Should automatically be in decrypt mode because it's a private key
 		// Now input the encrypted message
 		const messageTextarea = screen.getByLabelText(/Encrypted Message/i);
 		const outputTextarea = screen.getByLabelText(/Decrypted Output/i);

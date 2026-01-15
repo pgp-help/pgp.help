@@ -3,9 +3,7 @@
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import PGPKey from './PGPKey.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
-	import { PGPMode } from '../../routes/router.svelte.js';
 	import { type KeyWrapper } from './keyStore.svelte.js';
-	import { untrack } from 'svelte';
 	import type { Key } from 'openpgp';
 
 	interface Props {
@@ -14,9 +12,6 @@
 		keyValue?: string;
 	}
 	let { keyWrapper = $bindable(), onKeyParsed, keyValue = $bindable('') }: Props = $props();
-
-	// Local state for mode
-	let mode = $state<PGPMode>(PGPMode.ENCRYPT);
 
 	let keyObject = $derived(keyWrapper?.key ?? null);
 
@@ -35,46 +30,17 @@
 	// Any error message from the operation (e.g. decryption failure)
 	let error = $state('');
 
-	// Helper to determine valid modes for current key
-	let availableModes = $derived.by(() => {
-		if (!keyObject) return [PGPMode.ENCRYPT];
-		if (keyObject.isPrivate()) {
-			return [PGPMode.ENCRYPT, PGPMode.DECRYPT]; //, PGPMode.SIGN, PGPMode.VERIFY];
-		} else {
-			return [PGPMode.ENCRYPT]; //, PGPMode.VERIFY];
-		}
-	});
-
-	// Ensure mode is valid for current key
-	$effect(() => {
-		if (!availableModes.includes(mode)) {
-			// If current mode is not available, switch to first available mode
-			const newMode = availableModes[0] as PGPMode;
-			// Use untrack to avoid infinite loops if router.setMode triggers this effect again
-			mode = newMode;
-		}
-	});
-
 	let isPrivate = $derived(keyObject?.isPrivate() ?? false);
 
 	$effect(() => {
 		// Wrap async logic in a non-async function to comply with $effect requirements.
 		// $effect callbacks must return void or a cleanup function, not a Promise.
-		const currentMode = untrack(() => mode);
 		const currentMessage = message;
 
-		if (isPrivate && currentMode !== PGPMode.DECRYPT) {
-			//console.log('Checking armor type for mode auto-switch...', message.substring(0, 30));
-			// Fire off the async check without awaiting at the effect level
-			// getArmorType(message).then((armorType) => {
-			// 	console.log('Armor type check for mode auto-switch:', armorType);
-			// 	if (armorType === enums.armor.message) {
-			// 		mode = PGPMode.DECRYPT;
-			// 		output = '';
-			// 	}
-			// });
+		// If we are in ENCRYPT mode (Public Key) and we have a private key available
+		if (!isPrivate && keyWrapper?.masterKey) {
 			if (currentMessage.trim().startsWith('-----BEGIN PGP MESSAGE-----')) {
-				mode = PGPMode.DECRYPT;
+				keyWrapper = keyWrapper.masterKey;
 				output = '';
 			}
 		}
@@ -83,7 +49,7 @@
 	$effect(() => {
 		const k = keyObject;
 		const m = message;
-		const currentMode = mode;
+		const currentIsPrivate = isPrivate;
 
 		if (!k || !m) {
 			output = '';
@@ -92,7 +58,7 @@
 		}
 
 		// Check if we need to decrypt the private key for the current operation
-		if (mode === PGPMode.DECRYPT && k.isPrivate() && !k.isDecrypted()) {
+		if (currentIsPrivate && k.isPrivate() && !k.isDecrypted()) {
 			pgpKeyComponent?.nudgeForDecryption();
 			output = '';
 			error = 'Unlock the private key to proceed.';
@@ -106,7 +72,7 @@
 		// and we don't want to trigger the effect again.
 		// Although output/error are not dependencies here, it's good practice.
 
-		const processPromise = mode === PGPMode.DECRYPT ? decryptMessage(k, m) : encryptMessage(k, m);
+		const processPromise = currentIsPrivate ? decryptMessage(k, m) : encryptMessage(k, m);
 
 		processPromise
 			.then((result) => {
@@ -121,12 +87,12 @@
 				// with a stale result. But we also want to make sure we don't overwrite if the user has
 				// cleared the input.
 
-				if (mode === currentMode && keyObject === k && message === m) {
+				if (isPrivate === currentIsPrivate && keyObject === k && message === m) {
 					output = result;
 				}
 			})
 			.catch((err) => {
-				if (mode == currentMode && keyObject === k && message === m) {
+				if (isPrivate === currentIsPrivate && keyObject === k && message === m) {
 					error = err.message;
 				}
 			});
@@ -155,25 +121,7 @@
 			{/if}
 		</fieldset>
 
-		{#if availableModes.length > 1}
-			<div class="join w-full">
-				{#each availableModes as availableMode (availableMode)}
-					<button
-						type="button"
-						class="btn btn-sm join-item flex-1 {mode === availableMode
-							? 'btn-primary'
-							: 'btn-outline'}"
-						onclick={() => {
-							mode = availableMode;
-						}}
-					>
-						{availableMode.charAt(0).toUpperCase() + availableMode.slice(1)}
-					</button>
-				{/each}
-			</div>
-		{/if}
-
-		{#if mode === PGPMode.ENCRYPT}
+		{#if !isPrivate}
 			<fieldset class="fieldset">
 				<legend class="fieldset-legend">Message</legend>
 				<CopyableTextarea
@@ -196,7 +144,7 @@
 					buttons={true}
 				/>
 			</fieldset>
-		{:else if mode === PGPMode.DECRYPT}
+		{:else}
 			<fieldset class="fieldset">
 				<legend class="fieldset-legend">Encrypted Message</legend>
 				<CopyableTextarea

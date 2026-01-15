@@ -60,7 +60,12 @@
 					: ''}"
 				role="link"
 				tabindex="0"
-				onclick={() => (selectedWrapper = wrapper)}
+				onclick={() => {
+					// If the key is already selected this will effectively switch to the cannonical verion
+					// (i.e. if the user is looking at the public key view of a private key, this will switch to the private key view)
+					// This is ok.
+					selectedWrapper = wrapper;
+				}}
 				onkeydown={(e) => {
 					if (e.key === 'Enter' || e.key === ' ') {
 						selectedWrapper = wrapper;

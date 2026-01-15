@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { decryptPrivateKey } from './pgp';
-	import type { KeyWrapper } from './keyStore.svelte.js';
+	import { type KeyWrapper, asPublicKeyWrapper } from './keyStore.svelte.js';
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
-	import PublicKeyButtons from './PublicKeyButtons.svelte';
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
 
@@ -33,6 +32,16 @@
 		setTimeout(() => {
 			shaking = false;
 		}, 820); // 0.82s matches the animation duration
+	}
+
+	function switchToPublic() {
+		keyWrapper = asPublicKeyWrapper(keyWrapper);
+	}
+
+	function switchToPrivate() {
+		if (keyWrapper.masterKey) {
+			keyWrapper = keyWrapper.masterKey;
+		}
 	}
 
 	let expirationTime = $state<Date | null>(null);
@@ -115,10 +124,6 @@
 	}
 </script>
 
-{#snippet publicKeyButtons()}
-	<PublicKeyButtons value={publicKey?.armor ? publicKey.armor() : key.armor()} />
-{/snippet}
-
 <div
 	class="card bg-base-200 border selectable w-full max-w-full overflow-hidden"
 	onfocusout={handleFocusOut}
@@ -164,7 +169,7 @@
 								value={publicKey?.armor ? publicKey.armor() : ''}
 								class="text-xs"
 								fixed
-								buttons={publicKeyButtons}
+								buttons
 							/>
 						</div>
 					</details>
@@ -203,6 +208,20 @@
 				>
 					Show less details
 				</button>
+			{/if}
+
+			{#if key.isPrivate()}
+				<div class="mt-2">
+					<button class="btn btn-xs btn-outline" onclick={switchToPublic}>
+						Switch to Public Key
+					</button>
+				</div>
+			{:else if keyWrapper.masterKey}
+				<div class="mt-2">
+					<button class="btn btn-xs btn-outline" onclick={switchToPrivate}>
+						Switch to Private Key
+					</button>
+				</div>
 			{/if}
 
 			{#if key.isPrivate() && !key.isDecrypted()}

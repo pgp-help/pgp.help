@@ -26,16 +26,6 @@ function addBasePath(appPath: string): string {
 	return base + path;
 }
 
-/**
- * Enum for PGP operation modes
- */
-export enum PGPMode {
-	ENCRYPT = 'encrypt',
-	DECRYPT = 'decrypt',
-	SIGN = 'sign',
-	VERIFY = 'verify'
-}
-
 export enum Pages {
 	HOME = 'Home',
 	GUIDE = 'Guide',

@@ -84,10 +84,7 @@ describe('PGPWorkflow', () => {
 			expect(unlockButton).not.toBeInTheDocument();
 		});
 
-		// Switch to decrypt mode
-		const decryptButton = screen.getByRole('button', { name: /Decrypt/i });
-		await user.click(decryptButton);
-
+		// Should be in decrypt mode automatically because it is a private key
 		const messageTextarea = screen.getByLabelText(/Encrypted Message/i);
 		const outputTextarea = screen.getByLabelText(/Decrypted Output/i);
 
@@ -101,7 +98,7 @@ describe('PGPWorkflow', () => {
 		);
 	});
 
-	it('allows switching modes with private key', async () => {
+	it('allows switching to public key from private key', async () => {
 		const user = userEvent.setup();
 		render(PGPPage);
 
@@ -110,36 +107,17 @@ describe('PGPWorkflow', () => {
 
 		await screen.findByText('Private Key', { selector: 'legend' });
 
-		// Unlock
-		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
-		const unlockButton = screen.getByRole('button', { name: /Unlock/i });
-		await user.type(passwordInput, passphrase);
-		await user.click(unlockButton);
-		// Wait for the unlockButton to go away
-		await vi.waitFor(() => {
-			expect(unlockButton).not.toBeInTheDocument();
-		});
+		// Switch to Public Key
+		const switchButton = screen.getByRole('button', { name: /Switch to Public Key/i });
+		await user.click(switchButton);
 
-		// Default is Encrypt
+		// Should now be in Encrypt mode (Public Key)
 		expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/Encrypted Output/i)).toBeInTheDocument();
-
-		// Switch to Decrypt
-		const decryptButton = screen.getByRole('button', { name: /Decrypt/i });
-		await user.click(decryptButton);
-
-		expect(screen.getByLabelText(/Encrypted Message/i)).toBeInTheDocument();
-		expect(screen.getByLabelText(/Decrypted Output/i)).toBeInTheDocument();
-
-		// Switch back to Encrypt
-		const encryptButton = screen.getByRole('button', { name: /Encrypt/i });
-		await user.click(encryptButton);
-
-		expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
-		expect(screen.getByLabelText(/Encrypted Output/i)).toBeInTheDocument();
+		expect(screen.getByText('Public Key', { selector: 'legend' })).toBeInTheDocument();
 	});
 
-	it('automatically switches to decrypt mode when pasting encrypted message', async () => {
+	it('automatically switches to private key (decrypt mode) when pasting encrypted message', async () => {
 		const user = userEvent.setup();
 		render(PGPPage);
 
@@ -166,14 +144,18 @@ describe('PGPWorkflow', () => {
 			expect(unlockButton).not.toBeInTheDocument();
 		});
 
+		// Switch to Public Key manually to test auto-switch back
+		const switchButton = screen.getByRole('button', { name: /Switch to Public Key/i });
+		await user.click(switchButton);
+
 		// Ensure we are in Encrypt mode
 		const messageTextarea = screen.getByLabelText(/^Message/i);
 
 		// Paste encrypted message into the "Message" box (which is for plaintext in Encrypt mode)
 		await fireEvent.input(messageTextarea, { target: { value: encrypted } });
 
-		// It should detect the armor and switch to Decrypt mode
-		// In Decrypt mode, the input label becomes "Encrypted Message" and output "Decrypted Message"
+		// It should detect the armor and switch to Private Key (Decrypt mode)
+		// In Decrypt mode, the input label becomes "Encrypted Message" and output "Decrypted Output"
 
 		await waitFor(() => {
 			expect(screen.getByLabelText(/Decrypted Output/i)).toBeInTheDocument();
@@ -195,6 +177,24 @@ describe('PGPWorkflow', () => {
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
 		await screen.findByText('Private Key', { selector: 'legend' });
 
+		// Unlock
+		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
+		const unlockButton = screen.getByRole('button', { name: /Unlock/i });
+		await user.type(passwordInput, passphrase);
+		await user.click(unlockButton);
+		await vi.waitFor(() => {
+			expect(unlockButton).not.toBeInTheDocument();
+		});
+
+		// Switch to Public Key manually to test auto-switch back
+		const switchButton = screen.getByRole('button', { name: /Switch to Public Key/i });
+		await user.click(switchButton);
+
+		// Ensure we are in Encrypt mode (Public Key)
+		await waitFor(() => {
+			expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
+		});
+
 		const encrypted = `
 -----BEGIN PGP MESSAGE-----
 
@@ -213,31 +213,15 @@ El/w
 			expect(screen.getByLabelText(/Decrypted Output/i)).toBeInTheDocument();
 		});
 
-		// Check that there's an error because the key is unlocked.
-		const textarea = within(mainArea).getByRole('textbox', { name: /Encrypted Message/i });
-		screen.debug(textarea);
-		expect(textarea).toHaveAttribute('aria-invalid', 'true');
-		expect(textarea).toHaveAccessibleDescription(/Unlock the private key to proceed./i);
-
-		// Now unlock the key:
-		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
-		const unlockButton = screen.getByRole('button', { name: /Unlock/i });
-		await user.type(passwordInput, passphrase);
-		await user.click(unlockButton);
-
-		// The error should go away after unlocking
-		await waitFor(() => {
-			// PGP errors are cryptic to say the least. "No decryption key packets found" is their way of saying
-			// you have the wrong key. Whatever, just look for the basic error:
-			// Note: toHaveAccessibleDescription might fail if the element is not in the document or if happy-dom has issues with aria-describedby refs.
-			// Let's check the error message directly if possible, or skip this check if it's flaky in this environment.
-			// expect(textarea).toHaveAccessibleDescription(/Error decrypting message/);
-
-			// Instead, let's check if the error message is displayed in the UI
-			// The CopyableTextarea displays error in a div with class text-error
-			// But we don't have easy access to it via role.
-			// Let's just check if the textarea is invalid.
-			expect(textarea).toHaveAttribute('aria-invalid', 'true');
-		});
+		// Should show error because decryption will fail (bad data)
+		// Note: The error message might take a moment
+		await waitFor(
+			() => {
+				// The CopyableTextarea displays error in a label with class text-error
+				const errorLabel = mainArea.querySelector('.text-error');
+				expect(errorLabel).toBeInTheDocument();
+			},
+			{ timeout: 5000 }
+		);
 	});
 });
