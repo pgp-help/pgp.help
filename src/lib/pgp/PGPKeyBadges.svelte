@@ -11,7 +11,7 @@
 </script>
 
 <div class="flex gap-1 shrink-0">
-	<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
+	<span class="badge {key.isPrivate() ? 'badge-primary' : 'badge-secondary'} badge-sm">
 		{key.isPrivate() ? 'Private' : 'Public'}
 	</span>
 	{#if persisted === PersistenceType.MEMORY}

@@ -73,6 +73,21 @@ export interface KeyWrapper {
 	key: Key;
 	persisted: PersistenceType;
 	hasNoPassword?: boolean;
+	// Sometimes we represent a public key for which we have the private key.
+	masterKey?: KeyWrapper;
+}
+
+export function asPublicKeyWrapper(wrapper: KeyWrapper): KeyWrapper {
+	if (!wrapper.key.isPrivate()) {
+		throw new Error('Key is already public');
+	}
+
+	return {
+		key: wrapper.key.toPublic(),
+		persisted: wrapper.persisted,
+		hasNoPassword: wrapper.hasNoPassword,
+		masterKey: wrapper
+	};
 }
 
 /**

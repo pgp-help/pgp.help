@@ -31,8 +31,8 @@
 		selectAllOnFocus?: boolean;
 		fixed?: boolean;
 		error?: string;
-		class?: string;
 		rows?: number;
+		class?: string;
 		buttons?: boolean;
 	}>();
 

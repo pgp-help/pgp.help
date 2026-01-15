@@ -190,6 +190,7 @@
 				<CopyableTextarea
 					value={output}
 					readonly={true}
+					fixed={true}
 					placeholder="Encrypted output will appear here..."
 					label="Encrypted Output"
 					buttons={true}
@@ -212,6 +213,7 @@
 				<CopyableTextarea
 					value={output}
 					readonly={true}
+					fixed={true}
 					placeholder="Decrypted output will appear here..."
 					label="Decrypted Output"
 					buttons={true}
