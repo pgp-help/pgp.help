@@ -230,6 +230,12 @@ export class KeyStore {
 		this.save();
 	}
 
+	async clearPersistedKeys() {
+		await this.load();
+		this.keys = this.keys.filter((k) => k.persisted !== PersistenceType.LOCAL_STORAGE);
+		this.save();
+	}
+
 	async deleteKey(fingerprint: string) {
 		await this.load();
 		this.keys = this.keys.filter((k) => k.key.getFingerprint() !== fingerprint);

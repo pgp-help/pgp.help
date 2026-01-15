@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { decryptPrivateKey } from './pgp';
-	import { type KeyWrapper, asPublicKeyWrapper } from './keyStore.svelte.js';
+	import {
+		type KeyWrapper,
+		asPublicKeyWrapper,
+		PersistenceType,
+		keyStore
+	} from './keyStore.svelte.js';
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
@@ -42,6 +47,11 @@
 		if (keyWrapper.masterKey) {
 			keyWrapper = keyWrapper.masterKey;
 		}
+	}
+
+	function persistKey() {
+		keyWrapper.persisted = PersistenceType.LOCAL_STORAGE;
+		keyStore.addKey(keyWrapper.key);
 	}
 
 	let expirationTime = $state<Date | null>(null);
@@ -221,6 +231,11 @@
 					<button class="btn btn-xs btn-outline" onclick={switchToPrivate}>
 						Switch to Private Key
 					</button>
+				</div>
+			{/if}
+			{#if keyWrapper.persisted === PersistenceType.MEMORY}
+				<div class="mt-2">
+					<button class="btn btn-xs btn-outline" onclick={persistKey}>Save To Browser</button>
 				</div>
 			{/if}
 

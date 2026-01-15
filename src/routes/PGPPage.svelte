@@ -2,12 +2,13 @@
 	import KeyList from '../lib/pgp/KeyList.svelte';
 	import PGPWorkflow from '../lib/pgp/PGPWorkflow.svelte';
 	import GenerateKey from '../lib/pgp/GenerateKey.svelte';
-	import { keyStore, type KeyWrapper } from '../lib/pgp/keyStore.svelte.js';
+	import { keyStore, type KeyWrapper, PersistenceType } from '../lib/pgp/keyStore.svelte.js';
 	import { router, Pages } from './router.svelte.js';
 	import type { Key } from 'openpgp';
 	import { fade } from 'svelte/transition';
 	import PlusIcon from '../lib/ui/icons/PlusIcon.svelte';
 	import KeyIcon from '../lib/ui/icons/KeyIcon.svelte';
+	import WarningIcon from '../lib/ui/icons/WarningIcon.svelte';
 	import { untrack } from 'svelte';
 
 	let selectedKeyWrapper = $state<KeyWrapper | null>(null);
@@ -56,6 +57,13 @@
 
 	function toggleMobileMenu() {
 		isMobileMenuOpen = !isMobileMenuOpen;
+	}
+
+	let clearDataDialog: HTMLDialogElement;
+
+	function clearData() {
+		keyStore.clearPersistedKeys();
+		clearDataDialog.close();
 	}
 </script>
 
@@ -137,6 +145,14 @@
 				<span class="label-text text-sm">Persist new keys</span>
 			</label>
 		</div>
+		{#if !keyStore.shouldPersistByDefault && keyStore.keys.some((k) => k.persisted === PersistenceType.LOCAL_STORAGE)}
+			<button
+				class="btn btn-xs btn-error btn-outline w-full mt-2"
+				onclick={() => clearDataDialog.showModal()}
+			>
+				Clear Saved Data
+			</button>
+		{/if}
 	</div>
 </aside>
 
@@ -147,3 +163,31 @@
 		<PGPWorkflow bind:keyWrapper={selectedKeyWrapper} onKeyParsed={handleNewKey} {keyValue} />
 	{/if}
 </main>
+
+<dialog bind:this={clearDataDialog} class="modal" onclick={(e) => e.stopPropagation()}>
+	<div class="modal-box text-base-content cursor-default">
+		<h3 class="font-bold text-lg">Clear Saved Data?</h3>
+		<p class="py-4">
+			You have turned off "Persist new keys", but you still have keys saved in your browser storage.
+			Do you want to clear them now?
+		</p>
+
+		<div role="alert" class="alert alert-warning mb-4">
+			<WarningIcon />
+			<span>
+				Warning: This will remove all keys saved in this browser. Make sure you have backups of any
+				important keys!
+			</span>
+		</div>
+
+		<div class="modal-action">
+			<form method="dialog">
+				<button class="btn">Keep Data</button>
+			</form>
+			<button class="btn btn-error" onclick={clearData}>Clear Data</button>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
