@@ -15,33 +15,32 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.39.2",
-		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/postcss": "^4.1.18",
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/svelte": "^5.3.1",
 		"@testing-library/user-event": "^14.6.1",
-		"@types/openpgp": "^4.4.22",
-		"@vitest/coverage-v8": "^4.0.16",
+		"@vitest/coverage-v8": "^4.0.17",
 		"autoprefixer": "^10.4.23",
 		"daisyui": "^5.5.14",
 		"eslint": "^9.39.2",
 		"eslint-config-prettier": "^10.1.8",
-		"eslint-plugin-svelte": "^3.13.1",
+		"eslint-plugin-svelte": "^3.14.0",
 		"globals": "^17.0.0",
-		"happy-dom": "^20.0.11",
+		"happy-dom": "^20.3.1",
 		"husky": "^9.1.7",
 		"lint-staged": "^16.2.7",
 		"postcss": "^8.5.6",
-		"prettier": "^3.7.4",
+		"prettier": "^3.8.0",
 		"prettier-plugin-svelte": "^3.4.1",
-		"svelte": "^5.43.8",
-		"typescript-eslint": "^8.51.0",
-		"vite": "npm:rolldown-vite@7.2.5",
+		"svelte": "^5.46.4",
+		"typescript-eslint": "^8.53.0",
+		"vite": "npm:rolldown-vite@7.3.1",
 		"vite-plugin-html-config": "^2.0.2",
-		"vitest": "^4.0.16"
+		"vitest": "^4.0.17"
 	},
 	"overrides": {
-		"vite": "npm:rolldown-vite@7.2.5"
+		"vite": "npm:rolldown-vite@7.3.1"
 	},
 	"dependencies": {
 		"@fontsource/inter": "^5.2.8",
