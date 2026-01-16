@@ -1,4 +1,5 @@
 import { SvelteURLSearchParams } from 'svelte/reactivity';
+import { Key } from 'openpgp';
 const BASE_PATH = import.meta.env.BASE_URL || '/';
 
 /**
@@ -137,6 +138,13 @@ class Router {
 
 	openHome() {
 		this.openPage(Pages.HOME);
+	}
+
+	/**
+	 * Navigate to home and select a specific key by fingerprint
+	 */
+	openKey(key: Key) {
+		this.#navigate(`/?fp=${key.getFingerprint()}`);
 	}
 }
 

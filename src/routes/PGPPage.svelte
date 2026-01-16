@@ -2,8 +2,8 @@
 	import KeyList from '../lib/pgp/KeyList.svelte';
 	import PGPWorkflow from '../lib/pgp/PGPWorkflow.svelte';
 	import GenerateKey from '../lib/pgp/GenerateKey.svelte';
-	import { keyStore, type KeyWrapper, PersistenceType } from '../lib/pgp/keyStore.svelte.js';
-	import { router, Pages } from './router.svelte.js';
+	import { keyStore, type KeyWrapper, PersistenceType } from '../lib/pgp/keyStore.svelte.ts';
+	import { router, Pages } from './router.svelte';
 	import type { Key } from 'openpgp';
 	import { fade } from 'svelte/transition';
 	import PlusIcon from '../lib/ui/icons/PlusIcon.svelte';
@@ -48,10 +48,8 @@
 	});
 
 	function handleNewKey(key: Key) {
-		const fp = key.getFingerprint();
 		keyStore.addKey(key).then(() => {
-			const wrapper = keyStore.getKey(fp);
-			selectedKeyWrapper = wrapper;
+			router.openKey(key);
 		});
 	}
 
