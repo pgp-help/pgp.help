@@ -33,7 +33,7 @@ describe('App', () => {
 		render(App);
 		// Check Header
 		expect(screen.getByRole('link', { name: 'pgp.help' })).toBeInTheDocument();
-		expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
+		expect(screen.getByLabelText(/Message/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/Encrypted Output/i)).toBeInTheDocument();
 	});
 
@@ -42,7 +42,7 @@ describe('App', () => {
 		render(App);
 
 		const keyTextarea = screen.getByLabelText(/Public Key/i);
-		const messageTextarea = screen.getByLabelText(/^Message/i);
+		const messageTextarea = screen.getByLabelText(/Message/i);
 		const outputTextarea = screen.getByLabelText(/Encrypted Output/i);
 
 		// Use fireEvent for the key to simulate a paste/instant update
@@ -76,7 +76,7 @@ describe('App', () => {
 			encryptionKeys: await openpgp.readKey({ armoredKey: validPublicKey })
 		})) as string;
 
-		const keyTextarea = screen.getByLabelText(/Public Key/i);
+		const keyTextarea = await screen.findByLabelText(/Public Key/i);
 
 		// Paste private key
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
@@ -99,18 +99,21 @@ describe('App', () => {
 
 		// Should automatically be in decrypt mode because it's a private key
 		// Now input the encrypted message
-		const messageTextarea = screen.getByLabelText(/Encrypted Message/i);
-		const outputTextarea = screen.getByLabelText(/Decrypted Output/i);
+		const messageTextarea = screen.getByLabelText(/Input Message/i);
 
 		await fireEvent.input(messageTextarea, { target: { value: encrypted } });
 
+		// This will swicth modes...
+		await vi.waitFor(() => {
+			expect(screen.getByLabelText(/Decrypted Output/i)).toBeInTheDocument();
+		});
+
 		// Wait for the async decryption to complete
-		await vi.waitFor(
-			() => {
-				expect(outputTextarea).toHaveValue(secretMessage);
-			},
-			{ timeout: 5000 }
-		);
+		const outputTextarea = screen.getByLabelText(/Decrypted Output/i);
+
+		await vi.waitFor(() => {
+			expect(outputTextarea).toHaveValue(secretMessage);
+		});
 	});
 
 	it('applies DaisyUI styling classes', () => {
