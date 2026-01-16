@@ -1,4 +1,5 @@
 import { SvelteURLSearchParams } from 'svelte/reactivity';
+import type { Key } from 'openpgp';
 const BASE_PATH = import.meta.env.BASE_URL || '/';
 
 /**
@@ -24,16 +25,6 @@ function addBasePath(appPath: string): string {
 	// Ensure appPath starts with /
 	const path = appPath.startsWith('/') ? appPath : '/' + appPath;
 	return base + path;
-}
-
-/**
- * Enum for PGP operation modes
- */
-export enum PGPMode {
-	ENCRYPT = 'encrypt',
-	DECRYPT = 'decrypt',
-	SIGN = 'sign',
-	VERIFY = 'verify'
 }
 
 export enum Pages {
@@ -147,6 +138,13 @@ class Router {
 
 	openHome() {
 		this.openPage(Pages.HOME);
+	}
+
+	/**
+	 * Navigate to home and select a specific key by fingerprint
+	 */
+	openKey(key: Key) {
+		this.#navigate(`/?fp=${key.getFingerprint()}`);
 	}
 }
 

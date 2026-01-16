@@ -3,7 +3,7 @@ import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import PGPKey from './PGPKey.svelte';
 import * as pgp from './pgp';
 import * as openpgp from 'openpgp';
-import { PersistenceType } from './keyStore.svelte';
+import { PersistenceType, keyStore } from './keyStore.svelte';
 
 // Mock the getKeyDetails function to avoid expensive key parsing in UI tests
 vi.mock('./pgp', async (importOriginal) => {
@@ -11,6 +11,17 @@ vi.mock('./pgp', async (importOriginal) => {
 	return {
 		...actual,
 		getKeyDetails: vi.fn()
+	};
+});
+
+// Mock keyStore
+vi.mock('./keyStore.svelte.js', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('./keyStore.svelte.js')>();
+	return {
+		...actual,
+		keyStore: {
+			addKey: vi.fn()
+		}
 	};
 });
 
@@ -119,7 +130,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
 
-		const { getByText, queryByPlaceholderText } = render(PGPKey, {
+		const { getByText, queryByPlaceholderText, getByRole } = render(PGPKey, {
 			props: {
 				keyWrapper: { key: testKey, persisted: PersistenceType.MEMORY }
 			}
@@ -127,7 +138,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 
 		// Wait for the async effect to resolve
 		await waitFor(() => {
-			expect(getByText('Pgp Help <hello@pgp.help>')).toBeTruthy();
+			expect(getByRole('heading', { name: 'Pgp Help <hello@pgp.help>' })).toBeTruthy();
 		});
 
 		expect(getByText('23fd9f3e9b067569')).toBeTruthy();
@@ -214,5 +225,47 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		await fireEvent.click(publicCopyBtn);
 
 		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(testPrivateKey.toPublic().armor());
+	});
+
+	it('shows persist button when key is in memory and calls persistKey on click', async () => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
+
+		const { getByLabelText, getByRole } = render(PGPKey, {
+			props: {
+				keyWrapper: { key: testKey, persisted: PersistenceType.MEMORY }
+			}
+		});
+
+		await waitFor(() => {
+			expect(getByRole('heading', { name: 'Pgp Help <hello@pgp.help>' })).toBeTruthy();
+		});
+
+		const persistBtn = getByLabelText('Save key');
+		expect(persistBtn).toBeTruthy();
+
+		await fireEvent.click(persistBtn);
+
+		expect(keyStore.addKey).toHaveBeenCalledWith({
+			key: testKey,
+			persisted: PersistenceType.LOCAL_STORAGE
+		});
+	});
+
+	it('does not show persist button when key is already persisted', async () => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
+
+		const { queryByText, getByRole } = render(PGPKey, {
+			props: {
+				keyWrapper: { key: testKey, persisted: PersistenceType.LOCAL_STORAGE }
+			}
+		});
+
+		await waitFor(() => {
+			expect(getByRole('heading', { name: 'Pgp Help <hello@pgp.help>' })).toBeTruthy();
+		});
+
+		expect(queryByText(/Save To Browser/i)).toBeNull();
 	});
 });

@@ -41,7 +41,7 @@ describe('Navigation', () => {
 
 		// Verify main view shows it (card view)
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
-		await within(mainArea).findByText(/User One/);
+		await within(mainArea).findByRole('heading', { name: /User One/ });
 
 		// 2. Press New Key
 		const newKeyButton = within(sidebar).getByRole('button', { name: /Import Key/i });
@@ -68,7 +68,7 @@ describe('Navigation', () => {
 
 		// Verify App navigates to it
 		// Main view should show User One
-		await within(mainArea).findByText(/User One/);
+		await within(mainArea).findByRole('heading', { name: /User One/ });
 
 		// And NOT User Two (in main view)
 		// Note: queryByText might find it in the sidebar if we don't scope to main
@@ -89,7 +89,7 @@ describe('Navigation', () => {
 		await within(sidebar).findByTitle('User One');
 
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
-		await within(mainArea).findByText(/User One/);
+		await within(mainArea).findByRole('heading', { name: /User One/ });
 
 		// Verify URL is updated to use path-based fingerprint instead of raw key
 		await waitFor(() => {

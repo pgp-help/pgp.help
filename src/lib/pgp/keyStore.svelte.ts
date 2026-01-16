@@ -33,28 +33,28 @@ async function getOldKeyrings() {
 
 	// Parse and read public keys
 	if (publicKeysData) {
-		console.log('Found old public keys data in localStorage: ', publicKeysData);
 		const publicKeys = JSON.parse(publicKeysData);
 		for (const keyData of publicKeys) {
 			try {
-				const key = await getKeyDetails(keyData.armored);
+				const key = await getKeyDetails(keyData);
 				keys.push({ key, persisted: PersistenceType.LEGACY });
 			} catch (e) {
 				console.error('Failed to parse old public key', e);
+				console.log(keyData);
 			}
 		}
 	}
 
 	// Parse and read private keys
 	if (privateKeysData) {
-		console.log('Found old private keys data in localStorage: ', privateKeysData);
 		const privateKeys = JSON.parse(privateKeysData);
 		for (const keyData of privateKeys) {
 			try {
-				const key = await getKeyDetails(keyData.armored);
+				const key = await getKeyDetails(keyData);
 				keys.push({ key, persisted: PersistenceType.LEGACY });
 			} catch (e) {
 				console.error('Failed to parse old private key', e);
+				console.log(keyData);
 			}
 		}
 	}
@@ -66,13 +66,29 @@ export enum PersistenceType {
 	ASSET = 'asset',
 	LOCAL_STORAGE = 'localstorage',
 	MEMORY = 'memory',
-	LEGACY = 'legacy'
+	LEGACY = 'legacy',
+	DEFAULT = 'default'
 }
 
 export interface KeyWrapper {
 	key: Key;
 	persisted: PersistenceType;
 	hasNoPassword?: boolean;
+	// Sometimes we represent a public key for which we have the private key.
+	masterKey?: KeyWrapper;
+}
+
+export function asPublicKeyWrapper(wrapper: KeyWrapper): KeyWrapper {
+	if (!wrapper.key.isPrivate()) {
+		throw new Error('Key is already public');
+	}
+
+	return {
+		key: wrapper.key.toPublic(),
+		persisted: wrapper.persisted,
+		hasNoPassword: wrapper.hasNoPassword,
+		masterKey: wrapper
+	};
 }
 
 /**
@@ -82,7 +98,7 @@ export interface KeyWrapper {
 export class KeyStore {
 	keys = $state<KeyWrapper[]>([]);
 	isLoaded = $state(false);
-	shouldPersistByDefault = $state(true);
+	shouldPersistByDefault = $state(false);
 
 	private loadPromise: Promise<void> | undefined;
 	private lastLoadedJson: string | null = null;
@@ -188,30 +204,41 @@ export class KeyStore {
 		}
 	}
 
-	async addKey(key: Key) {
+	async addKey(wrapper: KeyWrapper) {
 		await this.load();
 
-		const fingerprint = key.getFingerprint();
-		const isPrivate = key.isPrivate();
-
+		const fingerprint = wrapper.key.getFingerprint();
 		const existingIndex = this.keys.findIndex((k) => k.key.getFingerprint() === fingerprint);
 
 		if (existingIndex !== -1) {
 			const existing = this.keys[existingIndex];
 
-			if (!existing.key.isPrivate() && isPrivate) {
-				// Upgrade to private
-				this.keys[existingIndex] = { key, persisted: existing.persisted };
+			// If the new wrapper has DEFAULT persistence, keep the existing persistence
+			if (wrapper.persisted === PersistenceType.DEFAULT) {
+				wrapper.persisted = existing.persisted;
 			}
+
+			// If existing key is private and new is public, keep the private key
+			if (existing.key.isPrivate() && !wrapper.key.isPrivate()) {
+				wrapper.key = existing.key;
+			}
+
+			this.keys[existingIndex] = wrapper;
 		} else {
-			this.keys.push({
-				key,
-				persisted: this.shouldPersistByDefault
+			if (wrapper.persisted === PersistenceType.DEFAULT) {
+				wrapper.persisted = this.shouldPersistByDefault
 					? PersistenceType.LOCAL_STORAGE
-					: PersistenceType.MEMORY
-			});
+					: PersistenceType.MEMORY;
+			}
+			this.keys.push(wrapper);
 		}
 
+		this.save();
+	}
+
+	async clearPersistedKeys() {
+		await this.load();
+		this.keys = this.keys.filter((k) => k.persisted !== PersistenceType.LOCAL_STORAGE);
 		this.save();
 	}
 

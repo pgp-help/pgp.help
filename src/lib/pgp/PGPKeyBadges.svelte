@@ -11,9 +11,12 @@
 </script>
 
 <div class="flex gap-1 shrink-0">
-	<span class="badge {key.isPrivate() ? 'badge-secondary' : 'badge-primary'} badge-sm">
+	<span class="badge {key.isPrivate() ? 'badge-primary' : 'badge-secondary'} badge-sm">
 		{key.isPrivate() ? 'Private' : 'Public'}
 	</span>
+	{#if keyWrapper.masterKey}
+		<span class="badge badge-primary badge-sm" title="Private key available">Private Avail.</span>
+	{/if}
 	{#if persisted === PersistenceType.MEMORY}
 		<span class="badge badge-sm badge-warning" title="Unsaved">Unsaved</span>
 	{/if}
