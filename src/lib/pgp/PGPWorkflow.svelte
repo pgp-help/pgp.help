@@ -230,12 +230,7 @@
 				{/if}
 			{:else}
 				<fieldset class="fieldset">
-					<legend class="fieldset-legend">
-						Input Message
-						<span class="text-xs font-normal opacity-60 ml-2">
-							({currentOperation === OperationType.Decrypt ? 'Decrypting...' : 'Signing...'})
-						</span>
-					</legend>
+					<legend class="fieldset-legend"> Input Message </legend>
 					<CopyableTextarea
 						bind:value={message}
 						placeholder="Type message to sign...
