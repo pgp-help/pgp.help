@@ -129,7 +129,7 @@
 </script>
 
 <div
-	class="card bg-base-200 border selectable w-full max-w-full overflow-hidden"
+	class="card group/key-actions bg-base-200 border selectable w-full max-w-full"
 	onfocusout={handleFocusOut}
 >
 	{#if keyWrapper && key}

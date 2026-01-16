@@ -24,7 +24,7 @@
 	}
 </script>
 
-<div class="flex-1 overflow-y-auto p-2 space-y-1">
+<div class="flex-1 p-2 space-y-1">
 	{#if keys.length === 0}
 		<div class="text-center p-4 text-base-content/50 text-sm">
 			No keys found. Create or import one to get started.
@@ -37,7 +37,7 @@
 
 		<div class="flex flex-col" transition:slide={{ duration: 200 }}>
 			<div
-				class="group flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-base-200 transition-colors {isSelected
+				class="group/key-actions flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-base-200 transition-colors {isSelected
 					? 'bg-base-200 border-l-4 border-primary'
 					: ''}"
 				role="link"
@@ -64,10 +64,7 @@
 					{/if}
 				</div>
 
-				<KeyActions
-					keyWrapper={wrapper}
-					class="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
-				/>
+				<KeyActions keyWrapper={wrapper} />
 			</div>
 		</div>
 	{/each}

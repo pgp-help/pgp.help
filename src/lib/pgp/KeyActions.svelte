@@ -31,26 +31,31 @@
 
 	function getKeyName(wrapper: KeyWrapper) {
 		const user = wrapper.key.getUserIDs()[0] || '<Unknown>';
-		const match = user.match(/^(.*?)(?:\s+<([^>]+)>)?$/);
-		return match ? match[1].trim() : user;
+		return user;
 	}
+
+	const tooltipClasses = '';
+	const buttonClasses =
+		'btn-mini opacity-0 group-hover/key-actions:opacity-100 group-focus-within/key-actions:opacity-100 transition-opacity';
 </script>
 
 <div
-	class="flex items-center gap-1 {className}"
+	class="flex items-center gap-1 {className} overflow-visible"
 	onclick={(e) => e.stopPropagation()}
 	onkeydown={(e) => e.stopPropagation()}
+	onkeyup={(e) => e.stopPropagation()}
+	tabindex="-1"
 	role="group"
 >
 	{#if keyWrapper.persisted === PersistenceType.MEMORY}
-		<div class="tooltip tooltip-bottom" data-tip="Save key">
-			<button type="button" class="btn-mini" onclick={handleSave} aria-label="Save key">
+		<div class="tooltip ${tooltipClasses}" data-tip="Save key">
+			<button type="button" class="${buttonClasses}" onclick={handleSave} aria-label="Save key">
 				<SaveIcon />
 			</button>
 		</div>
 	{:else}
-		<div class="tooltip tooltip-bottom" data-tip="Delete key">
-			<button type="button" class="btn-mini" onclick={handleDelete} aria-label="Delete key">
+		<div class="tooltip ${tooltipClasses}" data-tip="Delete key">
+			<button type="button" class="${buttonClasses}" onclick={handleDelete} aria-label="Delete key">
 				<TrashIcon />
 			</button>
 		</div>
