@@ -20,6 +20,9 @@
 	{#if persisted === PersistenceType.MEMORY}
 		<span class="badge badge-sm badge-warning" title="Unsaved">Unsaved</span>
 	{/if}
+	{#if persisted === PersistenceType.LEGACY}
+		<span class="badge badge-sm badge-secondary" title="Legacy">Legacy</span>
+	{/if}
 	{#if key.isPrivate()}
 		{#if hasNoPassword}
 			<span class="badge badge-success badge-sm">No Password</span>
