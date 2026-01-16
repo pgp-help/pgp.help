@@ -231,7 +231,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
 
-		const { getByText } = render(PGPKey, {
+		const { getByText, getByLabelText } = render(PGPKey, {
 			props: {
 				keyWrapper: { key: testKey, persisted: PersistenceType.MEMORY }
 			}
@@ -241,7 +241,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 			expect(getByText('Pgp Help <hello@pgp.help>')).toBeTruthy();
 		});
 
-		const persistBtn = getByText(/Save To Browser/i);
+		const persistBtn = getByLabelText('Save key');
 		expect(persistBtn).toBeTruthy();
 
 		await fireEvent.click(persistBtn);

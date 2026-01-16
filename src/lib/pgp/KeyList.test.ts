@@ -25,8 +25,7 @@ describe('KeyList', () => {
 
 		// 2. Render KeyList
 		render(KeyList, {
-			keys: keyStore.keys,
-			onSelectKey: vi.fn()
+			keys: keyStore.keys
 		});
 
 		// 3. Verify key is present

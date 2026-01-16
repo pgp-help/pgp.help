@@ -42,7 +42,7 @@ describe('PGPWorkflow', () => {
 
 		// Wait for key to be parsed
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
-		await within(mainArea).findByText(/Test User/);
+		await within(mainArea).findByRole('heading', { name: /Test User/ });
 
 		await user.type(messageTextarea, 'Hello World');
 

@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { slide } from 'svelte/transition';
-	import { keyStore, type KeyWrapper } from './keyStore.svelte.js';
-	import TrashIcon from '../ui/icons/TrashIcon.svelte';
-	import WarningIcon from '../ui/icons/WarningIcon.svelte';
+	import { type KeyWrapper } from './keyStore.svelte.js';
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
+	import KeyActions from './KeyActions.svelte';
 
 	interface Props {
 		keys: KeyWrapper[];
@@ -11,23 +10,6 @@
 	}
 
 	let { keys, selectedWrapper = $bindable() }: Props = $props();
-
-	let keyToDelete = $state<KeyWrapper | null>(null);
-	let deleteDialog: HTMLDialogElement;
-
-	function handleDelete(wrapper: KeyWrapper, e: Event) {
-		e.stopPropagation();
-		keyToDelete = wrapper;
-		deleteDialog.showModal();
-	}
-
-	function confirmDelete() {
-		if (keyToDelete) {
-			keyStore.deleteKey(keyToDelete.key.getFingerprint());
-			keyToDelete = null;
-		}
-		deleteDialog.close();
-	}
 
 	function getKeyName(wrapper: KeyWrapper) {
 		const user = wrapper.key.getUserIDs()[0] || '<Unknown>';
@@ -82,47 +64,11 @@
 					{/if}
 				</div>
 
-				<button
-					type="button"
-					class="btn-mini opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
-					onclick={(e) => handleDelete(wrapper, e)}
-					aria-label="Delete key"
-					title="Delete key"
-				>
-					<TrashIcon />
-				</button>
+				<KeyActions
+					keyWrapper={wrapper}
+					class="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+				/>
 			</div>
 		</div>
 	{/each}
 </div>
-
-<dialog bind:this={deleteDialog} class="modal" onclick={(e) => e.stopPropagation()}>
-	<div class="modal-box text-base-content cursor-default">
-		<h3 class="font-bold text-lg">Delete Key</h3>
-		<p class="py-4">
-			Are you sure you want to delete the key for <span class="font-semibold"
-				>{keyToDelete ? getKeyName(keyToDelete) : ''}</span
-			>?
-		</p>
-
-		{#if keyToDelete?.key.isPrivate()}
-			<div role="alert" class="alert alert-warning mb-4">
-				<WarningIcon />
-				<span>
-					Warning: This is a private key. The data CANNOT be recovered unless YOU have a backup.
-				</span>
-			</div>
-		{/if}
-
-		<div class="modal-action">
-			<form method="dialog">
-				<!-- if there is a button in form, it will close the modal -->
-				<button class="btn">Cancel</button>
-			</form>
-			<button class="btn btn-error" onclick={confirmDelete}>Delete</button>
-		</div>
-	</div>
-	<form method="dialog" class="modal-backdrop">
-		<button>close</button>
-	</form>
-</dialog>

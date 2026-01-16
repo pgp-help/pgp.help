@@ -1,5 +1,5 @@
 import { SvelteURLSearchParams } from 'svelte/reactivity';
-import { Key } from 'openpgp';
+import type { Key } from 'openpgp';
 const BASE_PATH = import.meta.env.BASE_URL || '/';
 
 /**
