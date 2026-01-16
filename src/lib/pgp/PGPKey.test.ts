@@ -246,7 +246,10 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 
 		await fireEvent.click(persistBtn);
 
-		expect(keyStore.addKey).toHaveBeenCalledWith(testKey);
+		expect(keyStore.addKey).toHaveBeenCalledWith({
+			key: testKey,
+			persisted: PersistenceType.LOCAL_STORAGE
+		});
 	});
 
 	it('does not show persist button when key is already persisted', async () => {

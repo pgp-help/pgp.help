@@ -15,7 +15,7 @@
 	function handleSave(e: Event) {
 		e.stopPropagation();
 		keyWrapper.persisted = PersistenceType.LOCAL_STORAGE;
-		keyStore.addKey(keyWrapper.key);
+		keyStore.addKey(keyWrapper);
 	}
 
 	function handleDelete(e: Event) {

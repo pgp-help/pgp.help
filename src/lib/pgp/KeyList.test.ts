@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import KeyList from './KeyList.svelte';
-import { keyStore } from './keyStore.svelte';
+import { keyStore, PersistenceType } from './keyStore.svelte';
 import { generateKeyPair, getKeyDetails } from './pgp';
 
 vi.mock('svelte/transition', () => ({
@@ -18,7 +18,8 @@ describe('KeyList', () => {
 		// 1. Setup: Add a key
 		const keyPair = await generateKeyPair('Test User', 'test@example.com');
 		const key = await getKeyDetails(keyPair.privateKey);
-		await keyStore.addKey(key);
+		// Add as LOCAL_STORAGE so the delete button appears (MEMORY keys show Save button)
+		await keyStore.addKey({ key, persisted: PersistenceType.LOCAL_STORAGE });
 
 		expect(keyStore.keys).toHaveLength(1);
 		expect(screen.queryByText('Test User')).not.toBeInTheDocument();

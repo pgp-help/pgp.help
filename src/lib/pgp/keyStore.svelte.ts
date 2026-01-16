@@ -66,7 +66,8 @@ export enum PersistenceType {
 	ASSET = 'asset',
 	LOCAL_STORAGE = 'localstorage',
 	MEMORY = 'memory',
-	LEGACY = 'legacy'
+	LEGACY = 'legacy',
+	DEFAULT = 'default'
 }
 
 export interface KeyWrapper {
@@ -203,28 +204,33 @@ export class KeyStore {
 		}
 	}
 
-	async addKey(key: Key) {
+	async addKey(wrapper: KeyWrapper) {
 		await this.load();
 
-		const fingerprint = key.getFingerprint();
-		const isPrivate = key.isPrivate();
-
+		const fingerprint = wrapper.key.getFingerprint();
 		const existingIndex = this.keys.findIndex((k) => k.key.getFingerprint() === fingerprint);
 
 		if (existingIndex !== -1) {
 			const existing = this.keys[existingIndex];
 
-			if (!existing.key.isPrivate() && isPrivate) {
-				// Upgrade to private
-				this.keys[existingIndex] = { key, persisted: existing.persisted };
+			// If the new wrapper has DEFAULT persistence, keep the existing persistence
+			if (wrapper.persisted === PersistenceType.DEFAULT) {
+				wrapper.persisted = existing.persisted;
 			}
+
+			// If existing key is private and new is public, keep the private key
+			if (existing.key.isPrivate() && !wrapper.key.isPrivate()) {
+				wrapper.key = existing.key;
+			}
+
+			this.keys[existingIndex] = wrapper;
 		} else {
-			this.keys.push({
-				key,
-				persisted: this.shouldPersistByDefault
+			if (wrapper.persisted === PersistenceType.DEFAULT) {
+				wrapper.persisted = this.shouldPersistByDefault
 					? PersistenceType.LOCAL_STORAGE
-					: PersistenceType.MEMORY
-			});
+					: PersistenceType.MEMORY;
+			}
+			this.keys.push(wrapper);
 		}
 
 		this.save();

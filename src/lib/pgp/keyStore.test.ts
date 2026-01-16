@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
-import { keyStore, KeyStore } from './keyStore.svelte';
+import { keyStore, KeyStore, PersistenceType } from './keyStore.svelte';
 import { generateKeyPair, getKeyDetails } from './pgp';
 
 describe('KeyStore', () => {
@@ -23,15 +23,15 @@ describe('KeyStore', () => {
 
 	it('adds a key', async () => {
 		const key = await getKeyDetails(publicKeyArmor);
-		await keyStore.addKey(key);
+		await keyStore.addKey({ key, persisted: PersistenceType.DEFAULT });
 		expect(keyStore.keys).toHaveLength(1);
 		expect(keyStore.keys[0].key.getFingerprint()).toBe(key.getFingerprint());
 	});
 
 	it('prevents duplicates when adding same key twice', async () => {
 		const key = await getKeyDetails(publicKeyArmor);
-		await keyStore.addKey(key);
-		await keyStore.addKey(key);
+		await keyStore.addKey({ key, persisted: PersistenceType.DEFAULT });
+		await keyStore.addKey({ key, persisted: PersistenceType.DEFAULT });
 		expect(keyStore.keys).toHaveLength(1);
 	});
 
@@ -39,10 +39,10 @@ describe('KeyStore', () => {
 		const pub = await getKeyDetails(publicKeyArmor);
 		const priv = await getKeyDetails(privateKeyArmor);
 
-		await keyStore.addKey(pub);
+		await keyStore.addKey({ key: pub, persisted: PersistenceType.DEFAULT });
 		expect(keyStore.keys[0].key.isPrivate()).toBe(false);
 
-		await keyStore.addKey(priv);
+		await keyStore.addKey({ key: priv, persisted: PersistenceType.DEFAULT });
 		expect(keyStore.keys).toHaveLength(1);
 		expect(keyStore.keys[0].key.isPrivate()).toBe(true);
 	});
@@ -51,10 +51,10 @@ describe('KeyStore', () => {
 		const pub = await getKeyDetails(publicKeyArmor);
 		const priv = await getKeyDetails(privateKeyArmor);
 
-		await keyStore.addKey(priv);
+		await keyStore.addKey({ key: priv, persisted: PersistenceType.DEFAULT });
 		expect(keyStore.keys[0].key.isPrivate()).toBe(true);
 
-		await keyStore.addKey(pub);
+		await keyStore.addKey({ key: pub, persisted: PersistenceType.DEFAULT });
 		expect(keyStore.keys).toHaveLength(1);
 		expect(keyStore.keys[0].key.isPrivate()).toBe(true);
 	});
@@ -63,8 +63,8 @@ describe('KeyStore', () => {
 		const k1 = await getKeyDetails(publicKeyArmor);
 		const k2 = await getKeyDetails(otherKeyArmor);
 
-		await keyStore.addKey(k1);
-		await keyStore.addKey(k2);
+		await keyStore.addKey({ key: k1, persisted: PersistenceType.DEFAULT });
+		await keyStore.addKey({ key: k2, persisted: PersistenceType.DEFAULT });
 		expect(keyStore.keys).toHaveLength(2);
 	});
 
@@ -97,7 +97,7 @@ describe('KeyStore', () => {
 
 	it('retrieves public key from private key when requested', async () => {
 		const priv = await getKeyDetails(privateKeyArmor);
-		await keyStore.addKey(priv);
+		await keyStore.addKey({ key: priv, persisted: PersistenceType.DEFAULT });
 
 		const fp = priv.getFingerprint();
 
@@ -119,7 +119,7 @@ describe('KeyStore', () => {
 
 	it('deletes a key', async () => {
 		const key = await getKeyDetails(publicKeyArmor);
-		await keyStore.addKey(key);
+		await keyStore.addKey({ key, persisted: PersistenceType.DEFAULT });
 		expect(keyStore.keys).toHaveLength(1);
 
 		await keyStore.deleteKey(key.getFingerprint());

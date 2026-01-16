@@ -48,7 +48,7 @@
 	});
 
 	function handleNewKey(key: Key) {
-		keyStore.addKey(key).then(() => {
+		keyStore.addKey({ key, persisted: PersistenceType.DEFAULT }).then(() => {
 			router.openKey(key);
 		});
 	}
