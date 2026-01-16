@@ -26,7 +26,8 @@ describe('PGPPage', () => {
 		await vi.waitFor(() => {
 			// PGPPage should show "Private Key", and the newly generated key: "Test <test@test.com>"
 			expect(screen.getByText('Private Key')).toBeInTheDocument();
-			expect(screen.getByText('Test <test@test.com>')).toBeInTheDocument();
+			//NTH: getByRole would probably be better here...
+			expect(screen.getAllByText('Test <test@test.com>').length).toBeGreaterThan(0);
 
 			// We can also verify that the router has navigated back to HOME (which implies the workflow is shown)
 			// Since PGPWorkflow is rendered, and it shows the key details.

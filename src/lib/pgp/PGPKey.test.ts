@@ -130,7 +130,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
 
-		const { getByText, queryByPlaceholderText } = render(PGPKey, {
+		const { getByText, queryByPlaceholderText, getByRole } = render(PGPKey, {
 			props: {
 				keyWrapper: { key: testKey, persisted: PersistenceType.MEMORY }
 			}
@@ -138,7 +138,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 
 		// Wait for the async effect to resolve
 		await waitFor(() => {
-			expect(getByText('Pgp Help <hello@pgp.help>')).toBeTruthy();
+			expect(getByRole('heading', { name: 'Pgp Help <hello@pgp.help>' })).toBeTruthy();
 		});
 
 		expect(getByText('23fd9f3e9b067569')).toBeTruthy();
@@ -231,14 +231,14 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
 
-		const { getByText, getByLabelText } = render(PGPKey, {
+		const { getByLabelText, getByRole } = render(PGPKey, {
 			props: {
 				keyWrapper: { key: testKey, persisted: PersistenceType.MEMORY }
 			}
 		});
 
 		await waitFor(() => {
-			expect(getByText('Pgp Help <hello@pgp.help>')).toBeTruthy();
+			expect(getByRole('heading', { name: 'Pgp Help <hello@pgp.help>' })).toBeTruthy();
 		});
 
 		const persistBtn = getByLabelText('Save key');
@@ -256,14 +256,14 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
 
-		const { queryByText, getByText } = render(PGPKey, {
+		const { queryByText, getByRole } = render(PGPKey, {
 			props: {
 				keyWrapper: { key: testKey, persisted: PersistenceType.LOCAL_STORAGE }
 			}
 		});
 
 		await waitFor(() => {
-			expect(getByText('Pgp Help <hello@pgp.help>')).toBeTruthy();
+			expect(getByRole('heading', { name: 'Pgp Help <hello@pgp.help>' })).toBeTruthy();
 		});
 
 		expect(queryByText(/Save To Browser/i)).toBeNull();
