@@ -123,7 +123,7 @@ export async function signMessage(privateKey: openpgp.PrivateKey, text: string):
 	if (text == null) throw new Error('Message text is required');
 
 	try {
-		const message = await openpgp.createMessage({ text });
+		const message = await openpgp.createCleartextMessage({ text });
 
 		const signed = await openpgp.sign({
 			message,
@@ -145,7 +145,12 @@ export async function verifySignature(
 	signedMessage: string
 ): Promise<boolean> {
 	try {
-		const message = await openpgp.readMessage({ armoredMessage: signedMessage });
+		let message;
+		if (signedMessage.includes('-----BEGIN PGP SIGNED MESSAGE-----')) {
+			message = await openpgp.readCleartextMessage({ cleartextMessage: signedMessage });
+		} else {
+			message = await openpgp.readMessage({ armoredMessage: signedMessage });
+		}
 
 		const verificationResult = await openpgp.verify({
 			message,

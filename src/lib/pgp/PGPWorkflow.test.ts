@@ -35,7 +35,7 @@ describe('PGPWorkflow', () => {
 		render(PGPPage);
 
 		const keyTextarea = screen.getByLabelText(/Public Key/i);
-		const messageTextarea = screen.getByLabelText(/^Message/i);
+		const messageTextarea = screen.getByLabelText(/Input Message/i);
 		const outputTextarea = screen.getByLabelText(/Encrypted Output/i);
 
 		await fireEvent.input(keyTextarea, { target: { value: validPublicKey } });
@@ -85,17 +85,15 @@ describe('PGPWorkflow', () => {
 		});
 
 		// Should be in decrypt mode automatically because it is a private key
-		const messageTextarea = screen.getByLabelText(/Encrypted Message/i);
-		const outputTextarea = screen.getByLabelText(/Decrypted Output/i);
+		const messageTextarea = screen.getByLabelText(/Input Message/i);
 
 		await fireEvent.input(messageTextarea, { target: { value: encrypted } });
 
-		await waitFor(
-			() => {
-				expect(outputTextarea).toHaveValue(secretMessage);
-			},
-			{ timeout: 5000 }
-		);
+		const outputTextarea = await screen.findByLabelText(/Decrypted Output/i);
+
+		await waitFor(() => {
+			expect(outputTextarea).toHaveValue(secretMessage);
+		});
 	});
 
 	it('allows switching to public key from private key', async () => {
@@ -112,7 +110,7 @@ describe('PGPWorkflow', () => {
 		await user.click(switchButton);
 
 		// Should now be in Encrypt mode (Public Key)
-		expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
+		expect(screen.getByLabelText(/Input Message/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/Encrypted Output/i)).toBeInTheDocument();
 		expect(screen.getByText('Public Key', { selector: 'legend' })).toBeInTheDocument();
 	});
@@ -149,7 +147,7 @@ describe('PGPWorkflow', () => {
 		await user.click(switchButton);
 
 		// Ensure we are in Encrypt mode
-		const messageTextarea = screen.getByLabelText(/^Message/i);
+		const messageTextarea = screen.getByLabelText(/Input Message/i);
 
 		// Paste encrypted message into the "Message" box (which is for plaintext in Encrypt mode)
 		await fireEvent.input(messageTextarea, { target: { value: encrypted } });
@@ -192,7 +190,7 @@ describe('PGPWorkflow', () => {
 
 		// Ensure we are in Encrypt mode (Public Key)
 		await waitFor(() => {
-			expect(screen.getByLabelText(/^Message/i)).toBeInTheDocument();
+			expect(screen.getByLabelText(/Input Message/i)).toBeInTheDocument();
 		});
 
 		const encrypted = `
@@ -204,7 +202,7 @@ ULngoExa449ozHYCiJwbyVvXJWLgSamPDL+yGxunifP7uOyPa0wOGL5c4Ny6
 El/w
 =vbML
 -----END PGP MESSAGE-----`;
-		const messageTextarea = within(mainArea).getByLabelText(/^Message/i);
+		const messageTextarea = within(mainArea).getByLabelText(/Input Message/i);
 
 		// Pasting a ciphertext should switch to Decrypt mode:
 		await fireEvent.input(messageTextarea, { target: { value: encrypted } });

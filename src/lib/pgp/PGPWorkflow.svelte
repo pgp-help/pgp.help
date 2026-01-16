@@ -1,10 +1,20 @@
 <script lang="ts">
-	import { encryptMessage, decryptMessage } from './pgp.js';
+	import { encryptMessage, decryptMessage, signMessage, verifySignature } from './pgp.js';
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import PGPKey from './PGPKey.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
 	import { type KeyWrapper } from './keyStore.svelte.js';
 	import type { Key } from 'openpgp';
+	import { untrack } from 'svelte';
+
+	const OperationType = {
+		Encrypt: 'encrypt',
+		Decrypt: 'decrypt',
+		Sign: 'sign',
+		Verify: 'verify'
+	} as const;
+
+	type OperationType = (typeof OperationType)[keyof typeof OperationType];
 
 	interface Props {
 		keyWrapper: KeyWrapper | null;
@@ -29,8 +39,20 @@
 	let output = $state('');
 	// Any error message from the operation (e.g. decryption failure)
 	let error = $state('');
+	let verificationStatus = $state<'valid' | 'invalid' | null>(null);
+	let signerIdentity = $state<string | null>(null);
 
 	let isPrivate = $derived(keyObject?.isPrivate() ?? false);
+	let isEncryptedMessage = $derived(message.trim().startsWith('-----BEGIN PGP MESSAGE-----'));
+	let isSignedMessage = $derived(message.trim().startsWith('-----BEGIN PGP SIGNED MESSAGE-----'));
+
+	let currentOperation = $derived.by(() => {
+		if (isPrivate) {
+			return isEncryptedMessage ? OperationType.Decrypt : OperationType.Sign;
+		} else {
+			return isSignedMessage ? OperationType.Verify : OperationType.Encrypt;
+		}
+	});
 
 	$effect(() => {
 		// Wrap async logic in a non-async function to comply with $effect requirements.
@@ -47,9 +69,21 @@
 	});
 
 	$effect(() => {
+		void verificationStatus; // To trigger the event
+		const k = untrack(() => keyObject);
+
+		if (verificationStatus) {
+			signerIdentity = k.getUserIDs()[0] || '<unknown>';
+		}
+	});
+
+	$effect(() => {
 		const k = keyObject;
 		const m = message;
 		const currentIsPrivate = isPrivate;
+		const op = currentOperation;
+
+		verificationStatus = null;
 
 		if (!k || !m) {
 			output = '';
@@ -67,33 +101,40 @@
 
 		error = '';
 
-		// Use untrack to prevent this effect from re-running when output or error changes
-		// This is important because we are setting output/error inside the promise callback
-		// and we don't want to trigger the effect again.
-		// Although output/error are not dependencies here, it's good practice.
+		let processPromise: Promise<string | boolean>;
 
-		const processPromise = currentIsPrivate ? decryptMessage(k, m) : encryptMessage(k, m);
+		if (op === OperationType.Decrypt) {
+			processPromise = decryptMessage(k, m);
+		} else if (op === OperationType.Sign) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			processPromise = signMessage(k as any, m);
+		} else if (op === OperationType.Verify) {
+			processPromise = verifySignature(k, m);
+		} else {
+			processPromise = encryptMessage(k, m);
+		}
 
 		processPromise
 			.then((result) => {
-				// Check if the key and message are still the same
-				// We need to access the current values of keyObject and message, but we can't use them directly
-				// because they are reactive. We should use the captured k and m.
-				// However, we also need to check if the component state has moved on.
-				// The best way is to check if k and m match the current state.
-				// But since we are in a promise, we need to be careful.
-
-				// Actually, checking against the captured k and m is correct for ensuring we don't overwrite
-				// with a stale result. But we also want to make sure we don't overwrite if the user has
-				// cleared the input.
-
 				if (isPrivate === currentIsPrivate && keyObject === k && message === m) {
-					output = result;
+					if (op === OperationType.Verify) {
+						console.log('verified ok');
+						verificationStatus = 'valid';
+						output = '';
+					} else {
+						output = result as string;
+					}
 				}
 			})
 			.catch((err) => {
 				if (isPrivate === currentIsPrivate && keyObject === k && message === m) {
-					error = err.message;
+					if (op === OperationType.Verify) {
+						console.log('verified failed: ', err);
+						verificationStatus = 'invalid';
+						error = err.message;
+					} else {
+						error = err.message;
+					}
 				}
 			});
 	});
@@ -121,52 +162,110 @@
 			{/if}
 		</fieldset>
 
-		{#if !isPrivate}
-			<fieldset class="fieldset">
-				<legend class="fieldset-legend">Message</legend>
-				<CopyableTextarea
-					bind:value={message}
-					placeholder="Type your secret message..."
-					label="Message"
-					selectAllOnFocus={false}
-					{error}
-					buttons={true}
-				/>
-			</fieldset>
-			<fieldset class="fieldset mt-4">
-				<legend class="fieldset-legend">Encrypted Output</legend>
-				<CopyableTextarea
-					value={output}
-					readonly={true}
-					fixed={true}
-					placeholder="Encrypted output will appear here..."
-					label="Encrypted Output"
-					buttons={true}
-				/>
-			</fieldset>
-		{:else}
-			<fieldset class="fieldset">
-				<legend class="fieldset-legend">Encrypted Message</legend>
-				<CopyableTextarea
-					bind:value={message}
-					placeholder="Paste encrypted message..."
-					label="Encrypted Message"
-					selectAllOnFocus={false}
-					{error}
-					buttons={true}
-				/>
-			</fieldset>
-			<fieldset class="fieldset mt-4">
-				<legend class="fieldset-legend">Decrypted Output</legend>
-				<CopyableTextarea
-					value={output}
-					readonly={true}
-					fixed={true}
-					placeholder="Decrypted output will appear here..."
-					label="Decrypted Output"
-					buttons={true}
-				/>
-			</fieldset>
-		{/if}
+		<div data-testid="io_fields">
+			{#if !isPrivate}
+				<fieldset class="fieldset">
+					<legend class="fieldset-legend"> Input Message </legend>
+					<CopyableTextarea
+						bind:value={message}
+						placeholder="Type your secret message... or Paste signed message to verify..."
+						label="Input Message"
+						selectAllOnFocus={false}
+						{error}
+						buttons={true}
+					/>
+				</fieldset>
+
+				{#if currentOperation === OperationType.Verify}
+					{#if verificationStatus === 'valid'}
+						<div role="alert" class="alert alert-success mt-4">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="stroke-current shrink-0 h-6 w-6"
+								fill="none"
+								viewBox="0 0 24 24"
+								><path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+								/></svg
+							>
+							<div class="flex flex-col">
+								<span class="font-bold">Signature Verified!</span>
+								{#if signerIdentity}
+									<span class="text-sm opacity-80">Signed by: {signerIdentity}</span>
+								{/if}
+							</div>
+						</div>
+					{:else if verificationStatus === 'invalid'}
+						<div role="alert" class="alert alert-error mt-4">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="stroke-current shrink-0 h-6 w-6"
+								fill="none"
+								viewBox="0 0 24 24"
+								><path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+								/></svg
+							>
+							<span>Verification Failed: {error}</span>
+						</div>
+					{/if}
+				{:else}
+					<fieldset class="fieldset mt-4">
+						<legend class="fieldset-legend">Encrypted Output</legend>
+						<CopyableTextarea
+							value={output}
+							readonly={true}
+							fixed={true}
+							placeholder="Encrypted output will appear here..."
+							label="Encrypted Output"
+							buttons={true}
+						/>
+					</fieldset>
+				{/if}
+			{:else}
+				<fieldset class="fieldset">
+					<legend class="fieldset-legend">
+						Input Message
+						<span class="text-xs font-normal opacity-60 ml-2">
+							({currentOperation === OperationType.Decrypt ? 'Decrypting...' : 'Signing...'})
+						</span>
+					</legend>
+					<CopyableTextarea
+						bind:value={message}
+						placeholder="Type message to sign...
+or Paste encrypted message to decrypt..."
+						label="Input Message"
+						selectAllOnFocus={false}
+						{error}
+						buttons={true}
+					/>
+				</fieldset>
+				<fieldset class="fieldset mt-4">
+					<legend class="fieldset-legend"
+						>{currentOperation === OperationType.Decrypt
+							? 'Decrypted Output'
+							: 'Signed Message'}</legend
+					>
+					<CopyableTextarea
+						value={output}
+						readonly={true}
+						fixed={true}
+						placeholder={currentOperation === OperationType.Decrypt
+							? 'Decrypted output will appear here...'
+							: 'Signed message will appear here...'}
+						label={currentOperation === OperationType.Decrypt
+							? 'Decrypted Output'
+							: 'Signed Message'}
+						buttons={true}
+					/>
+				</fieldset>
+			{/if}
+		</div>
 	</form>
 </div>
