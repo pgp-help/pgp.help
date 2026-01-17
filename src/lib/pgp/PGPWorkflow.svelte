@@ -226,7 +226,7 @@
 						<CopyableTextarea
 							value={output}
 							readonly={true}
-							class="flex-1 overflow-y-auto"
+							fixed={true}
 							placeholder="Encrypted output will appear here..."
 							label="Encrypted Output"
 							buttons={true}
