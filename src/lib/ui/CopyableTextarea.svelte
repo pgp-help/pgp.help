@@ -54,10 +54,23 @@
 		}
 	}
 
-	async function copyToClipboardMarkdown() {
-		const markdownValue = '```\n' + (value || '') + '\n```';
+	// Basic markdown is easy enough to hand-crank, it's reddit markdown that's a pain. So focus on that.
+	// async function copyToClipboardMarkdown() {
+	// 	const markdownValue = '```\n' + (value || '') + '\n```';
+	// 	try {
+	// 		await navigator.clipboard.writeText(markdownValue);
+	// 	} catch (err) {
+	// 		console.error('Failed to copy text: ', err);
+	// 	}
+	// }
+
+	async function copyToClipboardReddit() {
+		const redditValue = (value || '')
+			.split('\n')
+			.map((line) => '    ' + line)
+			.join('\n');
 		try {
-			await navigator.clipboard.writeText(markdownValue);
+			await navigator.clipboard.writeText(redditValue);
 		} catch (err) {
 			console.error('Failed to copy text: ', err);
 		}
@@ -155,7 +168,7 @@
 		bind:value
 		{cols}
 		{rows}
-		readonly={readonly || fixed}
+		{readonly}
 		{placeholder}
 		class="textarea textarea-code w-full whitespace-nowrap {fixed
 			? 'resize-none'
@@ -189,10 +202,11 @@
 					secondary
 					label="Copy (Markdown)"
 					feedback="Copied!"
-					onclick={copyToClipboardMarkdown}
+					onclick={copyToClipboardReddit}
 				>
 					<MarkdownIcon />
 				</MiniActionButton>
+				<!-- I did consider having a separate markdown / reddit-markdown button, but it's too much clutter -->
 			</div>
 			{#if isPublicKey}
 				<div>

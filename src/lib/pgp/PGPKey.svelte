@@ -148,7 +148,7 @@
 				{#each properties as prop (prop.label)}
 					{#if !prop.hidden || showDetails}
 						<div class={KEY_PROPERTY_CLASS}>
-							<div class="tooltip" data-tip={prop.tooltip}>
+							<div class="tooltip tooltip-right" data-tip={prop.tooltip}>
 								<span class="cursor-help">{prop.label}</span>:
 							</div>
 							<span class="break-all">{prop.value}</span>
@@ -166,9 +166,7 @@
 					<div class="mt-2">
 						<details class="mt-1" bind:open={publicKeyOpen}>
 							<summary class={KEY_PROPERTY_CLASS}>
-								<span class="tooltip" data-tip="Click to show the full public key">
-									<span class="cursor-help">Public Key</span>:
-								</span>
+								Public Key:
 								<span class="opacity-60 cursor-pointer">[click to show]</span>
 							</summary>
 							<div class="mt-2 ml-0">
@@ -176,6 +174,7 @@
 									value={publicKey?.armor ? publicKey.armor() : ''}
 									class="text-xs"
 									fixed
+									readonly
 									buttons
 								/>
 							</div>
@@ -184,17 +183,21 @@
 						{#if key.isPrivate()}
 							<details class="mt-1" bind:open={privateKeyOpen}>
 								<summary class={KEY_PROPERTY_CLASS}>
-									<span class="tooltip" data-tip="Warning: Never share your private key!">
-										<span class="cursor-help">Private Key</span>:
-									</span>
+									Private Key:
 									<span class="opacity-60 cursor-pointer">[click to export]</span>
 								</summary>
 								<div class="mt-2 ml-0">
 									<div class="alert alert-warning text-xs py-2 mb-2">
 										<WarningIcon class="h-4 w-4" />
-										<span>Warning: Never share your private key!</span>
+										<span>Warning: For backup only. Never share your private key!</span>
 									</div>
-									<CopyableTextarea value={key.armor()} class="text-xs" fixed buttons={true} />
+									<CopyableTextarea
+										value={key.armor()}
+										class="text-xs"
+										fixed
+										readonly
+										buttons={true}
+									/>
 								</div>
 							</details>
 						{/if}

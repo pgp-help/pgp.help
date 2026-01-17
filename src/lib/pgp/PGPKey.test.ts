@@ -148,7 +148,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		await fireEvent.click(showDetailsBtn);
 
 		expect(getByText('1dfa77312bac1781f699e78223fd9f3e9b067569')).toBeTruthy();
-		expect(getByText('Public Key')).toBeTruthy();
+		expect(getByText('Public Key:')).toBeTruthy();
 		expect(getByText('RSAENCRYPTSIGN (2048 bit)')).toBeTruthy();
 
 		// Input should be hidden
@@ -207,7 +207,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		await fireEvent.click(showDetailsBtn);
 
 		await waitFor(() => {
-			expect(getByText('Private Key')).toBeTruthy();
+			expect(getByText('Private Key:')).toBeTruthy();
 		});
 
 		// Find the Copy button associated with Show Public Key
