@@ -164,18 +164,6 @@
 
 		<div data-testid="io_fields">
 			{#if !isPrivate}
-				<fieldset class="fieldset">
-					<legend class="fieldset-legend"> Input Message </legend>
-					<CopyableTextarea
-						bind:value={message}
-						placeholder="Type your secret message... or Paste signed message to verify..."
-						label="Input Message"
-						selectAllOnFocus={false}
-						{error}
-						buttons={true}
-					/>
-				</fieldset>
-
 				{#if currentOperation === OperationType.Verify}
 					{#if verificationStatus === 'valid'}
 						<div role="alert" class="alert alert-success mt-4">
@@ -215,13 +203,30 @@
 							<span>Verification Failed: {error}</span>
 						</div>
 					{/if}
-				{:else}
+				{/if}
+			{/if}
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend"> Input Message </legend>
+				<CopyableTextarea
+					bind:value={message}
+					placeholder={isPrivate
+						? 'Type message to sign...\n or Paste encrypted message to decrypt...'
+						: 'Type your secret message...\n or Paste signed message to verify...'}
+					label="Input Message"
+					selectAllOnFocus={false}
+					fixed={currentOperation == OperationType.Verify}
+					{error}
+					buttons={true}
+				/>
+			</fieldset>
+			{#if !isPrivate}
+				{#if currentOperation !== OperationType.Verify}
 					<fieldset class="fieldset mt-4">
 						<legend class="fieldset-legend">Encrypted Output</legend>
 						<CopyableTextarea
 							value={output}
 							readonly={true}
-							fixed={true}
+							class="flex-1 overflow-y-auto"
 							placeholder="Encrypted output will appear here..."
 							label="Encrypted Output"
 							buttons={true}
@@ -229,18 +234,6 @@
 					</fieldset>
 				{/if}
 			{:else}
-				<fieldset class="fieldset">
-					<legend class="fieldset-legend"> Input Message </legend>
-					<CopyableTextarea
-						bind:value={message}
-						placeholder="Type message to sign...
-or Paste encrypted message to decrypt..."
-						label="Input Message"
-						selectAllOnFocus={false}
-						{error}
-						buttons={true}
-					/>
-				</fieldset>
 				<fieldset class="fieldset mt-4">
 					<legend class="fieldset-legend"
 						>{currentOperation === OperationType.Decrypt
@@ -251,9 +244,7 @@ or Paste encrypted message to decrypt..."
 						value={output}
 						readonly={true}
 						fixed={true}
-						placeholder={currentOperation === OperationType.Decrypt
-							? 'Decrypted output will appear here...'
-							: 'Signed message will appear here...'}
+						placeholder="Signed / Decrypted message will appear here..."
 						label={currentOperation === OperationType.Decrypt
 							? 'Decrypted Output'
 							: 'Signed Message'}
