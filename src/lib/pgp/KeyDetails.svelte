@@ -5,7 +5,7 @@
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
 	import KeyActions from './KeyActions.svelte';
-	import { KeyType } from './crypto';
+	import { KeyType, wrapPGPKey, isPGPKey } from './crypto';
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
 	// parent component to see the updated value.
@@ -64,8 +64,14 @@
 		decryptError = '';
 
 		try {
-			const decryptedKey = await decryptPrivateKey(key, pass);
-			keyWrapper.key = decryptedKey;
+			// Extract the underlying OpenPGP key from the facade
+			if (!isPGPKey(key)) {
+				throw new Error('Only PGP keys can be decrypted');
+			}
+			const openPGPKey = key.getOpenPGPKey();
+			const decryptedKey = await decryptPrivateKey(openPGPKey, pass);
+			// Wrap the decrypted OpenPGP key in a facade
+			keyWrapper.key = wrapPGPKey(decryptedKey);
 		} catch (err) {
 			decryptError = (err as Error).message;
 		}
@@ -78,55 +84,57 @@
 		return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 	}
 
-	let properties = $derived.by(() => {
-		if (!key) return [];
+	let properties = $derived.by(
+		(): Array<{ label: string; value: string; tooltip: string; hidden?: boolean }> => {
+			if (!key) return [];
 
-		if (isPGP) {
-			const created = formatDate(key.getCreationTime());
-			const expires = expirationTime ? formatDate(expirationTime) : null;
-			const validity =
-				expires && expires !== 'Never'
-					? `${created} (expires: ${expires})`
-					: `${created} (never expires)`;
-			const props = [
-				{
-					label: 'ID',
-					value: key.getID(), // Use generic getID
-					tooltip: 'The short identifier for this key'
-				},
-				{
-					label: 'FP',
-					value: key.getFingerprint(),
-					tooltip: 'The full unique fingerprint of the key',
-					hidden: true
-				},
-				{
-					label: 'Created',
-					value: validity,
-					tooltip: 'Key creation and expiration dates',
-					hidden: true
-				},
-				{
-					label: 'Type',
-					//value: `${key.getAlgorithmInfo().algorithm.toUpperCase()} ${key.getAlgorithmInfo().bits ? `(${key.getAlgorithmInfo().bits} bit)` : ''}`,
-					value: 'FIXME', //TODO: Fix!
-					tooltip: 'The cryptographic algorithm and key size',
-					hidden: true
-				}
-			];
-			return props;
-		} else {
-			// AGE key
-			const props = [
-				{
-					label: 'ID',
-					value: key.getFingerprint(), // Use generic getID
-					tooltip: 'The short identifier for this key'
-				}
-			];
-			return props;
+			if (isPGP) {
+				const created = formatDate(key.getCreationTime());
+				const expires = expirationTime ? formatDate(expirationTime) : null;
+				const validity =
+					expires && expires !== 'Never'
+						? `${created} (expires: ${expires})`
+						: `${created} (never expires)`;
+				const props = [
+					{
+						label: 'ID',
+						value: key.getID(), // Use generic getID
+						tooltip: 'The short identifier for this key'
+					},
+					{
+						label: 'FP',
+						value: key.getFingerprint(),
+						tooltip: 'The full unique fingerprint of the key',
+						hidden: true
+					},
+					{
+						label: 'Created',
+						value: validity,
+						tooltip: 'Key creation and expiration dates',
+						hidden: true
+					},
+					{
+						label: 'Type',
+						//value: `${key.getAlgorithmInfo().algorithm.toUpperCase()} ${key.getAlgorithmInfo().bits ? `(${key.getAlgorithmInfo().bits} bit)` : ''}`,
+						value: 'FIXME', //TODO: Fix!
+						tooltip: 'The cryptographic algorithm and key size',
+						hidden: true
+					}
+				];
+				return props;
+			} else {
+				// AGE key
+				const props = [
+					{
+						label: 'ID',
+						value: key.getFingerprint(), // Use generic getID
+						tooltip: 'The short identifier for this key'
+					}
+				];
+				return props;
+			}
 		}
-	});
+	);
 
 	let showDetails = $state(false);
 	let publicKeyOpen = $state(false);

@@ -65,7 +65,11 @@ export interface CryptoKey {
 export class PGPKeyFacade implements CryptoKey {
 	readonly type = KeyType.PGP;
 
-	constructor(private key: OpenPGPKey) {}
+	constructor(private key: OpenPGPKey) {
+		if (!key) {
+			throw new Error('PGPKeyFacade requires a valid OpenPGP key');
+		}
+	}
 
 	isPrivate(): boolean {
 		return this.key.isPrivate();
@@ -149,6 +153,7 @@ export class AGEKeyFacade implements CryptoKey {
 	}
 
 	getFingerprint(): string {
+		// Always return the public key as fingerprint
 		return this.publicKeyString || this.keyString;
 	}
 

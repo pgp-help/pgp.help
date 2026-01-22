@@ -25,8 +25,8 @@ vi.mock('./crypto', async (importOriginal) => {
 });
 
 // Mock keyStore
-vi.mock('./keyStore.svelte.js', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('./keyStore.svelte.js')>();
+vi.mock('./keyStore.svelte', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('./keyStore.svelte')>();
 	return {
 		...actual,
 		keyStore: {
