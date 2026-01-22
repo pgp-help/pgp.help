@@ -2,8 +2,7 @@
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import GenerateKey from './GenerateKey.svelte';
 import * as pgp from './pgp';
-
-import type { Key } from 'openpgp';
+import * as crypto from './crypto';
 
 // Mock dependencies
 vi.mock('../router.svelte.js', () => ({
@@ -14,8 +13,15 @@ vi.mock('../router.svelte.js', () => ({
 }));
 
 vi.mock('./pgp', () => ({
-	generateKeyPair: vi.fn(),
-	getKeyDetails: vi.fn()
+	generateKeyPair: vi.fn()
+}));
+
+vi.mock('./crypto', () => ({
+	getKeyDetails: vi.fn(),
+	KeyType: {
+		PGP: 'pgp',
+		AGE: 'age'
+	}
 }));
 
 vi.mock('./KeyList.svelte', () => ({
@@ -45,9 +51,18 @@ describe('GenerateKey', () => {
 			revocationCertificate: 'mock-rev-cert'
 		};
 
-		const mockKey = { getFingerprint: () => 'mock-fp' } as Key;
+		const mockKey = {
+			type: crypto.KeyType.PGP,
+			isPrivate: () => true,
+			getId: () => 'mock-id',
+			getFingerprint: () => 'mock-fp',
+			getArmor: () => 'mock-armor',
+			getUserIDs: () => ['Test User <test@example.com>'],
+			isDecrypted: () => true,
+			toPublic: () => mockKey
+		};
 		vi.mocked(pgp.generateKeyPair).mockResolvedValue(mockKeyPair);
-		vi.mocked(pgp.getKeyDetails).mockResolvedValue(mockKey);
+		vi.mocked(crypto.getKeyDetails).mockResolvedValue(mockKey);
 
 		const onKeyGenerated = vi.fn();
 		const onCancel = vi.fn();

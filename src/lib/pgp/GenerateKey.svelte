@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { generateKeyPair, getKeyDetails } from './pgp';
-	import { generateKeyPair as generateAGEKeyPair, getKeyDetails as getAGEKeyDetails } from './age';
-	import { type CryptoKey, wrapPGPKey, KeyType } from './crypto';
+	import { generateKeyPair } from './pgp';
+	import { generateKeyPair as generateAGEKeyPair } from './age';
+	import { type CryptoKey, getKeyDetails, KeyType } from './crypto';
 
 	interface Props {
 		onKeyGenerated: (key: CryptoKey) => void;
@@ -27,10 +27,10 @@
 			if (keyType === KeyType.PGP) {
 				const keyPair = await generateKeyPair(name, email, passphrase);
 				const privateKeyObj = await getKeyDetails(keyPair.privateKey);
-				onKeyGenerated(wrapPGPKey(privateKeyObj));
+				onKeyGenerated(privateKeyObj);
 			} else {
 				const keyPair = await generateAGEKeyPair();
-				const privateKeyObj = await getAGEKeyDetails(keyPair.privateKey);
+				const privateKeyObj = await getKeyDetails(keyPair.privateKey);
 				onKeyGenerated(privateKeyObj);
 			}
 		} catch (err) {

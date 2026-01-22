@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { encryptMessage, decryptMessage, signMessage, verifySignature } from './cipher';
-	import { isAGEEncryptedMessage } from './cipher';
+	import { encryptMessage, decryptMessage, signMessage, verifySignature } from './crypto';
+	import { isAGEEncryptedMessage } from './crypto';
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import KeyDetails from './KeyDetails.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';

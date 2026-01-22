@@ -1,21 +1,14 @@
 import { getKeyDetails as getPGPKeyDetails } from './pgp';
-import { getKeyDetails as getAGEKeyDetails, isAGEKeyString } from './age';
-import { type CryptoKey, wrapPGPKey } from './crypto';
+import { type CryptoKey, wrapPGPKey, getKeyDetails } from './crypto';
 
 // Re-export CryptoKey for consumers
 export type { CryptoKey } from './crypto';
 
 /**
- * Universal key parser that tries PGP then AGE
+ * Universal key parser that uses unified crypto layer
  */
 export async function parseKey(text: string): Promise<CryptoKey> {
-	// Simple heuristic first
-	if (isAGEKeyString(text)) {
-		return getAGEKeyDetails(text);
-	}
-	// Default to PGP (or if it looks like PGP)
-	const key = await getPGPKeyDetails(text);
-	return wrapPGPKey(key);
+	return getKeyDetails(text);
 }
 
 const assetKeysModules = import.meta.glob('../../assets/keys/*', {

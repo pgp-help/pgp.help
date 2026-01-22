@@ -1,5 +1,4 @@
 import * as age from 'age-encryption';
-import { AGEKeyFacade } from './crypto';
 
 /**
  * Checks if a string looks like an AGE key (public or private)
@@ -19,16 +18,18 @@ export function cleanKey(text: string): string {
 }
 
 /**
- * Parse an AGE key string into an AGEKeyFacade
+ * Parse an AGE key string and return raw key data
  */
-export async function getKeyDetails(text: string): Promise<AGEKeyFacade> {
+export async function getKeyDetails(
+	text: string
+): Promise<{ keyString: string; publicKeyString?: string }> {
 	const trimmed = text.trim();
 	if (trimmed.startsWith('AGE-SECRET-KEY-1')) {
 		// Private key
 		// Verify it's valid by trying to get the recipient
 		try {
 			const recipient = await age.identityToRecipient(trimmed);
-			return new AGEKeyFacade(trimmed, recipient);
+			return { keyString: trimmed, publicKeyString: recipient };
 		} catch (e) {
 			throw new Error('Invalid AGE private key: ' + (e as Error).message);
 		}
@@ -36,7 +37,7 @@ export async function getKeyDetails(text: string): Promise<AGEKeyFacade> {
 		// Public key
 		// No easy way to validate format other than regex or trying to use it.
 		// age-encryption doesn't seem to have a standalone validator exposed simply.
-		return new AGEKeyFacade(trimmed);
+		return { keyString: trimmed };
 	}
 	throw new Error('Invalid AGE key format');
 }
@@ -52,9 +53,11 @@ export async function generateKeyPair(): Promise<{ privateKey: string; publicKey
 }
 
 /**
- * Encrypt a message using an AGE key
+ * Encrypt a message using an AGE key (passed via facade from crypto layer)
+ * Note: The key parameter is typed as any to avoid circular imports
  */
-export async function encryptMessage(key: AGEKeyFacade, text: string): Promise<string> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function encryptMessage(key: any, text: string): Promise<string> {
 	const encrypter = new age.Encrypter();
 
 	// Use the public key (recipient string)
@@ -72,9 +75,11 @@ export async function encryptMessage(key: AGEKeyFacade, text: string): Promise<s
 }
 
 /**
- * Decrypt a message using an AGE key
+ * Decrypt a message using an AGE key (passed via facade from crypto layer)
+ * Note: The key parameter is typed as any to avoid circular imports
  */
-export async function decryptMessage(key: AGEKeyFacade, armoredMessage: string): Promise<string> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function decryptMessage(key: any, armoredMessage: string): Promise<string> {
 	if (!key.isPrivate()) {
 		throw new Error('Cannot decrypt with a public key');
 	}

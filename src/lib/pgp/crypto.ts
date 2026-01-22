@@ -1,10 +1,27 @@
 /**
- * Common crypto types and interfaces for PGP and AGE encryption.
- * This provides a facade pattern to allow the UI to work with both
- * PGP and AGE keys seamlessly.
+ * Unified crypto layer - provides facade pattern for PGP and AGE encryption.
+ * This allows the UI to work with both key types seamlessly and provides
+ * encryption/decryption operations.
  */
 
 import type { Key as OpenPGPKey } from 'openpgp';
+
+// Import PGP functions
+import {
+	encryptMessage as pgpEncrypt,
+	decryptMessage as pgpDecrypt,
+	signMessage as pgpSign,
+	verifySignature as pgpVerify,
+	getKeyDetails as pgpGetKeyDetails
+} from './pgp';
+
+// Import AGE functions
+import {
+	encryptMessage as ageEncrypt,
+	decryptMessage as ageDecrypt,
+	getKeyDetails as ageGetKeyDetails,
+	isAGEKeyString
+} from './age';
 
 /**
  * The type of encryption key
@@ -26,7 +43,7 @@ export interface CryptoKey {
 	isPrivate(): boolean;
 
 	/** Get a unique identifier for this key */
-	getID(): string;
+	getId(): string;
 
 	/** Get the full fingerprint/identifier */
 	getFingerprint(): string;
@@ -37,23 +54,11 @@ export interface CryptoKey {
 	/** Get user identities associated with this key */
 	getUserIDs(): string[];
 
-	/** Check if the key is encrypted/locked */
-	isEncrypted(): boolean;
-
 	/** For private keys that are encrypted, unlock them */
 	unlock?(passphrase: string): Promise<CryptoKey>;
 
 	/** Some keys (like PGP) are decrypted in place, others might return a new key */
 	isDecrypted?(): boolean;
-
-	/** Get the creation time of the key */
-	getCreationTime(): Date;
-
-	/** Check if this key is expired */
-	isExpired(): Promise<boolean>;
-
-	/** Get expiration time, or null if never expires */
-	getExpirationTime(): Promise<Date | null>;
 
 	/** Convert to public key (returns same object if already public) */
 	toPublic(): CryptoKey;
@@ -75,7 +80,7 @@ export class PGPKeyFacade implements CryptoKey {
 		return this.key.isPrivate();
 	}
 
-	getID(): string {
+	getId(): string {
 		return this.key.getKeyID().toHex();
 	}
 
@@ -91,29 +96,9 @@ export class PGPKeyFacade implements CryptoKey {
 		return this.key.getUserIDs();
 	}
 
-	isEncrypted(): boolean {
-		if (!this.key.isPrivate()) return false;
-		const privateKey = this.key as OpenPGPKey & { isDecrypted?: () => boolean };
-		return privateKey.isDecrypted ? !privateKey.isDecrypted() : false;
-	}
-
 	isDecrypted(): boolean {
 		const privateKey = this.key as OpenPGPKey & { isDecrypted?: () => boolean };
 		return privateKey.isDecrypted ? privateKey.isDecrypted() : true;
-	}
-
-	getCreationTime(): Date {
-		return this.key.getCreationTime() as Date;
-	}
-
-	async isExpired(): Promise<boolean> {
-		const exp = await this.getExpirationTime();
-		return exp !== null && exp < new Date();
-	}
-
-	async getExpirationTime(): Promise<Date | null> {
-		const exp = await this.key.getExpirationTime();
-		return exp as Date | null;
 	}
 
 	toPublic(): CryptoKey {
@@ -144,7 +129,7 @@ export class AGEKeyFacade implements CryptoKey {
 		return this.keyString.startsWith('AGE-SECRET-KEY-');
 	}
 
-	getID(): string {
+	getId(): string {
 		const pub = this.publicKeyString || this.keyString;
 		if (pub.startsWith('age1')) {
 			return pub.substring(0, 16) + '...';
@@ -165,24 +150,8 @@ export class AGEKeyFacade implements CryptoKey {
 		return this.isPrivate() ? ['AGE Private Key'] : ['AGE Public Key'];
 	}
 
-	isEncrypted(): boolean {
-		return false;
-	}
-
 	isDecrypted(): boolean {
 		return true;
-	}
-
-	getCreationTime(): Date {
-		return new Date();
-	}
-
-	async isExpired(): Promise<boolean> {
-		return false;
-	}
-
-	async getExpirationTime(): Promise<Date | null> {
-		return null;
 	}
 
 	toPublic(): CryptoKey {
@@ -221,3 +190,108 @@ export function isPGPKey(key: CryptoKey): key is PGPKeyFacade {
 export function isAGEKey(key: CryptoKey): key is AGEKeyFacade {
 	return key.type === KeyType.AGE;
 }
+
+/**
+ * Unified key parsing function that detects the key type and returns a CryptoKey facade
+ */
+export async function getKeyDetails(keyString: string): Promise<CryptoKey> {
+	const trimmed = keyString.trim();
+
+	if (isAGEKeyString(trimmed)) {
+		// AGE key - get the raw key data and wrap it
+		const ageKeyData = await ageGetKeyDetails(trimmed);
+		return new AGEKeyFacade(ageKeyData.keyString, ageKeyData.publicKeyString);
+	} else {
+		// Assume PGP key
+		const openpgpKey = await pgpGetKeyDetails(trimmed);
+		return wrapPGPKey(openpgpKey);
+	}
+}
+
+/**
+ * Encrypt a text message using the appropriate encryption method
+ * based on the key type
+ */
+export async function encryptMessage(key: CryptoKey, text: string): Promise<string> {
+	if (key.type === KeyType.AGE) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return ageEncrypt(key as any, text);
+	} else {
+		// PGP uses openpgp.Key type, but we're wrapping it
+		if (key instanceof PGPKeyFacade) {
+			const openpgpKey = key.getOpenPGPKey();
+			return pgpEncrypt(openpgpKey, text);
+		}
+		throw new Error('Unknown key type for encryption');
+	}
+}
+
+/**
+ * Decrypt an encrypted message using the appropriate decryption method
+ * based on the key type
+ */
+export async function decryptMessage(key: CryptoKey, encryptedMessage: string): Promise<string> {
+	if (key.type === KeyType.AGE) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return ageDecrypt(key as any, encryptedMessage);
+	} else {
+		if (key instanceof PGPKeyFacade) {
+			const openpgpKey = key.getOpenPGPKey();
+			return pgpDecrypt(openpgpKey, encryptedMessage);
+		}
+		throw new Error('Unknown key type for decryption');
+	}
+}
+
+/**
+ * Sign a text message using the appropriate signing method
+ * based on the key type
+ */
+export async function signMessage(key: CryptoKey, text: string): Promise<string> {
+	if (key.type === KeyType.AGE) {
+		throw new Error('Signing is not supported by AGE encryption');
+	} else {
+		if (key instanceof PGPKeyFacade) {
+			// type assertion needed because openpgp.PrivateKey is a subtype of openpgp.Key
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const openpgpKey = key.getOpenPGPKey() as any;
+			return pgpSign(openpgpKey, text);
+		}
+		throw new Error('Unknown key type for signing');
+	}
+}
+
+/**
+ * Verify a signed message using the appropriate verification method
+ * based on the key type
+ */
+export async function verifySignature(key: CryptoKey, signedMessage: string): Promise<boolean> {
+	if (key.type === KeyType.AGE) {
+		throw new Error('Signing is not supported by AGE encryption');
+	} else {
+		if (key instanceof PGPKeyFacade) {
+			const openpgpKey = key.getOpenPGPKey();
+			return pgpVerify(openpgpKey, signedMessage);
+		}
+		throw new Error('Unknown key type for verification');
+	}
+}
+
+/**
+ * Check if a string looks like an AGE encrypted message
+ * AGE messages are base64 encoded (from our implementation)
+ */
+export function isAGEEncryptedMessage(text: string): boolean {
+	const trimmed = text.trim();
+	// Check if it's valid base64
+	try {
+		const decoded = atob(trimmed);
+		// AGE encrypted messages are typically longer than this
+		return decoded.length > 50;
+	} catch {
+		return false;
+	}
+}
+
+// Re-export this for generic use if needed
+export { parseKey } from './keyStore.svelte';

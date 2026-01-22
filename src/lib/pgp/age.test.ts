@@ -1,12 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import {
-	generateKeyPair,
-	encryptMessage,
-	decryptMessage,
-	getKeyDetails,
-	isAGEKeyString
-} from './age';
-import { AGEKeyFacade, KeyType } from './crypto';
+import { generateKeyPair, isAGEKeyString } from './age';
+import { encryptMessage, decryptMessage, getKeyDetails, AGEKeyFacade, KeyType } from './crypto';
 
 describe('AGE Encryption', () => {
 	it('generates a valid key pair', async () => {

@@ -5,7 +5,7 @@
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
 	import KeyActions from './KeyActions.svelte';
-	import { KeyType, wrapPGPKey, isPGPKey } from './crypto';
+	import { type CryptoKey, KeyType, wrapPGPKey, isPGPKey } from './crypto';
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
 	// parent component to see the updated value.
@@ -13,7 +13,7 @@
 		keyWrapper: KeyWrapper | null;
 	}>();
 
-	let key = $derived(keyWrapper?.key);
+	let key = $derived<CryptoKey | null>(keyWrapper?.key);
 	let isPGP = $derived(key?.type === KeyType.PGP);
 
 	let publicKey = $derived.by(() => {
@@ -53,9 +53,16 @@
 	let expirationTime = $state<Date | null>(null);
 
 	$effect(() => {
-		key.getExpirationTime().then((t) => {
-			expirationTime = t as Date | null;
-		});
+		if (key && isPGPKey(key)) {
+			// Access detailed properties through the underlying OpenPGP key
+			const openPGPKey = key.getOpenPGPKey();
+			openPGPKey.getExpirationTime().then((t) => {
+				expirationTime = t as Date | null;
+			});
+		} else {
+			// AGE keys don't expire
+			expirationTime = null;
+		}
 	});
 
 	async function handleDecrypt(pass: string) {
@@ -88,8 +95,10 @@
 		(): Array<{ label: string; value: string; tooltip: string; hidden?: boolean }> => {
 			if (!key) return [];
 
-			if (isPGP) {
-				const created = formatDate(key.getCreationTime());
+			if (isPGP && isPGPKey(key)) {
+				// Access creation time through underlying OpenPGP key
+				const openPGPKey = key.getOpenPGPKey();
+				const created = formatDate(openPGPKey.getCreationTime() as Date);
 				const expires = expirationTime ? formatDate(expirationTime) : null;
 				const validity =
 					expires && expires !== 'Never'
@@ -98,7 +107,7 @@
 				const props = [
 					{
 						label: 'ID',
-						value: key.getID(), // Use generic getID
+						value: key.getId(), // Use consistent getId method
 						tooltip: 'The short identifier for this key'
 					},
 					{
@@ -115,8 +124,11 @@
 					},
 					{
 						label: 'Type',
-						//value: `${key.getAlgorithmInfo().algorithm.toUpperCase()} ${key.getAlgorithmInfo().bits ? `(${key.getAlgorithmInfo().bits} bit)` : ''}`,
-						value: 'FIXME', //TODO: Fix!
+						value: (() => {
+							// Access algorithm info through underlying OpenPGP key
+							const algorithmInfo = openPGPKey.getAlgorithmInfo();
+							return `${algorithmInfo.algorithm.toUpperCase()} ${algorithmInfo.bits ? `(${algorithmInfo.bits} bit)` : ''}`;
+						})(),
 						tooltip: 'The cryptographic algorithm and key size',
 						hidden: true
 					}
