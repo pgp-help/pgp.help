@@ -1,5 +1,22 @@
-import { getKeyDetails } from './pgp';
-import type { Key } from 'openpgp';
+import { getKeyDetails as getPGPKeyDetails } from './pgp';
+import { getKeyDetails as getAGEKeyDetails, isAGEKeyString } from './age';
+import { type CryptoKey, wrapPGPKey } from './crypto';
+
+// Re-export CryptoKey for consumers
+export type { CryptoKey } from './crypto';
+
+/**
+ * Universal key parser that tries PGP then AGE
+ */
+export async function parseKey(text: string): Promise<CryptoKey> {
+	// Simple heuristic first
+	if (isAGEKeyString(text)) {
+		return getAGEKeyDetails(text);
+	}
+	// Default to PGP (or if it looks like PGP)
+	const key = await getPGPKeyDetails(text);
+	return wrapPGPKey(key);
+}
 
 const assetKeysModules = import.meta.glob('../../assets/keys/*', {
 	query: '?raw',
@@ -7,19 +24,19 @@ const assetKeysModules = import.meta.glob('../../assets/keys/*', {
 	eager: true
 });
 const assetKeysRaw = Object.values(assetKeysModules) as string[];
-let assetKeysCache: Key[] | null = null;
+let assetKeysCache: CryptoKey[] | null = null;
 
 async function getAssetKeys() {
 	if (assetKeysCache) return assetKeysCache;
 	const promises = assetKeysRaw.map(async (armor) => {
 		try {
-			return await getKeyDetails(armor);
+			return await parseKey(armor);
 		} catch (e) {
 			console.error('Failed to parse asset key', e);
 			return null;
 		}
 	});
-	assetKeysCache = (await Promise.all(promises)).filter((k): k is Key => k !== null);
+	assetKeysCache = (await Promise.all(promises)).filter((k): k is CryptoKey => k !== null);
 	return assetKeysCache;
 }
 
@@ -36,11 +53,10 @@ async function getOldKeyrings() {
 		const publicKeys = JSON.parse(publicKeysData);
 		for (const keyData of publicKeys) {
 			try {
-				const key = await getKeyDetails(keyData);
-				keys.push({ key, persisted: PersistenceType.LEGACY });
+				const key = await getPGPKeyDetails(keyData);
+				keys.push({ key: wrapPGPKey(key), persisted: PersistenceType.LEGACY });
 			} catch (e) {
 				console.error('Failed to parse old public key', e);
-				console.log(keyData);
 			}
 		}
 	}
@@ -50,11 +66,10 @@ async function getOldKeyrings() {
 		const privateKeys = JSON.parse(privateKeysData);
 		for (const keyData of privateKeys) {
 			try {
-				const key = await getKeyDetails(keyData);
-				keys.push({ key, persisted: PersistenceType.LEGACY });
+				const key = await getPGPKeyDetails(keyData);
+				keys.push({ key: wrapPGPKey(key), persisted: PersistenceType.LEGACY });
 			} catch (e) {
 				console.error('Failed to parse old private key', e);
-				console.log(keyData);
 			}
 		}
 	}
@@ -71,7 +86,7 @@ export enum PersistenceType {
 }
 
 export interface KeyWrapper {
-	key: Key;
+	key: CryptoKey;
 	persisted: PersistenceType;
 	hasNoPassword?: boolean;
 	// Sometimes we represent a public key for which we have the private key.
@@ -137,13 +152,13 @@ export class KeyStore {
 
 				// Parse all keys in parallel
 				const promises = rawKeys.map((armor) =>
-					getKeyDetails(armor).catch((e) => {
+					parseKey(armor).catch((e) => {
 						console.error('Failed to parse stored key', e);
 						return null;
 					})
 				);
 
-				const parsed = (await Promise.all(promises)).filter((k): k is Key => k !== null);
+				const parsed = (await Promise.all(promises)).filter((k): k is CryptoKey => k !== null);
 				storedKeys = parsed.map((key) => ({ key, persisted: PersistenceType.LOCAL_STORAGE }));
 			} catch (e) {
 				console.error('Failed to load keys', e);
@@ -197,7 +212,7 @@ export class KeyStore {
 		if (typeof window !== 'undefined') {
 			const rawKeys = this.keys
 				.filter((k) => k.persisted === PersistenceType.LOCAL_STORAGE)
-				.map((k) => k.key.armor());
+				.map((k) => k.key.getArmor());
 			const json = JSON.stringify(rawKeys);
 			localStorage.setItem('pgp-keys-simple', json);
 			this.lastLoadedJson = json;

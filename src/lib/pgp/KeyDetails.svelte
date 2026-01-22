@@ -5,6 +5,7 @@
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
 	import KeyActions from './KeyActions.svelte';
+	import { KeyType } from './crypto';
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
 	// parent component to see the updated value.
@@ -13,6 +14,7 @@
 	}>();
 
 	let key = $derived(keyWrapper?.key);
+	let isPGP = $derived(key?.type === KeyType.PGP);
 
 	let publicKey = $derived.by(() => {
 		if (!key) return null;
@@ -79,38 +81,51 @@
 	let properties = $derived.by(() => {
 		if (!key) return [];
 
-		const created = formatDate(key.getCreationTime());
-		const expires = expirationTime ? formatDate(expirationTime) : null;
-		const validity =
-			expires && expires !== 'Never'
-				? `${created} (expires: ${expires})`
-				: `${created} (never expires)`;
-
-		return [
-			{
-				label: 'ID',
-				value: key.getKeyID().toHex(),
-				tooltip: 'The short 8-character identifier for this key'
-			},
-			{
-				label: 'FP',
-				value: key.getFingerprint(),
-				tooltip: 'The full unique fingerprint of the key',
-				hidden: true
-			},
-			{
-				label: 'Created',
-				value: validity,
-				tooltip: 'Key creation and expiration dates',
-				hidden: true
-			},
-			{
-				label: 'Type',
-				value: `${key.getAlgorithmInfo().algorithm.toUpperCase()} ${key.getAlgorithmInfo().bits ? `(${key.getAlgorithmInfo().bits} bit)` : ''}`,
-				tooltip: 'The cryptographic algorithm and key size',
-				hidden: true
-			}
-		];
+		if (isPGP) {
+			const created = formatDate(key.getCreationTime());
+			const expires = expirationTime ? formatDate(expirationTime) : null;
+			const validity =
+				expires && expires !== 'Never'
+					? `${created} (expires: ${expires})`
+					: `${created} (never expires)`;
+			const props = [
+				{
+					label: 'ID',
+					value: key.getID(), // Use generic getID
+					tooltip: 'The short identifier for this key'
+				},
+				{
+					label: 'FP',
+					value: key.getFingerprint(),
+					tooltip: 'The full unique fingerprint of the key',
+					hidden: true
+				},
+				{
+					label: 'Created',
+					value: validity,
+					tooltip: 'Key creation and expiration dates',
+					hidden: true
+				},
+				{
+					label: 'Type',
+					//value: `${key.getAlgorithmInfo().algorithm.toUpperCase()} ${key.getAlgorithmInfo().bits ? `(${key.getAlgorithmInfo().bits} bit)` : ''}`,
+					value: 'FIXME', //TODO: Fix!
+					tooltip: 'The cryptographic algorithm and key size',
+					hidden: true
+				}
+			];
+			return props;
+		} else {
+			// AGE key
+			const props = [
+				{
+					label: 'ID',
+					value: key.getFingerprint(), // Use generic getID
+					tooltip: 'The short identifier for this key'
+				}
+			];
+			return props;
+		}
 	});
 
 	let showDetails = $state(false);
@@ -171,7 +186,7 @@
 							</summary>
 							<div class="mt-2 ml-0">
 								<CopyableTextarea
-									value={publicKey?.armor ? publicKey.armor() : ''}
+									value={publicKey?.getArmor ? publicKey.getArmor() : ''}
 									class="text-xs"
 									fixed
 									readonly
@@ -192,7 +207,7 @@
 										<span>Warning: For backup only. Never share your private key!</span>
 									</div>
 									<CopyableTextarea
-										value={key.armor()}
+										value={key.getArmor()}
 										class="text-xs"
 										fixed
 										readonly

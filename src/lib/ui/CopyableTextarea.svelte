@@ -10,6 +10,8 @@
 	import ShareIcon from './icons/ShareIcon.svelte';
 	import LinkIcon from './icons/LinkIcon.svelte';
 
+	import { isAGEKeyString } from '../pgp/age';
+
 	let {
 		value = $bindable(''),
 		readonly = false,
@@ -44,7 +46,11 @@
 		fixed && value ? Math.max(...value.split('\n').map((l) => l.length)) + 0 : undefined
 	);
 
-	let isPublicKey = $derived(value && value.includes('-----BEGIN PGP PUBLIC KEY BLOCK-----'));
+	let isPublicKey = $derived(
+		value &&
+			(value.includes('-----BEGIN PGP PUBLIC KEY BLOCK-----') ||
+				(isAGEKeyString(value) && value.startsWith('age1')))
+	);
 
 	async function copyToClipboard() {
 		try {

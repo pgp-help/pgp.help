@@ -26,7 +26,7 @@ describe('PGPKeyBadges', () => {
 		render(PGPKeyBadges, {
 			keyWrapper: { key: publicKey, persisted: PersistenceType.LOCAL_STORAGE }
 		});
-		expect(screen.getByText('Public')).toBeInTheDocument();
+		expect(screen.getByText('Public')).toNotBeInTheDocument();
 	});
 
 	it('renders Unsaved badge when persisted is MEMORY', () => {

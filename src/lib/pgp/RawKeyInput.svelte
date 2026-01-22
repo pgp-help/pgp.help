@@ -1,18 +1,17 @@
 <script lang="ts">
-	import { getKeyDetails } from './pgp';
+	import { parseKey, type CryptoKey } from './keyStore.svelte.js';
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
-	import type { Key } from 'openpgp';
 
 	let {
 		value = $bindable(''),
-		label = 'PGP Key',
-		placeholder = 'Paste PGP Key (Armored)...',
+		label = 'Key',
+		placeholder = 'Paste PGP or AGE Key...',
 		onKeyParsed
 	} = $props<{
 		value?: string;
 		label?: string;
 		placeholder?: string;
-		onKeyParsed?: (key: Key) => void;
+		onKeyParsed?: (key: CryptoKey) => void;
 	}>();
 
 	let error = $state('');
@@ -24,7 +23,7 @@
 			return;
 		}
 
-		getKeyDetails(k)
+		parseKey(k)
 			.then(async (details) => {
 				onKeyParsed?.(details);
 			})

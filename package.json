@@ -44,6 +44,7 @@
 	},
 	"dependencies": {
 		"@fontsource/inter": "^5.2.8",
+		"age-encryption": "^0.3.0",
 		"openpgp": "^6.3.0"
 	}
 }

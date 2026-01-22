@@ -30,7 +30,7 @@ describe('GenerateKey', () => {
 	it('renders the generation form', () => {
 		render(GenerateKey, { onKeyGenerated: vi.fn(), onCancel: vi.fn() });
 
-		expect(screen.getByText('Generate New PGP Key')).toBeInTheDocument();
+		expect(screen.getByText('Generate New Key')).toBeInTheDocument();
 		expect(screen.getByLabelText('Name')).toBeInTheDocument();
 		expect(screen.getByLabelText('Email')).toBeInTheDocument();
 		expect(screen.getByLabelText(/Passphrase/)).toBeInTheDocument();
