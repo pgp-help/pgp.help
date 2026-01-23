@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { isAGEKey } from './crypto.js';
+	import { KeyType } from './crypto.js';
 	import { type KeyWrapper, PersistenceType } from './keyStore.svelte.js';
 
 	let { keyWrapper } = $props<{
@@ -12,7 +12,7 @@
 </script>
 
 <div class="flex gap-1 shrink-0">
-	{#if isAGEKey(key)}
+	{#if key.type == KeyType.AGE}
 		<span class="badge badge-accent badge-sm">AGE</span>
 	{/if}
 	{#if key.isPrivate()}

@@ -185,13 +185,6 @@ export function isPGPKey(key: CryptoKey): key is PGPKeyFacade {
 }
 
 /**
- * Check if a CryptoKey is an AGE key
- */
-export function isAGEKey(key: CryptoKey): key is AGEKeyFacade {
-	return key.type === KeyType.AGE;
-}
-
-/**
  * Unified key parsing function that detects the key type and returns a CryptoKey facade
  */
 export async function getKeyDetails(keyString: string): Promise<CryptoKey> {
