@@ -145,6 +145,29 @@
 						</p>
 					</div>
 				</div>
+
+				<div class="collapse collapse-arrow bg-base-200">
+					<input type="checkbox" checked />
+					<div class="collapse-title text-xl font-medium">What is AGE encryption?</div>
+					<div class="collapse-content">
+						<p class="mb-2">
+							<strong>AGE</strong> is a modern, secure file encryption format designed as a simpler alternative
+							to PGP.
+						</p>
+						<p class="mb-2">
+							This site supports both PGP and AGE encryption. AGE keys are smaller, easier to
+							handle, and use modern cryptographic best practices by default.
+						</p>
+						<p>
+							Learn more at <a
+								href="https://age-encryption.org/"
+								target="_blank"
+								rel="noopener noreferrer"
+								class="link link-primary">age-encryption.org</a
+							>
+						</p>
+					</div>
+				</div>
 			</div>
 		</div>
 

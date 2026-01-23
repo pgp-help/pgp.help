@@ -4,6 +4,7 @@ import PGPKeyBadges from './PGPKeyBadges.svelte';
 import { generateKeyPair, getKeyDetails } from './pgp';
 import type { Key } from 'openpgp';
 import { PersistenceType } from './keyStore.svelte';
+import { wrapPGPKey } from './crypto';
 
 describe('PGPKeyBadges', () => {
 	let privateKey: Key;
@@ -17,31 +18,35 @@ describe('PGPKeyBadges', () => {
 
 	it('renders Private badge for private key', () => {
 		render(PGPKeyBadges, {
-			keyWrapper: { key: privateKey, persisted: PersistenceType.LOCAL_STORAGE }
+			keyWrapper: { key: wrapPGPKey(privateKey), persisted: PersistenceType.LOCAL_STORAGE }
 		});
 		expect(screen.getByText('Private')).toBeInTheDocument();
 	});
 
-	it('renders Public badge for public key', () => {
+	it('does not render Private badge for public key', () => {
 		render(PGPKeyBadges, {
-			keyWrapper: { key: publicKey, persisted: PersistenceType.LOCAL_STORAGE }
+			keyWrapper: { key: wrapPGPKey(publicKey), persisted: PersistenceType.LOCAL_STORAGE }
 		});
-		expect(screen.getByText('Public')).toBeInTheDocument();
+		expect(screen.queryByText('Private')).not.toBeInTheDocument();
 	});
 
 	it('renders Unsaved badge when persisted is MEMORY', () => {
-		render(PGPKeyBadges, { keyWrapper: { key: publicKey, persisted: PersistenceType.MEMORY } });
+		render(PGPKeyBadges, {
+			keyWrapper: { key: wrapPGPKey(publicKey), persisted: PersistenceType.MEMORY }
+		});
 		expect(screen.getByText('Unsaved')).toBeInTheDocument();
 	});
 
 	it('does not render Unsaved badge when persisted is ASSET', () => {
-		render(PGPKeyBadges, { keyWrapper: { key: publicKey, persisted: PersistenceType.ASSET } });
+		render(PGPKeyBadges, {
+			keyWrapper: { key: wrapPGPKey(publicKey), persisted: PersistenceType.ASSET }
+		});
 		expect(screen.queryByText('Unsaved')).not.toBeInTheDocument();
 	});
 
 	it('does not render Unsaved badge when persisted is LOCAL_STORAGE', () => {
 		render(PGPKeyBadges, {
-			keyWrapper: { key: publicKey, persisted: PersistenceType.LOCAL_STORAGE }
+			keyWrapper: { key: wrapPGPKey(publicKey), persisted: PersistenceType.LOCAL_STORAGE }
 		});
 		expect(screen.queryByText('Unsaved')).not.toBeInTheDocument();
 	});
@@ -49,7 +54,7 @@ describe('PGPKeyBadges', () => {
 	it('renders Locked badge for locked private key', () => {
 		// Private key is locked by default when parsed from armor
 		render(PGPKeyBadges, {
-			keyWrapper: { key: privateKey, persisted: PersistenceType.LOCAL_STORAGE }
+			keyWrapper: { key: wrapPGPKey(privateKey), persisted: PersistenceType.LOCAL_STORAGE }
 		});
 		// We removed "Locked" badge, so it should NOT be there.
 		// Wait, the requirement was "Remove the 'Locked' badge".
@@ -62,7 +67,7 @@ describe('PGPKeyBadges', () => {
 
 		render(PGPKeyBadges, {
 			keyWrapper: {
-				key: decrypted,
+				key: wrapPGPKey(decrypted),
 				persisted: PersistenceType.LOCAL_STORAGE,
 				hasNoPassword: true
 			}

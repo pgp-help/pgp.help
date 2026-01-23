@@ -22,6 +22,14 @@
 		const match = user.match(/^(.*?)(?:\s+<([^>]+)>)?$/);
 		return match && match[2] ? match[2].trim() : '';
 	}
+
+	function getKeySubtitle(wrapper: KeyWrapper) {
+		const email = getKeyEmail(wrapper);
+		if (email) {
+			return email;
+		}
+		return wrapper.key.getId();
+	}
 </script>
 
 <div class="flex-1 p-2 space-y-1">
@@ -33,7 +41,7 @@
 	{#each keys as wrapper (wrapper.key.getFingerprint())}
 		{@const isSelected = selectedWrapper?.key.getFingerprint() === wrapper.key.getFingerprint()}
 		{@const name = getKeyName(wrapper)}
-		{@const email = getKeyEmail(wrapper)}
+		{@const email = getKeySubtitle(wrapper)}
 
 		<div class="flex flex-col" transition:slide={{ duration: 200 }}>
 			<div

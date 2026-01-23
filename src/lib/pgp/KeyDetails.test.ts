@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
-import PGPKey from './PGPKey.svelte';
+import KeyDetails from './KeyDetails.svelte';
 import * as pgp from './pgp';
 import * as openpgp from 'openpgp';
 import { PersistenceType, keyStore } from './keyStore.svelte';
@@ -14,9 +14,19 @@ vi.mock('./pgp', async (importOriginal) => {
 	};
 });
 
+// Mock key details for wrappers
+import * as crypto from './crypto';
+vi.mock('./crypto', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('./crypto')>();
+	return {
+		...actual,
+		wrapPGPKey: (k: openpgp.Key) => new actual.PGPKeyFacade(k)
+	};
+});
+
 // Mock keyStore
-vi.mock('./keyStore.svelte.js', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('./keyStore.svelte.js')>();
+vi.mock('./keyStore.svelte', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('./keyStore.svelte')>();
 	return {
 		...actual,
 		keyStore: {
@@ -25,7 +35,7 @@ vi.mock('./keyStore.svelte.js', async (importOriginal) => {
 	};
 });
 
-describe('PGPKey Component', async () => {
+describe('KeyDetails Component', async () => {
 	const testKeyArmor = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 xsBNBFW7TH8BCADccz73OFQprAsBLNTFNZFTPzDUbmwKn5BMFFK7rYf7v8Gj
@@ -57,6 +67,7 @@ HLrZ5SS/qnXSXE79odO4Cd/gx1nJrovmut1vZfxh3yyLOnh9+BZX/NeU9FWu
 =MMEa
 -----END PGP PUBLIC KEY BLOCK-----`;
 	const testKey = await openpgp.readKey({ armoredKey: testKeyArmor });
+	const testKeyFacade = new crypto.PGPKeyFacade(testKey);
 
 	const testPrivateKeyArmor = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 
@@ -125,14 +136,15 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 =6ZGn
 -----END PGP PRIVATE KEY BLOCK-----`;
 	const testPrivateKey = await openpgp.readKey({ armoredKey: testPrivateKeyArmor });
+	const testPrivateKeyFacade = new crypto.PGPKeyFacade(testPrivateKey);
 
 	it('renders key details widget when valid key is provided', async () => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
 
-		const { getByText, queryByPlaceholderText, getByRole } = render(PGPKey, {
+		const { getByText, queryByPlaceholderText, getByRole } = render(KeyDetails, {
 			props: {
-				keyWrapper: { key: testKey, persisted: PersistenceType.MEMORY }
+				keyWrapper: { key: testKeyFacade, persisted: PersistenceType.MEMORY }
 			}
 		});
 
@@ -159,9 +171,9 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testPrivateKey as any);
 
-		const { component, container } = render(PGPKey, {
+		const { component, container } = render(KeyDetails, {
 			props: {
-				keyWrapper: { key: testPrivateKey, persisted: PersistenceType.MEMORY }
+				keyWrapper: { key: testPrivateKeyFacade, persisted: PersistenceType.MEMORY }
 			}
 		});
 
@@ -196,9 +208,9 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 			writable: true
 		});
 
-		const { getByText } = render(PGPKey, {
+		const { getByText } = render(KeyDetails, {
 			props: {
-				keyWrapper: { key: testPrivateKey, persisted: PersistenceType.MEMORY }
+				keyWrapper: { key: testPrivateKeyFacade, persisted: PersistenceType.MEMORY }
 			}
 		});
 
@@ -224,16 +236,18 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		const publicCopyBtn = copyButtons[0];
 		await fireEvent.click(publicCopyBtn);
 
-		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(testPrivateKey.toPublic().armor());
+		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+			testPrivateKeyFacade.toPublic().getArmor()
+		);
 	});
 
 	it('shows persist button when key is in memory and calls persistKey on click', async () => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
 
-		const { getByLabelText, getByRole } = render(PGPKey, {
+		const { getByLabelText, getByRole } = render(KeyDetails, {
 			props: {
-				keyWrapper: { key: testKey, persisted: PersistenceType.MEMORY }
+				keyWrapper: { key: testKeyFacade, persisted: PersistenceType.MEMORY }
 			}
 		});
 
@@ -247,7 +261,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		await fireEvent.click(persistBtn);
 
 		expect(keyStore.addKey).toHaveBeenCalledWith({
-			key: testKey,
+			key: testKeyFacade,
 			persisted: PersistenceType.LOCAL_STORAGE
 		});
 	});
@@ -256,9 +270,9 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
 
-		const { queryByText, getByRole } = render(PGPKey, {
+		const { queryByText, getByRole } = render(KeyDetails, {
 			props: {
-				keyWrapper: { key: testKey, persisted: PersistenceType.LOCAL_STORAGE }
+				keyWrapper: { key: testKeyFacade, persisted: PersistenceType.LOCAL_STORAGE }
 			}
 		});
 

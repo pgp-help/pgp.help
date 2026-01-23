@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import KeyList from './KeyList.svelte';
 import { keyStore, PersistenceType } from './keyStore.svelte';
-import { generateKeyPair, getKeyDetails } from './pgp';
+import { generateKeyPair } from './pgp';
+import { getKeyDetails } from './crypto';
 
 vi.mock('svelte/transition', () => ({
 	slide: () => ({ duration: 0 })

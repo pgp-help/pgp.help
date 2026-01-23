@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { encryptMessage, decryptMessage, signMessage, verifySignature } from './pgp.js';
+	import { encryptMessage, decryptMessage, signMessage, verifySignature } from './crypto';
+	import { isAGEEncryptedMessage } from './crypto';
 	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
-	import PGPKey from './PGPKey.svelte';
+	import KeyDetails from './KeyDetails.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
 	import { type KeyWrapper } from './keyStore.svelte.js';
-	import type { Key } from 'openpgp';
+	import { type CryptoKey, KeyType } from './crypto';
 	import { untrack } from 'svelte';
 
 	const OperationType = {
@@ -18,7 +19,7 @@
 
 	interface Props {
 		keyWrapper: KeyWrapper | null;
-		onKeyParsed: (key: Key) => void;
+		onKeyParsed: (key: CryptoKey) => void;
 		keyValue?: string;
 	}
 	let { keyWrapper = $bindable(), onKeyParsed, keyValue = $bindable('') }: Props = $props();
@@ -31,8 +32,8 @@
 		}
 	});
 
-	// Reference to the PGPKey component instance (for calling methods like nudgeForDecryption)
-	let pgpKeyComponent = $state<PGPKey | null>(null);
+	// Reference to the KeyDetails component instance (for calling methods like nudgeForDecryption)
+	let pgpKeyComponent = $state<KeyDetails | null>(null);
 	// The input message to be encrypted or decrypted
 	let message = $state('');
 	// The result of the encryption or decryption operation
@@ -43,13 +44,25 @@
 	let signerIdentity = $state<string | null>(null);
 
 	let isPrivate = $derived(keyObject?.isPrivate() ?? false);
-	let isEncryptedMessage = $derived(message.trim().startsWith('-----BEGIN PGP MESSAGE-----'));
+	let isAGE = $derived(keyObject?.type === KeyType.AGE);
+	let isEncryptedMessage = $derived(
+		message.trim().startsWith('-----BEGIN PGP MESSAGE-----') || isAGEEncryptedMessage(message)
+	);
 	let isSignedMessage = $derived(message.trim().startsWith('-----BEGIN PGP SIGNED MESSAGE-----'));
 
 	let currentOperation = $derived.by(() => {
 		if (isPrivate) {
+			// Private Key: Decrypt or Sign
+			if (isAGE) {
+				// AGE is mainly for encryption/decryption, signatures not supported
+				return OperationType.Decrypt;
+			}
 			return isEncryptedMessage ? OperationType.Decrypt : OperationType.Sign;
 		} else {
+			// Public Key: Encrypt or Verify
+			if (isAGE) {
+				return OperationType.Encrypt;
+			}
 			return isSignedMessage ? OperationType.Verify : OperationType.Encrypt;
 		}
 	});
@@ -61,7 +74,10 @@
 
 		// If we are in ENCRYPT mode (Public Key) and we have a private key available
 		if (!isPrivate && keyWrapper?.masterKey) {
-			if (currentMessage.trim().startsWith('-----BEGIN PGP MESSAGE-----')) {
+			if (
+				currentMessage.trim().startsWith('-----BEGIN PGP MESSAGE-----') ||
+				(isAGE && isAGEEncryptedMessage(currentMessage))
+			) {
 				keyWrapper = keyWrapper.masterKey;
 				output = '';
 			}
@@ -151,7 +167,7 @@
 				{/if}
 			</legend>
 			{#if keyWrapper}
-				<PGPKey bind:this={pgpKeyComponent} bind:keyWrapper />
+				<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper />
 			{:else}
 				<RawKeyInput
 					bind:value={keyValue}
