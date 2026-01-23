@@ -163,10 +163,7 @@
 	}
 </script>
 
-<div
-	class="card group/key-actions bg-base-200 border selectable w-full max-w-full"
-	onfocusout={handleFocusOut}
->
+<div class="card group/key-actions emphasis-primary w-full max-w-full" onfocusout={handleFocusOut}>
 	{#if keyWrapper && key}
 		<div class="card-body p-3 sm:p-4">
 			<div>

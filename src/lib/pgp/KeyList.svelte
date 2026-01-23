@@ -2,7 +2,6 @@
 	import { slide } from 'svelte/transition';
 	import { type KeyWrapper } from './keyStore.svelte.js';
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
-	import KeyActions from './KeyActions.svelte';
 
 	interface Props {
 		keys: KeyWrapper[];
@@ -46,7 +45,7 @@
 		<div class="flex flex-col" transition:slide={{ duration: 200 }}>
 			<div
 				class="group/key-actions flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-base-200 transition-colors {isSelected
-					? 'bg-base-200 border-l-4 border-primary'
+					? 'emphasis-primary'
 					: ''}"
 				role="link"
 				tabindex="0"
@@ -71,8 +70,6 @@
 						<div class="text-xs text-base-content/70 truncate" title={email}>{email}</div>
 					{/if}
 				</div>
-
-				<KeyActions keyWrapper={wrapper} />
 			</div>
 		</div>
 	{/each}

@@ -1,15 +1,14 @@
 <script lang="ts">
 	import CopyableTextarea from '../lib/ui/CopyableTextarea.svelte';
 	import LockIcon from '../lib/ui/icons/LockIcon.svelte';
+	import InfoIcon from '../lib/ui/icons/InfoIcon.svelte';
 	import publicKey from '../assets/keys/pgphelp.pem?raw';
 </script>
 
 <main class="container mx-auto max-w-4xl p-4 h-full overflow-y-auto">
 	<div class="space-y-8">
 		<!-- Hero Section -->
-		<div
-			class="hero min-h-[40vh] bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-3xl shadow-lg"
-		>
+		<div class="hero min-h-[40vh] emphasis-primary">
 			<div class="hero-content text-center">
 				<div class="max-w-3xl">
 					<h1
@@ -38,9 +37,7 @@
 		</div>
 
 		<!-- Send a PGP Message -->
-		<div
-			class="card bg-gradient-to-r from-primary/5 to-secondary/5 shadow-xl border border-primary/20"
-		>
+		<div class="card emphasis-secondary">
 			<div class="card-body">
 				<h2 class="card-title text-3xl mb-4">Send a PGP Message</h2>
 				<p class="mb-4">
@@ -63,19 +60,7 @@
 				</p>
 
 				<div class="alert alert-info mt-6">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						class="stroke-current shrink-0 w-6 h-6"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						></path>
-					</svg>
+					<InfoIcon />
 					<div>
 						<h4 class="font-bold">Don't have someone to message?</h4>
 						<p>Try sending us a message using our key below - we'd love to hear from you!</p>
@@ -85,7 +70,7 @@
 		</div>
 
 		<!-- What is PGP - Simplified -->
-		<div class="card bg-base-100 shadow-xl">
+		<div class="card content-section">
 			<div class="card-body">
 				<h2 class="card-title text-3xl mb-4">What is PGP?</h2>
 
@@ -172,7 +157,7 @@
 		</div>
 
 		<!-- FAQ -->
-		<div class="card bg-base-100 shadow-xl">
+		<div class="card content-section">
 			<div class="card-body">
 				<h2 class="card-title text-3xl mb-6">FAQ</h2>
 
@@ -213,19 +198,7 @@
 								This website is designed so it <strong>cannot</strong> send your data anywhere.
 							</p>
 							<div class="alert alert-info">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									fill="none"
-									viewBox="0 0 24 24"
-									class="stroke-current shrink-0 w-6 h-6"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-									></path>
-								</svg>
+								<InfoIcon />
 								<div>
 									<h4 class="font-bold">Technical Details</h4>
 									<p class="text-sm">
@@ -331,9 +304,7 @@
 		</div>
 
 		<!-- Contact & Key -->
-		<div
-			class="card bg-gradient-to-r from-primary/5 to-secondary/5 shadow-xl border-2 border-primary"
-		>
+		<div class="card emphasis-accent">
 			<div class="card-body">
 				<h2 class="card-title text-3xl mb-4">Want to Try It Out?</h2>
 				<p class="text-lg mb-6">
@@ -378,7 +349,7 @@
 		</div>
 
 		<!-- About -->
-		<div class="card bg-base-100 shadow-xl">
+		<div class="card content-section">
 			<div class="card-body">
 				<h2 class="card-title text-2xl mb-4">About pgp.help</h2>
 				<p class="mb-4">This project is open source and built with:</p>

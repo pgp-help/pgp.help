@@ -35,8 +35,7 @@
 	}
 
 	const tooltipClasses = '';
-	const buttonClasses =
-		'btn-mini opacity-0 group-hover/key-actions:opacity-100 group-focus-within/key-actions:opacity-100 transition-opacity';
+	const buttonClasses = 'btn-mini';
 </script>
 
 <div
