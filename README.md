@@ -4,7 +4,8 @@ A simple, client-side PGP encryption web app built with Svelte and Vite. Encrypt
 
 ## ✨ Features
 
-- **Client-Side Encryption**: All PGP operations happen locally using OpenPGP.js.
+- **Client-Side Encryption**: All PGP and AGE encryption operations happen locally using OpenPGP.js and age-encryption.
+- **Multiple Encryption Standards**: Supports both PGP (OpenPGP) and AGE encryption formats.
 - **Content Security Policy**: Strict CSP means your browser will prevent any external communication
 - **Simple Interface**: Clean, responsive UI inspired by pgp.help with an easy-to-use form.
 - **Modern Stack**: Built with Svelte 5 (runes), Vite, and TypeScript support.
