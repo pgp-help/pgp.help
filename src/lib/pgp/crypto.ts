@@ -214,8 +214,12 @@ export async function getKeyDetails(keyString: string): Promise<CryptoKey> {
  */
 export async function encryptMessage(key: CryptoKey, text: string): Promise<string> {
 	if (key.type === KeyType.AGE) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		return ageEncrypt(key as any, text);
+		if (key instanceof AGEKeyFacade) {
+			// Use public key for encryption
+			const publicKeyString = key.isPrivate() ? key.getFingerprint() : key.getArmor();
+			return ageEncrypt(publicKeyString, text);
+		}
+		throw new Error('Unknown AGE key type for encryption');
 	} else {
 		// PGP uses openpgp.Key type, but we're wrapping it
 		if (key instanceof PGPKeyFacade) {
@@ -232,8 +236,15 @@ export async function encryptMessage(key: CryptoKey, text: string): Promise<stri
  */
 export async function decryptMessage(key: CryptoKey, encryptedMessage: string): Promise<string> {
 	if (key.type === KeyType.AGE) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		return ageDecrypt(key as any, encryptedMessage);
+		if (key instanceof AGEKeyFacade) {
+			if (!key.isPrivate()) {
+				throw new Error('Cannot decrypt with a public key');
+			}
+			// Use private key for decryption
+			const privateKeyString = key.getArmor();
+			return ageDecrypt(privateKeyString, encryptedMessage);
+		}
+		throw new Error('Unknown AGE key type for decryption');
 	} else {
 		if (key instanceof PGPKeyFacade) {
 			const openpgpKey = key.getOpenPGPKey();

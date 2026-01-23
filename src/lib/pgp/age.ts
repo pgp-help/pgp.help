@@ -53,19 +53,13 @@ export async function generateKeyPair(): Promise<{ privateKey: string; publicKey
 }
 
 /**
- * Encrypt a message using an AGE key (passed via facade from crypto layer)
- * Note: The key parameter is typed as any to avoid circular imports
+ * Encrypt a message using an AGE public key string
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function encryptMessage(key: any, text: string): Promise<string> {
+export async function encryptMessage(publicKeyString: string, text: string): Promise<string> {
 	const encrypter = new age.Encrypter();
 
-	// Use the public key (recipient string)
-	// If the key is private, .toPublic() gets the facade with only public part, .getArmor() gets the string
-	const publicKey = key.toPublic().getArmor();
-
 	try {
-		encrypter.addRecipient(publicKey);
+		encrypter.addRecipient(publicKeyString);
 		const ciphertext = await encrypter.encrypt(text);
 		return age.armor.encode(ciphertext);
 	} catch (e) {
@@ -75,18 +69,14 @@ export async function encryptMessage(key: any, text: string): Promise<string> {
 }
 
 /**
- * Decrypt a message using an AGE key (passed via facade from crypto layer)
- * Note: The key parameter is typed as any to avoid circular imports
+ * Decrypt a message using an AGE private key string
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function decryptMessage(key: any, armoredMessage: string): Promise<string> {
-	if (!key.isPrivate()) {
-		throw new Error('Cannot decrypt with a public key');
-	}
-
+export async function decryptMessage(
+	privateKeyString: string,
+	armoredMessage: string
+): Promise<string> {
 	const decrypter = new age.Decrypter();
-	// key.getArmor() returns the secret key string for private keys
-	decrypter.addIdentity(key.getArmor());
+	decrypter.addIdentity(privateKeyString);
 
 	let ciphertext: Uint8Array;
 	try {
