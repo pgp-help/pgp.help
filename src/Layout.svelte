@@ -13,7 +13,7 @@
 </script>
 
 <div class="h-screen flex flex-col overflow-hidden">
-	<div class="navbar bg-base-200 flex-none z-10">
+	<div class="navbar nav-bar flex-none z-10">
 		<div class="navbar-start">
 			<a class="btn btn-ghost text-xl" href="/" onclick={handleHome}>pgp.help</a>
 		</div>

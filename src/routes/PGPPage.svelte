@@ -101,9 +101,9 @@
 	aria-label="Sidebar"
 	class="{isMobileMenuOpen
 		? 'fixed inset-y-0 left-0 z-40 flex'
-		: 'hidden'} md:flex md:static h-full flex-col bg-base-100 border-r border-base-300 w-64 transition-transform"
+		: 'hidden'} md:flex md:static h-full flex-col bg-base-100 border-r border-primary/10 w-64 transition-transform"
 >
-	<div class="p-4 border-b border-base-300 space-y-2">
+	<div class="p-4 border-b border-primary/10 space-y-2 emphasis-secondary">
 		<button
 			class="btn btn-primary w-full"
 			onclick={() => {
@@ -129,7 +129,7 @@
 
 	<KeyList keys={keyStore.keys} bind:selectedWrapper={selectedKeyWrapper} />
 
-	<div class="p-4 border-t border-base-300">
+	<div class="p-4 border-t border-primary/10 emphasis-secondary">
 		<div class="form-control">
 			<label class="label cursor-pointer justify-start gap-2">
 				<input

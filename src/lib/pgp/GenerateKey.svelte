@@ -45,9 +45,14 @@
 </script>
 
 <div class="container mx-auto max-w-2xl">
-	<h1 class="text-2xl font-bold mb-6">Generate New Key</h1>
+	<div class="emphasis-primary p-8 mb-6">
+		<h1 class="text-3xl font-bold text-center">Generate New Key</h1>
+		<p class="text-center text-lg opacity-90 mt-2">
+			Create a secure cryptographic key for encryption
+		</p>
+	</div>
 
-	<form class="space-y-4" onsubmit={handleGenerate}>
+	<form class="content-section p-6 space-y-4" onsubmit={handleGenerate}>
 		<div class="form-control w-full">
 			<label class="label" for="type">
 				<span class="label-text">Key Type</span>
