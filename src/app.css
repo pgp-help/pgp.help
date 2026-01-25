@@ -61,7 +61,7 @@
 @layer components {
 	/* Primary emphasis style - for hero sections and main headlines */
 	.emphasis-primary {
-		@apply bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-3xl shadow-lg;
+		@apply bg-primary/10 card-border;
 	}
 
 	/* Secondary emphasis style - for important content cards */
@@ -82,6 +82,26 @@
 	/* Navigation bar - clean header style */
 	.nav-bar {
 		@apply bg-gradient-to-r from-primary/5 to-secondary/5 shadow-lg border-b border-primary/10;
+	}
+}
+
+@layer components {
+	.card-selectable {
+		@apply card card-border border-base-300 bg-base-100 transition;
+		cursor: pointer;
+	}
+
+	.card-selectable:hover,
+	.card-selectable:focus-within {
+		@apply bg-primary/10 shadow-sm;
+	}
+
+	.card-selectable:focus-within {
+		box-shadow: 0 0 0 2px hsl(var(--p) / 0.35);
+	}
+
+	.card-selectable.card-selected {
+		@apply border-primary bg-primary/10;
 	}
 }
 

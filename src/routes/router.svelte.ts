@@ -1,5 +1,5 @@
 import { SvelteURLSearchParams } from 'svelte/reactivity';
-import type { Key } from 'openpgp';
+import type { CryptoKey } from '../lib/pgp/crypto';
 const BASE_PATH = import.meta.env.BASE_URL || '/';
 
 /**
@@ -143,7 +143,7 @@ class Router {
 	/**
 	 * Navigate to home and select a specific key by fingerprint
 	 */
-	openKey(key: Key) {
+	openKey(key: CryptoKey) {
 		this.#navigate(`/?fp=${key.getFingerprint()}`);
 	}
 }
