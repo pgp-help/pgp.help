@@ -1,7 +1,7 @@
 <script lang="ts">
 	import AppIcon from './lib/ui/icons/AppIcon.svelte';
 
-	let { hasSidebar = false } = $props();
+	let { hasSidebar = false, sidebar, children } = $props();
 	let isMobileMenuOpen = $state(false);
 
 	const toggleMobileMenu = () => (isMobileMenuOpen = !isMobileMenuOpen);
@@ -37,12 +37,12 @@
 
 	<!-- Bottom-left: Sidebar (desktop only, always present but may be empty) -->
 	<aside class="hidden md:block bg-base-200 border-r border-primary/10">
-		<slot name="sidebar" />
+		{@render sidebar()}
 	</aside>
 
 	<!-- Bottom-right: Main content -->
 	<main class="md:col-start-2 overflow-hidden">
-		<slot />
+		{@render children()}
 	</main>
 </div>
 
@@ -71,7 +71,7 @@
 
 		<!-- Sidebar overlay -->
 		<aside class="md:hidden fixed inset-y-0 left-0 w-80 max-w-[85vw] z-50 bg-base-200 border-r">
-			<slot name="sidebar" />
+			{@render sidebar()}
 		</aside>
 	{/if}
 {/if}

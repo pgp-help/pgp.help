@@ -11,13 +11,17 @@
 
 {#if router.activeRoute.page === Pages.GUIDE}
 	<Layout>
+		{#snippet sidebar()}
+			<div></div>
+		{/snippet}
 		<Guide />
 	</Layout>
 {:else}
 	<Layout hasSidebar>
-		<svelte:fragment slot="sidebar">
+		{#snippet sidebar()}
 			<PGPSidebar bind:selectedKeyWrapper />
-		</svelte:fragment>
+		{/snippet}
+
 		<PGPPage bind:selectedKeyWrapper />
 	</Layout>
 {/if}
