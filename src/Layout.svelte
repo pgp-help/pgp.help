@@ -1,8 +1,8 @@
 <script lang="ts">
 	import AppIcon from './lib/ui/icons/AppIcon.svelte';
 
-	export let hasSidebar = false;
-	let isMobileMenuOpen = false;
+	let { hasSidebar = false } = $props();
+	let isMobileMenuOpen = $state(false);
 
 	const toggleMobileMenu = () => (isMobileMenuOpen = !isMobileMenuOpen);
 </script>
@@ -14,67 +14,42 @@
   - md:grid-cols-[16rem_1fr]: sidebar 16rem wide + main column
   - md:grid-rows-[5rem_1fr]: top header row (5rem) + content row
 -->
-<div
-	class={`min-h-screen ${hasSidebar ? 'md:grid md:grid-cols-[20rem_1fr] md:grid-rows-[5rem_1fr]' : ''}`}
->
-	{#if hasSidebar}
-		<!--
-      Sidebar top row (desktop only):
-      - hidden md:flex: only visible on desktop
-      - h-20: 5rem height (matches main header)
-      - border-b: draws the line that aligns with main header
-      - bg-base-200: sidebar background
-    -->
-		<div
-			class="hidden md:flex items-center gap-x-3 h-20 px-6 border-b border-primary/10 bg-base-200"
-		>
-			<AppIcon />
-			<div class="text-lg font-bold">
-				pgp.<span class="text-primary">help</span>
-			</div>
-		</div>
-	{/if}
+<div class="min-h-screen grid grid-rows-[5rem_1fr] md:grid-cols-[20rem_1fr]">
+	<!-- Top-left: Brand (desktop) -->
+	<div class="hidden md:flex items-center gap-x-3 px-6 border-b border-primary/10 bg-base-200">
+		<AppIcon />
+		<div class="text-lg font-bold">pgp.<span class="text-primary">help</span></div>
+	</div>
 
-	<!--
-		Main header row:
-		- h-20: same height as sidebar top row
-		- border-b: aligns bottom border
-		- md:col-start-2: if sidebar exists, header goes in right column
-	-->
-	<header
-		class={`h-20 flex items-center px-6 sm:px-8 border-b border-primary/10 z-20 
-	${hasSidebar ? 'md:col-start-2' : ''}`}
-	>
-		{#if hasSidebar}
-			<div class="flex items-center gap-x-3 md:hidden">
-				<AppIcon />
-				<div class="text-lg font-bold">
-					pgp.<span class="text-primary">help</span>
-				</div>
-			</div>
-		{/if}
-
+	<!-- Top-right: Title -->
+	<header class="h-20 flex items-center px-6 sm:px-8 border-b border-primary/10 md:col-start-2">
 		<div class="ml-4">
 			<h1 class="text-2xl font-bold">Encryption tool</h1>
 			<p class="text-sm text-secondary">Secure messaging with OpenPGP</p>
 		</div>
+
+		<!-- Mobile brand -->
+		<div class="flex items-center gap-x-3 md:hidden">
+			<AppIcon />
+			<div class="text-lg font-bold">pgp.<span class="text-primary">help</span></div>
+		</div>
 	</header>
 
-	{#if hasSidebar}
-		<aside class="md:row-start-2 md:col-start-1 bg-base-200 border-r border-primary/10">
-			<slot name="sidebar" />
-		</aside>
-	{/if}
+	<!-- Bottom-left: Sidebar (desktop only, always present but may be empty) -->
+	<aside class="hidden md:block bg-base-200 border-r border-primary/10">
+		<slot name="sidebar" />
+	</aside>
 
-	<main class={`${hasSidebar ? 'md:row-start-2 md:col-start-2' : ''} overflow-hidden`}>
+	<!-- Bottom-right: Main content -->
+	<main class="md:col-start-2 overflow-hidden">
 		<slot />
 	</main>
 </div>
 
-<!-- Mobile FAB toggle -->
+<!-- Mobile FAB + overlay only if sidebar exists -->
 {#if hasSidebar}
 	<div class="md:hidden fixed bottom-6 right-6 z-50">
-		<button class="btn btn-lg btn-circle btn-primary" on:click={toggleMobileMenu}>
+		<button class="btn btn-lg btn-circle btn-primary" onclick={toggleMobileMenu}>
 			{#if isMobileMenuOpen}
 				<span class="text-xl">✕</span>
 			{:else}
@@ -89,4 +64,14 @@
 			{/if}
 		</button>
 	</div>
+
+	{#if isMobileMenuOpen}
+		<!-- Backdrop -->
+		<div class="md:hidden fixed inset-0 z-40 bg-black/30" onclick={toggleMobileMenu}></div>
+
+		<!-- Sidebar overlay -->
+		<aside class="md:hidden fixed inset-y-0 left-0 w-80 max-w-[85vw] z-50 bg-base-200 border-r">
+			<slot name="sidebar" />
+		</aside>
+	{/if}
 {/if}

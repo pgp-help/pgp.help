@@ -141,7 +141,7 @@ describe('Routing', () => {
 		render(App);
 
 		// Verify we are on Guide page
-		expect(screen.getByText('What is PGP?')).toBeInTheDocument();
+		expect(screen.getByText('Get Started with PGP')).toBeInTheDocument();
 
 		// Click Home link
 		// There are multiple links with name 'pgp.help' (one in navbar, one in footer/content)
@@ -152,7 +152,7 @@ describe('Routing', () => {
 
 		// Should now be on PGP Workflow page
 		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();
-		expect(screen.queryByText('What is PGP?')).not.toBeInTheDocument();
+		expect(screen.queryByText('Get Started with PGP')).not.toBeInTheDocument();
 		expect(window.location.pathname).toBe('/');
 	});
 });
