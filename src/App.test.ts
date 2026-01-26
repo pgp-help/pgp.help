@@ -32,7 +32,8 @@ describe('App', () => {
 	it('renders core interface', () => {
 		render(App);
 		// Check Header - pgp.help is now a button, not a link
-		expect(screen.getByRole('button', { name: /pgp\.help/i })).toBeInTheDocument();
+		// There are two buttons (desktop and mobile), so use getAllByRole
+		expect(screen.getAllByRole('button', { name: /pgp\.help/i }).length).toBeGreaterThan(0);
 		expect(screen.getByLabelText(/Message/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/Encrypted Output/i)).toBeInTheDocument();
 	});

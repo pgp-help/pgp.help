@@ -19,8 +19,9 @@
 <div class="min-h-screen grid grid-rows-[5rem_1fr] md:grid-cols-[20rem_1fr]">
 	<!-- Top-left: Brand (desktop) -->
 	<button
-		class="hidden md:flex items-center gap-x-3 px-6 border-b border-primary/10 bg-base-200 hover:bg-base-300 transition-colors cursor-pointer"
+		class="hidden md:flex items-center gap-x-3 px-6 border-b border-primary/10 bg-base-200 cursor-pointer"
 		onclick={() => router.openHome()}
+		aria-label="pgp.help"
 	>
 		<AppIcon />
 		<div class="text-lg font-bold">pgp.<span class="text-primary">help</span></div>
@@ -35,8 +36,9 @@
 
 		<!-- Mobile brand -->
 		<button
-			class="flex items-center gap-x-3 md:hidden hover:bg-base-300 transition-colors cursor-pointer"
+			class="flex items-center gap-x-3 md:hidden cursor-pointer"
 			onclick={() => router.openHome()}
+			aria-label="pgp.help"
 		>
 			<AppIcon />
 			<div class="text-lg font-bold">pgp.<span class="text-primary">help</span></div>
