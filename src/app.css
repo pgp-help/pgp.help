@@ -59,6 +59,8 @@
  */
 
 @layer components {
+	/* These are mostly used by the guide now. Could retire / localise them */
+
 	/* Primary emphasis style - for hero sections and main headlines */
 	.emphasis-primary {
 		@apply bg-primary/10 card-border;
@@ -86,6 +88,8 @@
 }
 
 @layer components {
+	/* Used in the key list */
+
 	.card-selectable {
 		@apply card card-border border-base-300 bg-base-100 transition;
 		cursor: pointer;
