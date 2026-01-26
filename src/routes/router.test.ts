@@ -123,9 +123,9 @@ describe('Routing', () => {
 		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();
 		expect(screen.queryByText('What is PGP?')).not.toBeInTheDocument();
 
-		// Click Guide link
-		const guideLink = screen.getByRole('link', { name: 'Guide' });
-		await fireEvent.click(guideLink);
+		// Click Guide button (it's a button now, not a link)
+		const guideButton = screen.getByRole('button', { name: 'Guide' });
+		await fireEvent.click(guideButton);
 
 		// Should now be on Guide page
 		expect(screen.getByText('What is PGP?')).toBeInTheDocument();
@@ -143,12 +143,12 @@ describe('Routing', () => {
 		// Verify we are on Guide page
 		expect(screen.getByText('Get Started with PGP')).toBeInTheDocument();
 
-		// Click Home link
-		// There are multiple links with name 'pgp.help' (one in navbar, one in footer/content)
-		// We want the one in the navbar.
-		const homeLinks = screen.getAllByRole('link', { name: 'pgp.help' });
-		const navbarHomeLink = homeLinks[0]; // Assuming the first one is in the navbar
-		await fireEvent.click(navbarHomeLink);
+		// Click Home button (it's a button now, not a link)
+		// There are multiple buttons with name 'pgp.help' (one in navbar, one in mobile)
+		// We want the one in the navbar (desktop).
+		const homeButtons = screen.getAllByRole('button', { name: /pgp\.help/i });
+		const navbarHomeButton = homeButtons[0]; // Assuming the first one is in the navbar
+		await fireEvent.click(navbarHomeButton);
 
 		// Should now be on PGP Workflow page
 		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();

@@ -4,42 +4,19 @@
 	import KeyIcon from '../lib/ui/icons/KeyIcon.svelte';
 	import { keyStore, PersistenceType, type KeyWrapper } from '../lib/pgp/keyStore.svelte';
 	import { router, Pages } from './router.svelte';
+	import WarningIcon from '../lib/ui/icons/WarningIcon.svelte';
 
 	let { selectedKeyWrapper = $bindable(null) }: { selectedKeyWrapper: KeyWrapper | null } =
 		$props();
 
-	let isMobileMenuOpen = false;
-
-	const toggleMobileMenu = () => (isMobileMenuOpen = !isMobileMenuOpen);
+	let clearDataDialog: HTMLDialogElement;
+	function clearData() {
+		keyStore.clearPersistedKeys();
+		clearDataDialog.close();
+	}
 </script>
 
-<!-- Mobile FAB -->
-<div class="md:hidden fixed bottom-6 right-6 z-50">
-	<button class="btn btn-lg btn-circle btn-primary" onclick={toggleMobileMenu}>
-		{#if isMobileMenuOpen}
-			<span class="text-xl">✕</span>
-		{:else}
-			<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M4 6h16M4 12h16M4 18h16"
-				/>
-			</svg>
-		{/if}
-	</button>
-</div>
-
-{#if isMobileMenuOpen}
-	<div class="md:hidden fixed inset-0 bg-black/50 z-30" onclick={toggleMobileMenu} />
-{/if}
-
-<aside
-	aria-label="Sidebar"
-	class="{isMobileMenuOpen ? 'fixed inset-y-0 left-0 z-40 flex' : 'hidden'}
-    md:flex md:static h-full flex-col bg-base-200 w-full"
->
+<aside aria-label="Sidebar" class="h-full flex flex-col bg-base-200 w-full">
 	<div>
 		<KeyList keys={keyStore.keys} bind:selectedWrapper={selectedKeyWrapper} />
 	</div>
@@ -60,7 +37,6 @@
 			class="btn btn-outline w-full"
 			onclick={() => {
 				selectedKeyWrapper = null;
-				isMobileMenuOpen = false;
 				router.openPage(Pages.GENERATE_KEY);
 			}}
 		>
@@ -75,7 +51,12 @@
 				<p>
 					<strong>How it works:</strong> Type message to encrypt, or paste encrypted text to decrypt.
 				</p>
-				<a href="/Guide">Learn More</a>
+				<button
+					class="btn btn-link p-0 h-auto min-h-0 text-primary"
+					onclick={() => router.openPage(Pages.GUIDE)}
+				>
+					Learn More
+				</button>
 			</div>
 		</div>
 	</div>
@@ -98,9 +79,42 @@
 				</div>
 
 				{#if !keyStore.shouldPersistByDefault && keyStore.keys.some((k) => k.persisted === PersistenceType.LOCAL_STORAGE)}
-					<button class="btn btn-xs btn-error btn-outline w-full mt-2"> Clear Saved Data </button>
+					<button
+						class="btn btn-xs btn-error btn-outline w-full mt-2"
+						onclick={() => clearDataDialog.showModal()}
+					>
+						Clear Saved Data
+					</button>
 				{/if}
 			</div>
 		</div>
 	</div>
 </aside>
+
+<dialog bind:this={clearDataDialog} class="modal" onclick={(e) => e.stopPropagation()}>
+	<div class="modal-box text-base-content cursor-default">
+		<h3 class="font-bold text-lg">Clear Saved Data?</h3>
+		<p class="py-4">
+			You have turned off "Persist new keys", but you still have keys saved in your browser storage.
+			Do you want to clear them now?
+		</p>
+
+		<div role="alert" class="alert alert-warning mb-4">
+			<WarningIcon />
+			<span>
+				Warning: This will remove all keys saved in this browser. Make sure you have backups of any
+				important keys!
+			</span>
+		</div>
+
+		<div class="modal-action">
+			<form method="dialog">
+				<button class="btn">Keep Data</button>
+			</form>
+			<button class="btn btn-error" onclick={clearData}>Clear Data</button>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
