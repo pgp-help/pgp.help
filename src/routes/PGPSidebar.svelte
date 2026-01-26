@@ -6,38 +6,33 @@
 	import { router, Pages } from './router.svelte';
 	import WarningIcon from '../lib/ui/icons/WarningIcon.svelte';
 
-	let {
-		selectedKeyWrapper = $bindable(null),
-		onCloseMobileMenu
-	}: { selectedKeyWrapper: KeyWrapper | null; onCloseMobileMenu?: () => void } = $props();
+	let { selectedKeyWrapper = $bindable(null) }: { selectedKeyWrapper: KeyWrapper | null } =
+		$props();
 
 	let clearDataDialog: HTMLDialogElement;
 	function clearData() {
 		keyStore.clearPersistedKeys();
 		clearDataDialog.close();
+		router.openHome();
 	}
 
 	function handleKeySelect(wrapper: KeyWrapper) {
 		selectedKeyWrapper = wrapper;
 		router.openKey(wrapper.key);
-		onCloseMobileMenu?.();
 	}
 
 	function handleImportKey() {
 		selectedKeyWrapper = null;
 		router.openPage(Pages.HOME);
-		onCloseMobileMenu?.();
 	}
 
 	function handleGenerateKey() {
 		selectedKeyWrapper = null;
 		router.openPage(Pages.GENERATE_KEY);
-		onCloseMobileMenu?.();
 	}
 
 	function handleLearnMore() {
 		router.openPage(Pages.GUIDE);
-		onCloseMobileMenu?.();
 	}
 </script>
 

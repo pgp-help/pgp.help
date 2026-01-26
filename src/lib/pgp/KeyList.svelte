@@ -6,10 +6,9 @@
 	interface Props {
 		keys: KeyWrapper[];
 		selectedWrapper?: KeyWrapper | null;
-		onKeySelect?: (wrapper: KeyWrapper) => void;
 	}
 
-	let { keys, selectedWrapper = $bindable(), onKeySelect }: Props = $props();
+	let { keys, selectedWrapper = $bindable() }: Props = $props();
 
 	function getKeyName(wrapper: KeyWrapper) {
 		const user = wrapper.key.getUserIDs()[0] || '<Unknown>';
@@ -30,11 +29,6 @@
 		}
 		return wrapper.key.getId();
 	}
-
-	function handleKeyClick(wrapper: KeyWrapper) {
-		selectedWrapper = wrapper;
-		onKeySelect?.(wrapper);
-	}
 </script>
 
 <div class="p-4 space-y-2">
@@ -53,9 +47,9 @@
 				class="card card-selectable {isSelected ? 'card-selected' : ''}"
 				role="button"
 				tabindex="0"
-				onclick={() => handleKeyClick(wrapper)}
+				onclick={() => (selectedWrapper = wrapper)}
 				onkeydown={(e) => {
-					if (e.key === 'Enter' || e.key === ' ') handleKeyClick(wrapper);
+					if (e.key === 'Enter' || e.key === ' ') selectedWrapper = wrapper;
 				}}
 			>
 				<div class="card-body p-3 flex flex-row items-center">
