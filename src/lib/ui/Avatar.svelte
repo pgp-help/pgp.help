@@ -29,7 +29,7 @@
 </script>
 
 <div class="avatar {className}">
-	<div class="rounded-full overflow-hidden {sizeClass}">
+	<div class="rounded-full overflow-hidden border border-base-300 {sizeClass}">
 		{#if svgDataUrl}
 			<img src={svgDataUrl} {alt} class={sizeClass} />
 		{:else}
