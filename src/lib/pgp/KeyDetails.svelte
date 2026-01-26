@@ -5,6 +5,7 @@
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
 	import KeyActions from './KeyActions.svelte';
+	import Avatar from '../ui/Avatar.svelte';
 	import { type CryptoKey, KeyType, wrapPGPKey, isPGPKey } from './crypto';
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
@@ -171,13 +172,17 @@
 		<div class="card-body p-3 sm:p-4">
 			<div>
 				<!-- to force card-body to treat this as a single item -->
-				<div class="flex flex-wrap items-center gap-2 mb-1">
-					<h4 class="font-bold text-lg break-all">{key.getUserIDs()[0] || 'Unknown User'}</h4>
-					<div class="flex gap-1 shrink-0">
-						<PGPKeyBadges {keyWrapper} />
+				<div class="flex flex-wrap items-center gap-3 mb-1">
+					<Avatar fingerprint={key.getFingerprint()} size={64} />
+					<div class="flex-1 min-w-0">
+						<h4 class="font-bold text-lg break-all">{key.getUserIDs()[0] || 'Unknown User'}</h4>
+						<div class="flex items-center gap-2 mt-1">
+							<div class="flex gap-1 shrink-0">
+								<PGPKeyBadges {keyWrapper} />
+							</div>
+							<KeyActions {keyWrapper} />
+						</div>
 					</div>
-					<div class="flex-1"></div>
-					<KeyActions {keyWrapper} />
 				</div>
 
 				{#each properties as prop (prop.label)}
