@@ -6,40 +6,57 @@
 	import { router, Pages } from './router.svelte';
 	import WarningIcon from '../lib/ui/icons/WarningIcon.svelte';
 
-	let { selectedKeyWrapper = $bindable(null) }: { selectedKeyWrapper: KeyWrapper | null } =
-		$props();
+	let {
+		selectedKeyWrapper = $bindable(null),
+		onCloseMobileMenu
+	}: { selectedKeyWrapper: KeyWrapper | null; onCloseMobileMenu?: () => void } = $props();
 
 	let clearDataDialog: HTMLDialogElement;
 	function clearData() {
 		keyStore.clearPersistedKeys();
 		clearDataDialog.close();
 	}
+
+	function handleKeySelect(wrapper: KeyWrapper) {
+		selectedKeyWrapper = wrapper;
+		router.openKey(wrapper.key);
+		onCloseMobileMenu?.();
+	}
+
+	function handleImportKey() {
+		selectedKeyWrapper = null;
+		router.openPage(Pages.HOME);
+		onCloseMobileMenu?.();
+	}
+
+	function handleGenerateKey() {
+		selectedKeyWrapper = null;
+		router.openPage(Pages.GENERATE_KEY);
+		onCloseMobileMenu?.();
+	}
+
+	function handleLearnMore() {
+		router.openPage(Pages.GUIDE);
+		onCloseMobileMenu?.();
+	}
 </script>
 
 <aside aria-label="Sidebar" class="h-full flex flex-col bg-base-200 w-full">
 	<div>
-		<KeyList keys={keyStore.keys} bind:selectedWrapper={selectedKeyWrapper} />
+		<KeyList
+			keys={keyStore.keys}
+			bind:selectedWrapper={selectedKeyWrapper}
+			onKeySelect={handleKeySelect}
+		/>
 	</div>
 
 	<div class="p-4 border-b border-primary/10 space-y-4">
-		<button
-			class="btn btn-primary w-full"
-			onclick={() => {
-				selectedKeyWrapper = null;
-				router.openPage(Pages.HOME);
-			}}
-		>
+		<button class="btn btn-primary w-full" onclick={handleImportKey}>
 			<PlusIcon className="h-5 w-5 mr-2" />
 			Import Key
 		</button>
 
-		<button
-			class="btn btn-outline w-full"
-			onclick={() => {
-				selectedKeyWrapper = null;
-				router.openPage(Pages.GENERATE_KEY);
-			}}
-		>
+		<button class="btn btn-outline w-full" onclick={handleGenerateKey}>
 			<KeyIcon className="h-5 w-5 mr-2" />
 			Generate Private Key
 		</button>
@@ -51,10 +68,7 @@
 				<p>
 					<strong>How it works:</strong> Type message to encrypt, or paste encrypted text to decrypt.
 				</p>
-				<button
-					class="btn btn-link p-0 h-auto min-h-0 text-primary"
-					onclick={() => router.openPage(Pages.GUIDE)}
-				>
+				<button class="btn btn-link p-0 h-auto min-h-0 text-primary" onclick={handleLearnMore}>
 					Learn More
 				</button>
 			</div>

@@ -128,4 +128,34 @@ describe('Layout', () => {
 			expect(window.location.pathname).toBe('/Guide');
 		});
 	});
+
+	describe('Mobile Menu Closing', () => {
+		it('passes onCloseMobileMenu callback to sidebar', async () => {
+			let closeCallbackCalled = false;
+			const { container } = render(Layout, {
+				hasSidebar: true,
+				sidebar: ({ onCloseMobileMenu }: { onCloseMobileMenu?: () => void }) => {
+					onCloseMobileMenu?.();
+					closeCallbackCalled = true;
+					return '<div>Test Sidebar</div>';
+				},
+				children: () => '<div>Test Content</div>'
+			});
+
+			// Click mobile FAB to open menu
+			const fab = container.querySelector('.fixed.bottom-6.right-6 button');
+			expect(fab).toBeInTheDocument();
+			await fireEvent.click(fab);
+
+			// Sidebar should be rendered in mobile overlay
+			const mobileSidebar = container.querySelector('.md\\:hidden.fixed.inset-y-0');
+			expect(mobileSidebar).toBeInTheDocument();
+
+			// Click on sidebar should trigger close callback
+			await fireEvent.click(mobileSidebar);
+
+			// Close callback should have been called
+			expect(closeCallbackCalled).toBe(true);
+		});
+	});
 });

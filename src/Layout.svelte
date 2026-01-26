@@ -52,7 +52,7 @@
 
 	<!-- Bottom-left: Sidebar (desktop only, always present but may be empty) -->
 	<aside class="hidden md:block bg-base-200 border-r border-primary/10">
-		{@render sidebar()}
+		{@render sidebar({ onCloseMobileMenu: toggleMobileMenu })}
 	</aside>
 
 	<!-- Bottom-right: Main content -->
@@ -95,7 +95,7 @@
 
 		<!-- Sidebar overlay -->
 		<aside class="md:hidden fixed inset-y-0 left-0 w-80 max-w-[85vw] z-50 bg-base-200 border-r">
-			{@render sidebar()}
+			{@render sidebar({ onCloseMobileMenu: toggleMobileMenu })}
 		</aside>
 	{/if}
 {/if}
