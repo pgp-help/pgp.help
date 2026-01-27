@@ -22,6 +22,8 @@
 			if (wrapper) {
 				selectedKeyWrapper = wrapper;
 			} else {
+				// Fingerprint not found in store, navigate home
+				console.warn('Fingerprint not found in store, navigating home:', selectedFingerprint);
 				router.openHome();
 			}
 		} else if (!selectedFingerprint) {
