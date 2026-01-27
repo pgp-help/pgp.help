@@ -10,15 +10,14 @@
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
 	// parent component to see the updated value.
-	let { keyWrapper = $bindable<KeyWrapper | null>() } = $props<{
-		keyWrapper: KeyWrapper | null;
+	let { keyWrapper = $bindable() } = $props<{
+		keyWrapper: KeyWrapper;
 	}>();
 
-	let key = $derived<CryptoKey | null>(keyWrapper?.key);
-	let isPGP = $derived(key?.type === KeyType.PGP);
+	let key = $derived<CryptoKey>(keyWrapper.key);
+	let isPGP = $derived(key.type === KeyType.PGP);
 
 	let publicKey = $derived.by(() => {
-		if (!key) return null;
 		if (key.isPrivate()) {
 			return key.toPublic();
 		} else {
@@ -40,13 +39,11 @@
 	}
 
 	function switchToPublic() {
-		if (keyWrapper) {
-			keyWrapper = asPublicKeyWrapper(keyWrapper);
-		}
+		keyWrapper = asPublicKeyWrapper(keyWrapper);
 	}
 
 	function switchToPrivate() {
-		if (keyWrapper?.masterKey) {
+		if (keyWrapper.masterKey) {
 			keyWrapper = keyWrapper.masterKey;
 		}
 	}
@@ -54,7 +51,7 @@
 	let expirationTime = $state<Date | null>(null);
 
 	$effect(() => {
-		if (key && isPGPKey(key)) {
+		if (isPGPKey(key)) {
 			// Access detailed properties through the underlying OpenPGP key
 			const openPGPKey = key.getOpenPGPKey();
 			openPGPKey.getExpirationTime().then((t) => {
@@ -67,7 +64,7 @@
 	});
 
 	async function handleDecrypt(pass: string) {
-		if (!key || !key.isPrivate()) return;
+		if (!key.isPrivate()) return;
 
 		decryptError = '';
 
@@ -94,8 +91,6 @@
 
 	let properties = $derived.by(
 		(): Array<{ label: string; value: string; tooltip: string; hidden?: boolean }> => {
-			if (!key) return [];
-
 			if (isPGP && isPGPKey(key)) {
 				// Access creation time through underlying OpenPGP key
 				const openPGPKey = key.getOpenPGPKey();
@@ -165,115 +160,118 @@
 </script>
 
 <div
-	class="card card-border border-base-300 group/key-actions w-full max-w-full"
+	class="card card-border border-base-300 group/key-actions w-full max-w-full relative"
 	onfocusout={handleFocusOut}
 >
-	{#if keyWrapper && key}
-		<div class="card-body p-3 sm:p-4">
-			<div>
-				<!-- to force card-body to treat this as a single item -->
-				<div class="flex flex-wrap items-center gap-3 mb-1">
-					<Avatar cryptoKey={key} size={64} />
-					<div class="flex-1 min-w-0">
-						<h4 class="font-bold text-lg break-all">{key.getUserIDs()[0] || 'Unknown User'}</h4>
-						<div class="flex items-center gap-2 mt-1">
-							<div class="flex gap-1 shrink-0">
-								<PGPKeyBadges {keyWrapper} />
-							</div>
-							<KeyActions {keyWrapper} />
+	<div class="card-body p-3 sm:p-4">
+		<!-- KeyActions positioned in top-right corner -->
+		<div class="absolute top-3 right-3 z-10">
+			<KeyActions {keyWrapper} />
+		</div>
+
+		<div>
+			<!-- to force card-body to treat this as a single item -->
+			<div class="flex flex-wrap items-center gap-3 mb-1">
+				<Avatar cryptoKey={key} size={64} />
+				<div class="flex-1 min-w-0">
+					<h4 class="font-bold text-lg break-all">{key.getUserIDs()[0] || 'Unknown User'}</h4>
+					<div class="flex items-center gap-2 mt-1">
+						<div class="flex gap-1 shrink-0">
+							<PGPKeyBadges {keyWrapper} />
 						</div>
 					</div>
 				</div>
+			</div>
 
-				{#each properties as prop (prop.label)}
-					{#if !prop.hidden || showDetails}
-						<div class={KEY_PROPERTY_CLASS}>
-							<div class="tooltip tooltip-right" data-tip={prop.tooltip}>
-								<span class="cursor-help">{prop.label}</span>:
-							</div>
-							<span class="break-all">{prop.value}</span>
+			{#each properties as prop (prop.label)}
+				{#if !prop.hidden || showDetails}
+					<div class={KEY_PROPERTY_CLASS}>
+						<div class="tooltip tooltip-right" data-tip={prop.tooltip}>
+							<span class="cursor-help">{prop.label}</span>:
 						</div>
-					{/if}
-				{/each}
-
-				{#if key.getUserIDs().length > 1 && showDetails}
-					<div class="mt-2 text-xs opacity-60">
-						+{key.getUserIDs().length - 1} other ID(s)
+						<span class="break-all">{prop.value}</span>
 					</div>
 				{/if}
+			{/each}
 
-				{#if showDetails}
-					<div class="mt-2">
-						<details class="mt-1" bind:open={publicKeyOpen}>
+			{#if key.getUserIDs().length > 1 && showDetails}
+				<div class="mt-2 text-xs opacity-60">
+					+{key.getUserIDs().length - 1} other ID(s)
+				</div>
+			{/if}
+
+			{#if showDetails}
+				<div class="mt-2">
+					<details class="mt-1" bind:open={publicKeyOpen}>
+						<summary class={KEY_PROPERTY_CLASS}>
+							Public Key:
+							<span class="opacity-60 cursor-pointer">[click to show]</span>
+						</summary>
+						<div class="mt-2 ml-0">
+							<CopyableTextarea
+								value={publicKey?.getArmor ? publicKey.getArmor() : ''}
+								class="text-xs"
+								fixed
+								readonly
+								buttons
+							/>
+						</div>
+					</details>
+
+					{#if key.isPrivate()}
+						<details class="mt-1" bind:open={privateKeyOpen}>
 							<summary class={KEY_PROPERTY_CLASS}>
-								Public Key:
-								<span class="opacity-60 cursor-pointer">[click to show]</span>
+								Private Key:
+								<span class="opacity-60 cursor-pointer">[click to export]</span>
 							</summary>
 							<div class="mt-2 ml-0">
+								<div class="alert alert-warning text-xs py-2 mb-2">
+									<WarningIcon class="h-4 w-4" />
+									<span>Warning: For backup only. Never share your private key!</span>
+								</div>
 								<CopyableTextarea
-									value={publicKey?.getArmor ? publicKey.getArmor() : ''}
+									value={key.getArmor()}
 									class="text-xs"
 									fixed
 									readonly
-									buttons
+									buttons={true}
 								/>
 							</div>
 						</details>
+					{/if}
+				</div>
+			{/if}
 
-						{#if key.isPrivate()}
-							<details class="mt-1" bind:open={privateKeyOpen}>
-								<summary class={KEY_PROPERTY_CLASS}>
-									Private Key:
-									<span class="opacity-60 cursor-pointer">[click to export]</span>
-								</summary>
-								<div class="mt-2 ml-0">
-									<div class="alert alert-warning text-xs py-2 mb-2">
-										<WarningIcon class="h-4 w-4" />
-										<span>Warning: For backup only. Never share your private key!</span>
-									</div>
-									<CopyableTextarea
-										value={key.getArmor()}
-										class="text-xs"
-										fixed
-										readonly
-										buttons={true}
-									/>
-								</div>
-							</details>
-						{/if}
-					</div>
-				{/if}
+			{#if !showDetails}
+				<button
+					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
+					onclick={() => (showDetails = true)}
+				>
+					Show more details...
+				</button>
+			{:else}
+				<button
+					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
+					onclick={() => (showDetails = false)}
+				>
+					Show less details
+				</button>
+			{/if}
 
-				{#if !showDetails}
-					<button
-						class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
-						onclick={() => (showDetails = true)}
-					>
-						Show more details...
+			{#if key.isPrivate()}
+				<div class="mt-2">
+					<button class="btn btn-xs btn-outline" onclick={switchToPublic}>
+						Switch to Public Key
 					</button>
-				{:else}
-					<button
-						class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
-						onclick={() => (showDetails = false)}
-					>
-						Show less details
+				</div>
+			{:else if keyWrapper.masterKey}
+				<div class="mt-2">
+					<button class="btn btn-xs btn-outline" onclick={switchToPrivate}>
+						Switch to Private Key
 					</button>
-				{/if}
-
-				{#if key.isPrivate()}
-					<div class="mt-2">
-						<button class="btn btn-xs btn-outline" onclick={switchToPublic}>
-							Switch to Public Key
-						</button>
-					</div>
-				{:else if keyWrapper.masterKey}
-					<div class="mt-2">
-						<button class="btn btn-xs btn-outline" onclick={switchToPrivate}>
-							Switch to Private Key
-						</button>
-					</div>
-				{/if}
-				<!--
+				</div>
+			{/if}
+			<!--
 				{#if keyWrapper.persisted === PersistenceType.MEMORY}
 				<div class="mt-2">
 					<button class="btn btn-xs btn-outline" onclick={persistKey}>Save To Browser</button>
@@ -281,48 +279,47 @@
 				{/if}
 				-->
 
-				{#if key.isPrivate() && !key.isDecrypted()}
-					<div class="divider my-2"></div>
-					<div class="form-control w-full max-w-xs {shaking ? 'shake' : ''}">
-						<label class="label" for="passphrase">
-							<span class="label-text">Unlock Private Key</span>
-						</label>
-						<div class="join">
-							<input
-								type="password"
-								id="passphrase"
-								placeholder="Passphrase"
-								class="input input-bordered input-sm w-full join-item
+			{#if key.isPrivate() && !key.isDecrypted()}
+				<div class="divider my-2"></div>
+				<div class="form-control w-full max-w-xs {shaking ? 'shake' : ''}">
+					<label class="label" for="passphrase">
+						<span class="label-text">Unlock Private Key</span>
+					</label>
+					<div class="join">
+						<input
+							type="password"
+							id="passphrase"
+							placeholder="Passphrase"
+							class="input input-bordered input-sm w-full join-item
 									{decryptError ? 'input-error' : ''}"
-								oninput={() => {
-									decryptError = '';
-								}}
-								onkeydown={(e) => {
-									if (e.key === 'Enter') {
-										e.preventDefault();
-										handleDecrypt(e.currentTarget.value);
-									}
-								}}
-							/>
-							<button
-								type="button"
-								class="btn btn-sm btn-primary join-item"
-								onclick={(e) => {
-									const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-									handleDecrypt(input.value);
-								}}
-							>
-								Unlock
-							</button>
-						</div>
-						{#if decryptError}
-							<div class="text-error text-xs mt-1">{decryptError}</div>
-						{/if}
+							oninput={() => {
+								decryptError = '';
+							}}
+							onkeydown={(e) => {
+								if (e.key === 'Enter') {
+									e.preventDefault();
+									handleDecrypt(e.currentTarget.value);
+								}
+							}}
+						/>
+						<button
+							type="button"
+							class="btn btn-sm btn-primary join-item"
+							onclick={(e) => {
+								const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+								handleDecrypt(input.value);
+							}}
+						>
+							Unlock
+						</button>
 					</div>
-				{/if}
-			</div>
+					{#if decryptError}
+						<div class="text-error text-xs mt-1">{decryptError}</div>
+					{/if}
+				</div>
+			{/if}
 		</div>
-	{/if}
+	</div>
 </div>
 
 <style>
