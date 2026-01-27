@@ -55,12 +55,16 @@
 				<h3 class="font-bold text-lg">Don't have a PGP key?</h3>
 				<p>
 					You need to ask your recipient for their key, or suggest they go to
-					<button
-						class="btn btn-link p-0 h-auto min-h-0 text-primary"
-						onclick={() => router.openHome()}
+					<a
+						class="text-primary"
+						onclick={(e) => {
+							e.preventDefault();
+							router.openHome();
+						}}
+						href="https://pgp.help"
 					>
 						pgp.help
-					</button>
+					</a>
 					to generate one themselves.
 				</p>
 
@@ -334,10 +338,7 @@
 							<button
 								class="btn btn-primary btn-block"
 								onclick={() => {
-									router.openHome();
-									// The key will be handled by the router's keyParam logic
-									window.history.pushState({}, '', `/?key=${encodeURIComponent(publicKey)}`);
-									window.dispatchEvent(new PopStateEvent('popstate'));
+									router.openKeyString(publicKey);
 								}}
 							>
 								<LockIcon class="w-4 h-4" />
