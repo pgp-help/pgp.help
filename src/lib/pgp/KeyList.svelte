@@ -55,7 +55,7 @@
 			>
 				<div class="card-body p-3 flex flex-row items-center gap-3">
 					<!-- Avatar -->
-					<Avatar fingerprint={wrapper.key.getFingerprint()} size={48} />
+					<Avatar cryptoKey={wrapper.key} size={48} />
 
 					<!-- Name + badge + subtitle -->
 					<div class="min-w-0 flex-1">

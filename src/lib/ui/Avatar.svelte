@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { toSvg } from 'jdenticon';
+	import { type CryptoKey } from '../pgp/crypto';
 
 	interface Props {
 		/** The fingerprint to generate the avatar from */
-		fingerprint: string;
+		cryptoKey: CryptoKey;
 		/** Size of the avatar in pixels */
 		size?: number;
 		/** Additional CSS classes for the avatar */
@@ -12,9 +13,10 @@
 		alt?: string;
 	}
 
-	let { fingerprint, size = 64, class: className = '', alt = 'Key avatar' }: Props = $props();
+	let { cryptoKey, size = 64, class: className = '', alt = 'Key avatar' }: Props = $props();
 
 	let sizeClass = $derived(`w-[${size}px] h-[${size}px]`);
+	let fingerprint = $derived(cryptoKey.getFingerprint());
 
 	let svgDataUrl = $derived.by(() => {
 		if (fingerprint && size) {

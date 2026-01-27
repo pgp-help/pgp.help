@@ -173,7 +173,7 @@
 			<div>
 				<!-- to force card-body to treat this as a single item -->
 				<div class="flex flex-wrap items-center gap-3 mb-1">
-					<Avatar fingerprint={key.getFingerprint()} size={64} />
+					<Avatar cryptoKey={key} size={64} />
 					<div class="flex-1 min-w-0">
 						<h4 class="font-bold text-lg break-all">{key.getUserIDs()[0] || 'Unknown User'}</h4>
 						<div class="flex items-center gap-2 mt-1">
