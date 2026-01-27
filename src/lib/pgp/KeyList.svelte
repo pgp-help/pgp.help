@@ -2,6 +2,7 @@
 	import { slide } from 'svelte/transition';
 	import { type KeyWrapper } from './keyStore.svelte.js';
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
+	import Avatar from '../ui/Avatar.svelte';
 
 	interface Props {
 		keys: KeyWrapper[];
@@ -52,7 +53,10 @@
 					if (e.key === 'Enter' || e.key === ' ') selectedWrapper = wrapper;
 				}}
 			>
-				<div class="card-body p-3 flex flex-row items-center">
+				<div class="card-body p-3 flex flex-row items-center gap-3">
+					<!-- Avatar -->
+					<Avatar cryptoKey={wrapper.key} size={48} />
+
 					<!-- Name + badge + subtitle -->
 					<div class="min-w-0 flex-1">
 						<div class="flex items-center gap-2">
