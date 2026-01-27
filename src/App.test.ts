@@ -29,10 +29,11 @@ describe('App', () => {
 		vi.clearAllMocks();
 	});
 
-	it('renders the core interface', () => {
+	it('renders core interface', () => {
 		render(App);
-		// Check Header
-		expect(screen.getByRole('link', { name: 'pgp.help' })).toBeInTheDocument();
+		// Check Header - pgp.help is now a button, not a link
+		// There are two buttons (desktop and mobile), so use getAllByRole
+		expect(screen.getAllByRole('button', { name: /pgp\.help/i }).length).toBeGreaterThan(0);
 		expect(screen.getByLabelText(/Message/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/Encrypted Output/i)).toBeInTheDocument();
 	});
@@ -45,16 +46,16 @@ describe('App', () => {
 		const messageTextarea = screen.getByLabelText(/Message/i);
 		const outputTextarea = screen.getByLabelText(/Encrypted Output/i);
 
-		// Use fireEvent for the key to simulate a paste/instant update
+		// Use fireEvent for key to simulate a paste/instant update
 		await fireEvent.input(keyTextarea, { target: { value: validPublicKey } });
 
-		// Wait for the key to be parsed and displayed (this confirms the app accepted the key)
+		// Wait for key to be parsed and displayed (this confirms app accepted key)
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
 		await within(mainArea).findByText('Public Key', { selector: 'legend' });
 
 		await user.type(messageTextarea, 'Hello World');
 
-		// Wait for the async encryption to complete
+		// Wait for async encryption to complete
 		await vi.waitFor(
 			() => {
 				const output = (outputTextarea as HTMLTextAreaElement).value;
@@ -81,7 +82,7 @@ describe('App', () => {
 		// Paste private key
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
 
-		// Wait for the key to be parsed and displayed
+		// Wait for key to be parsed and displayed
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
 		await within(mainArea).findByText('Private Key', { selector: 'legend' });
 
@@ -92,7 +93,7 @@ describe('App', () => {
 		await user.type(passwordInput, passphrase);
 		await user.click(unlockButton);
 
-		// Wait for the unlockButton to go away
+		// Wait for unlockButton to go away
 		await vi.waitFor(() => {
 			expect(unlockButton).not.toBeInTheDocument();
 		});
@@ -103,12 +104,12 @@ describe('App', () => {
 
 		await fireEvent.input(messageTextarea, { target: { value: encrypted } });
 
-		// This will swicth modes...
+		// This will switch modes...
 		await vi.waitFor(() => {
 			expect(screen.getByLabelText(/Decrypted Output/i)).toBeInTheDocument();
 		});
 
-		// Wait for the async decryption to complete
+		// Wait for async decryption to complete
 		const outputTextarea = screen.getByLabelText(/Decrypted Output/i);
 
 		await vi.waitFor(() => {

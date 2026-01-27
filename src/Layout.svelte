@@ -1,45 +1,101 @@
 <script lang="ts">
-	import { router, Pages } from './routes/router.svelte.js';
+	import AppIcon from './lib/ui/icons/AppIcon.svelte';
+	import { fade } from 'svelte/transition';
+	import { router, Pages } from './routes/router.svelte';
 
-	function handleHome(e: MouseEvent) {
-		e.preventDefault();
-		router.openHome();
-	}
+	let { hasSidebar = false, sidebar, children } = $props();
+	let isMobileMenuOpen = $state(false);
 
-	function handleGuide(e: MouseEvent) {
-		e.preventDefault();
-		router.openPage(Pages.GUIDE);
-	}
+	const toggleMobileMenu = () => (isMobileMenuOpen = !isMobileMenuOpen);
 </script>
 
-<div class="h-screen flex flex-col overflow-hidden">
-	<div class="navbar nav-bar flex-none z-10">
-		<div class="navbar-start">
-			<a class="btn btn-ghost text-xl" href="/" onclick={handleHome}>pgp.help</a>
+<!--
+  Root wrapper:
+  - min-h-screen: page at least full height
+  - md:grid: use grid layout on desktop
+  - md:grid-cols-[16rem_1fr]: sidebar 16rem wide + main column
+  - md:grid-rows-[5rem_1fr]: top header row (5rem) + content row
+-->
+<div class="min-h-screen grid grid-rows-[5rem_1fr] md:grid-cols-[20rem_1fr]">
+	<!-- Top-left: Brand (desktop) -->
+	<button
+		class="hidden md:flex items-center gap-x-3 px-6 border-b border-primary/10 bg-base-200 cursor-pointer"
+		onclick={() => router.openHome()}
+		aria-label="pgp.help"
+	>
+		<AppIcon />
+		<div class="text-lg font-bold">pgp.<span class="text-primary">help</span></div>
+	</button>
+
+	<!-- Top-right: Title -->
+	<header class="h-20 flex items-center px-6 sm:px-8 border-b border-primary/10 md:col-start-2">
+		<div class="ml-4">
+			<h1 class="text-2xl font-bold">Encryption tool</h1>
+			<p class="text-sm text-secondary">Secure messaging with OpenPGP</p>
 		</div>
-		<div class="navbar-center hidden sm:flex">
-			<p class="text-sm opacity-80">Simple secure client-side encryption</p>
+
+		<!-- Mobile brand -->
+		<button
+			class="flex items-center gap-x-3 md:hidden cursor-pointer ml-auto"
+			onclick={() => router.openHome()}
+			aria-label="pgp.help"
+		>
+			<AppIcon />
+			<div class="text-lg font-bold">pgp.<span class="text-primary">help</span></div>
+		</button>
+
+		<!-- Guide link (desktop) -->
+		<div class="hidden md:flex ml-auto">
+			<button class="btn btn-ghost" onclick={() => router.openPage(Pages.GUIDE)}>Guide</button>
 		</div>
-		<div class="navbar-end">
-			<a class="btn btn-ghost btn-sm" href="/Guide" onclick={handleGuide}> Guide </a>
-		</div>
+	</header>
+
+	<!-- Bottom-left: Sidebar (desktop only, always present but may be empty) -->
+	<aside class="hidden md:block bg-base-200 border-r border-primary/10">
+		{@render sidebar()}
+	</aside>
+
+	<!-- Bottom-right: Main content -->
+	<main class="md:col-start-2 overflow-hidden">
+		{@render children()}
+	</main>
+</div>
+
+<!-- Mobile FAB + overlay only if sidebar exists -->
+{#if hasSidebar}
+	<div class="md:hidden fixed bottom-6 right-6 z-50">
+		<button class="btn btn-lg btn-circle btn-primary" onclick={toggleMobileMenu}>
+			{#if isMobileMenuOpen}
+				<span class="text-xl">✕</span>
+			{:else}
+				<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M4 6h16M4 12h16M4 18h16"
+					/>
+				</svg>
+			{/if}
+		</button>
 	</div>
 
-	<div class="flex flex-1 overflow-hidden">
-		<slot />
-	</div>
-	<footer class="footer footer-center p-4 mt-8 text-base-content/50">
-		<aside>
-			<p>
-				View source on
-				<a
-					class="link link-hover link-primary"
-					href="https://github.com/pgp-help/pgp.svelte"
-					rel="noopener"
-				>
-					GitHub
-				</a>
-			</p>
+	{#if isMobileMenuOpen}
+		<!-- Dim backdrop for mobile when menu is open -->
+		<div
+			class="md:hidden fixed inset-0 bg-black/50 z-30"
+			transition:fade={{ duration: 200 }}
+			onclick={toggleMobileMenu}
+			role="button"
+			tabindex="0"
+			onkeydown={(e) => {
+				if (e.key === 'Escape') toggleMobileMenu();
+			}}
+		></div>
+
+		<!-- Sidebar overlay -->
+		<aside class="md:hidden fixed inset-y-0 left-0 w-80 max-w-[85vw] z-50 bg-base-200 border-r">
+			{@render sidebar()}
 		</aside>
-	</footer>
-</div>
+	{/if}
+{/if}

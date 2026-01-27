@@ -1,0 +1,36 @@
+<script lang="ts">
+	export let size: string = 'w-8 h-8'; // Default size
+	export let width: string | undefined = undefined;
+	export let height: string | undefined = undefined;
+</script>
+
+<svg
+	class={size}
+	{width}
+	{height}
+	viewBox="0 0 512 512"
+	fill="none"
+	xmlns="http://www.w3.org/2000/svg"
+>
+	<!-- The Speech Bubble Outline - Uses a thick stroke (40px) - Fill is set to none (transparent) - Maximizes the bounding box -->
+	<g transform="translate(-20, 5)">
+		<path
+			d="M60.5 450.5L122 419C164 451 216 466 276 466C396.9 466 496 368.1 496 246C496 123.9 396.9 26 276 26C155.1 26 56 123.9 56 246C56 288 72 325 94 358L60.5 450.5Z"
+			stroke="#1E6F50"
+			stroke-width="40"
+			stroke-linejoin="round"
+			stroke-linecap="round"
+			fill="none"
+		/>
+	</g>
+	<!-- The Lock (Solid Filled) - Centered visually within of the bubble circle - No keyhole -->
+	<g transform="translate(160, 130)">
+		<!-- Solid Body -->
+		<rect y="70" width="180" height="150" rx="16" fill="#1E6F50" />
+		<!-- Solid Shackle -->
+		<path
+			d="M30 70V45C30 15 60 -10 90 -10C120 -10 150 15 150 45V70H114V45C114 31 104 22 90 22C76 22 66 31 66 45V70H30Z"
+			fill="#1E6F50"
+		/>
+	</g>
+</svg>

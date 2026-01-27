@@ -31,7 +31,7 @@
 	}
 </script>
 
-<div class="flex-1 p-2 space-y-1">
+<div class="p-4 space-y-2">
 	{#if keys.length === 0}
 		<div class="text-center p-4 text-base-content/50 text-sm">
 			No keys found. Create or import one to get started.
@@ -42,33 +42,30 @@
 		{@const name = getKeyName(wrapper)}
 		{@const email = getKeySubtitle(wrapper)}
 
-		<div class="flex flex-col" transition:slide={{ duration: 200 }}>
+		<div transition:slide={{ duration: 200 }}>
 			<div
-				class="group/key-actions flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-base-200 transition-colors {isSelected
-					? 'emphasis-primary'
-					: ''}"
-				role="link"
+				class="card card-selectable {isSelected ? 'card-selected' : ''}"
+				role="button"
 				tabindex="0"
-				onclick={() => {
-					// If the key is already selected this will effectively switch to the cannonical verion
-					// (i.e. if the user is looking at the public key view of a private key, this will switch to the private key view)
-					// This is ok.
-					selectedWrapper = wrapper;
-				}}
+				onclick={() => (selectedWrapper = wrapper)}
 				onkeydown={(e) => {
-					if (e.key === 'Enter' || e.key === ' ') {
-						selectedWrapper = wrapper;
-					}
+					if (e.key === 'Enter' || e.key === ' ') selectedWrapper = wrapper;
 				}}
 			>
-				<div class="flex-1 min-w-0 mr-2">
-					<div class="flex items-center gap-2">
-						<span class="font-medium truncate text-sm" title={name}>{name}</span>
-						<PGPKeyBadges keyWrapper={wrapper} />
+				<div class="card-body p-3 flex flex-row items-center">
+					<!-- Name + badge + subtitle -->
+					<div class="min-w-0 flex-1">
+						<div class="flex items-center gap-2">
+							<span class="font-medium truncate text-sm" title={name}>{name}</span>
+							<PGPKeyBadges keyWrapper={wrapper} />
+						</div>
+
+						{#if email}
+							<div class="text-xs text-base-content/60 truncate" title={email}>
+								{email}
+							</div>
+						{/if}
 					</div>
-					{#if email}
-						<div class="text-xs text-base-content/70 truncate" title={email}>{email}</div>
-					{/if}
 				</div>
 			</div>
 		</div>

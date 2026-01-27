@@ -3,6 +3,7 @@
 	import LockIcon from '../lib/ui/icons/LockIcon.svelte';
 	import InfoIcon from '../lib/ui/icons/InfoIcon.svelte';
 	import publicKey from '../assets/keys/pgphelp.pem?raw';
+	import { router } from './router.svelte';
 </script>
 
 <main class="container mx-auto max-w-4xl p-4 h-full overflow-y-auto">
@@ -53,10 +54,18 @@
 				<div class="divider"></div>
 				<h3 class="font-bold text-lg">Don't have a PGP key?</h3>
 				<p>
-					You need to ask your recipient for their key, or suggest they go to <a
-						href="/"
-						class="link link-primary">pgp.help</a
-					> to generate one themselves.
+					You need to ask your recipient for their key, or suggest they go to
+					<a
+						class="text-primary"
+						onclick={(e) => {
+							e.preventDefault();
+							router.openHome();
+						}}
+						href="https://pgp.help"
+					>
+						pgp.help
+					</a>
+					to generate one themselves.
 				</p>
 
 				<div class="alert alert-info mt-6">
@@ -326,10 +335,15 @@
 						<div class="card-body">
 							<h3 class="card-title text-lg">Quick Start</h3>
 							<p class="text-sm mb-3">Use our public key to write us a message right now:</p>
-							<a href="/?key={encodeURIComponent(publicKey)}" class="btn btn-primary btn-block">
+							<button
+								class="btn btn-primary btn-block"
+								onclick={() => {
+									router.openKeyString(publicKey);
+								}}
+							>
 								<LockIcon class="w-4 h-4" />
 								Write Encrypted Message
-							</a>
+							</button>
 						</div>
 					</div>
 				</div>
