@@ -146,6 +146,10 @@ class Router {
 	openKey(key: CryptoKey) {
 		this.#navigate(`/?fp=${key.getFingerprint()}`);
 	}
+
+	openKeyString(key: string) {
+		this.#navigate(`/?key=${encodeURIComponent(key)}`);
+	}
 }
 
 export const router = new Router();

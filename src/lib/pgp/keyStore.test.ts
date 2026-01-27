@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import { keyStore, KeyStore, PersistenceType } from './keyStore.svelte';
-import { generateKeyPair, getKeyDetails } from './pgp';
+import { generateKeyPair } from './pgp';
+import { getKeyDetails } from './crypto';
 
 describe('KeyStore', () => {
 	let privateKeyArmor: string;

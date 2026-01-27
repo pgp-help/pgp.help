@@ -36,7 +36,7 @@
 
 		<!-- Mobile brand -->
 		<button
-			class="flex items-center gap-x-3 md:hidden cursor-pointer"
+			class="flex items-center gap-x-3 md:hidden cursor-pointer ml-auto"
 			onclick={() => router.openHome()}
 			aria-label="pgp.help"
 		>
