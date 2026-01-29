@@ -8,6 +8,7 @@
 	import { untrack } from 'svelte';
 	import CardWithHeader from '../ui/CardWithHeader.svelte';
 	import ShareMenu from '../ui/ShareMenu.svelte';
+	import SelectableText from '../ui/SelectableText.svelte';
 
 	const OperationType = {
 		Encrypt: 'encrypt',
@@ -224,10 +225,6 @@
 
 			<div class="mt-4">
 				<CardWithHeader title="Input Message" class="w-full shadow-sm" {error}>
-					{#snippet actions()}
-						<ShareMenu value={message} />
-					{/snippet}
-
 					{#snippet children({ uid })}
 						{@const inputPlaceholder = isPrivate
 							? 'Type message to sign...\n or Paste encrypted message to decrypt...'
@@ -260,19 +257,12 @@
 						{/snippet}
 
 						{#snippet children({ uid })}
-							<div
+							<SelectableText
 								id={uid}
 								aria-label={outputTitle}
-								class="p-4 font-mono text-xs whitespace-pre-wrap"
-								role="textbox"
-								aria-readonly="true"
-							>
-								{#if output}
-									{output}
-								{:else}
-									<span class="text-base-content/40">{outputPlaceholder}</span>
-								{/if}
-							</div>
+								value={output}
+								placeholder={outputPlaceholder}
+							/>
 						{/snippet}
 					</CardWithHeader>
 				</div>

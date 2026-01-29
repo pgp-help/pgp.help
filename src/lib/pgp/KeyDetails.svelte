@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { decryptPrivateKey } from './pgp';
 	import { type KeyWrapper, asPublicKeyWrapper } from './keyStore.svelte.js';
-	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
 	import KeyActions from './KeyActions.svelte';
 	import Avatar from '../ui/Avatar.svelte';
 	import CardWithHeader from '../ui/CardWithHeader.svelte';
 	import { type CryptoKey, wrapPGPKey, isPGPKey } from './crypto';
+	import SelectableText from '../ui/SelectableText.svelte';
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
 	// parent component to see the updated value.
@@ -149,7 +149,6 @@
 	let publicKeyOpen = $state(false);
 	let privateKeyOpen = $state(false);
 
-	/*
 	function handleFocusOut(event: FocusEvent) {
 		const currentTarget = event.currentTarget as HTMLElement;
 		const relatedTarget = event.relatedTarget as Node | null;
@@ -158,7 +157,7 @@
 			publicKeyOpen = false;
 			privateKeyOpen = false;
 		}
-	}*/
+	}
 
 	let cardTitle = $derived(key.isPrivate() ? 'Private Key' : 'Public Key');
 </script>
@@ -174,12 +173,15 @@
 				<WarningIcon class="h-4 w-4" />
 				<span>Warning: For backup only. Never share your private key!</span>
 			</div>
-			<CopyableTextarea value={key.getArmor()} class="text-xs" fixed readonly />
+			<SelectableText
+				class="rounded-box bg-base-200 border border-base-300 w-fit"
+				value={key.getArmor()}
+			/>
 		</div>
 	</details>
 {/snippet}
 
-<CardWithHeader title={cardTitle} class="w-full shadow-sm">
+<CardWithHeader title={cardTitle} class="w-full shadow-sm" onfocusout={handleFocusOut}>
 	{#snippet actions()}
 		<KeyActions {keyWrapper} />
 	{/snippet}
@@ -223,11 +225,9 @@
 							<span class="opacity-60 cursor-pointer">[click to show]</span>
 						</summary>
 						<div class="mt-2 ml-0">
-							<CopyableTextarea
-								value={publicKey?.getArmor ? publicKey.getArmor() : ''}
-								class="text-xs"
-								fixed
-								readonly
+							<SelectableText
+								class="rounded-box bg-base-200 border border-base-300 w-fit"
+								value={publicKey.getArmor()}
 							/>
 						</div>
 					</details>

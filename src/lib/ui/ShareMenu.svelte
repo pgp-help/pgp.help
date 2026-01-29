@@ -50,7 +50,7 @@
 	<div class="dropdown dropdown-end">
 		<div tabindex="0" role="button" class="btn btn-ghost btn-xs text-primary">
 			<ShareIcon class="w-4 h-4" />
-			<span>Share</span>
+			<span>{isPublicKey ? 'Share public key' : 'Share message'}</span>
 		</div>
 		<ul
 			tabindex="-1"
