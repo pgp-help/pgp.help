@@ -14,7 +14,8 @@ describe('PGPWorkflow Sign/Verify', () => {
 	beforeAll(async () => {
 		const { publicKey, privateKey } = await openpgp.generateKey({
 			type: 'ecc',
-			curve: 'ed25519',
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			curve: 'ed25519' as any,
 			userIDs: [{ name: 'Test User', email: 'test@example.com' }],
 			passphrase
 		});
@@ -32,11 +33,11 @@ describe('PGPWorkflow Sign/Verify', () => {
 		const user = userEvent.setup();
 		render(PGPPage);
 
-		const keyTextarea = screen.getByLabelText(/Public Key/i);
+		const keyTextarea = screen.getByLabelText(/Key/i);
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
 
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
-		await within(mainArea).findByText('Private Key', { selector: '.card-header-title' });
+		await within(mainArea).findByText('Private Key');
 
 		// Unlock
 		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
@@ -54,8 +55,7 @@ describe('PGPWorkflow Sign/Verify', () => {
 		const outputTextarea = screen.getByLabelText(/Signed Message/i);
 
 		await waitFor(() => {
-			const output = (outputTextarea as HTMLTextAreaElement).value;
-			expect(output).toContain('-----BEGIN PGP SIGNED MESSAGE-----');
+			expect(outputTextarea).toHaveTextContent('-----BEGIN PGP SIGNED MESSAGE-----');
 		});
 	});
 
@@ -72,7 +72,7 @@ describe('PGPWorkflow Sign/Verify', () => {
 			signingKeys: decryptedPrivateKey
 		})) as string;
 
-		const keyTextarea = screen.getByLabelText(/Public Key/i);
+		const keyTextarea = screen.getByLabelText(/Key/i);
 		await fireEvent.input(keyTextarea, { target: { value: validPublicKey } });
 
 		// Input signed message

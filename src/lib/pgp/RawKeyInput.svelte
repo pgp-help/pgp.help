@@ -37,11 +37,11 @@
 </script>
 
 <CardWithHeader title={label} {error}>
-	{#snippet children(uid)}
+	{#snippet children({ uid })}
 		<textarea
 			id={uid}
 			bind:value
-			aria-label="Input Message"
+			aria-label={label}
 			class="textarea textarea-ghost h-32 w-full resize-y border-none focus:outline-none focus:bg-transparent"
 			{placeholder}
 		></textarea>

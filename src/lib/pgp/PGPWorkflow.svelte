@@ -163,7 +163,7 @@
 		{#if keyWrapper}
 			<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper />
 		{:else}
-			<RawKeyInput {keyValue} {onKeyParsed} />
+			<RawKeyInput value={keyValue} {onKeyParsed} />
 		{/if}
 
 		<!-- IO Fields -->
@@ -218,7 +218,7 @@
 						<ShareMenu value={message} />
 					{/snippet}
 
-					{#snippet children(uid)}
+					{#snippet children({ uid })}
 						<textarea
 							id={uid}
 							bind:value={message}
@@ -241,7 +241,7 @@
 								<ShareMenu value={output} />
 							{/snippet}
 
-							{#snippet children(uid)}
+							{#snippet children({ uid })}
 								<div
 									id={uid}
 									aria-label="Encrypted Output"
@@ -272,7 +272,7 @@
 							<ShareMenu value={output} />
 						{/snippet}
 
-						{#snippet children(uid)}
+						{#snippet children({ uid })}
 							<div
 								id={uid}
 								aria-label={currentOperation === OperationType.Decrypt

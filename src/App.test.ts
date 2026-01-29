@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import * as openpgp from 'openpgp';
 import App from './App.svelte';
 import { keyStore } from './lib/pgp/keyStore.svelte';
+import { router } from './routes/router.svelte';
 
 describe('App', () => {
 	let validPublicKey: string;
@@ -23,9 +24,10 @@ describe('App', () => {
 		validPrivateKey = privateKey;
 	});
 
-	beforeEach(() => {
+	beforeEach(async () => {
 		window.history.replaceState({}, '', '/');
-		keyStore.clear();
+		router.openHome();
+		await keyStore.clear();
 		vi.clearAllMocks();
 	});
 
@@ -42,7 +44,7 @@ describe('App', () => {
 		const user = userEvent.setup();
 		render(App);
 
-		const keyTextarea = screen.getByLabelText(/Public Key/i);
+		const keyTextarea = screen.getByLabelText(/^Key$/i);
 		const messageTextarea = screen.getByLabelText(/Message/i);
 		const outputTextarea = screen.getByLabelText(/Encrypted Output/i);
 
@@ -51,16 +53,15 @@ describe('App', () => {
 
 		// Wait for key to be parsed and displayed (this confirms app accepted key)
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
-		await within(mainArea).findByText('Public Key', { selector: '.card-header-title' });
+		await within(mainArea).findByText('Public Key');
 
 		await user.type(messageTextarea, 'Hello World');
 
 		// Wait for async encryption to complete
 		await vi.waitFor(
 			() => {
-				const output = (outputTextarea as HTMLTextAreaElement).value;
-				expect(output).toContain('-----BEGIN PGP MESSAGE-----');
-				expect(output).toContain('-----END PGP MESSAGE-----');
+				expect(outputTextarea).toHaveTextContent('-----BEGIN PGP MESSAGE-----');
+				expect(outputTextarea).toHaveTextContent('-----END PGP MESSAGE-----');
 			},
 			{ timeout: 5000 }
 		);
@@ -77,14 +78,14 @@ describe('App', () => {
 			encryptionKeys: await openpgp.readKey({ armoredKey: validPublicKey })
 		})) as string;
 
-		const keyTextarea = await screen.findByLabelText(/Public Key/i);
+		const keyTextarea = await screen.findByLabelText(/^Key$/i);
 
 		// Paste private key
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
 
 		// Wait for key to be parsed and displayed
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
-		await within(mainArea).findAllByText('Private Key', { selector: '.card-header-title' });
+		await within(mainArea).findAllByText('Private Key');
 
 		// Wait for unlock prompt
 		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
@@ -113,7 +114,7 @@ describe('App', () => {
 		const outputTextarea = screen.getByLabelText(/Decrypted Output/i);
 
 		await vi.waitFor(() => {
-			expect(outputTextarea).toHaveValue(secretMessage);
+			expect(outputTextarea).toHaveTextContent(secretMessage);
 		});
 	});
 
@@ -121,7 +122,8 @@ describe('App', () => {
 		render(App);
 
 		// Check that DaisyUI classes are present on key elements
-		const textareas = screen.getAllByRole('textbox');
+		// Filter for actual textarea elements, as output divs also have role="textbox"
+		const textareas = screen.getAllByRole('textbox').filter((el) => el.tagName === 'TEXTAREA');
 		expect(textareas.length).toBeGreaterThan(0);
 
 		// Verify DaisyUI textarea class is applied

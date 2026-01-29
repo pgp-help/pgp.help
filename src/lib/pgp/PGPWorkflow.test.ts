@@ -48,8 +48,7 @@ describe('PGPWorkflow', () => {
 
 		await waitFor(
 			() => {
-				const output = (outputTextarea as HTMLTextAreaElement).value;
-				expect(output).toContain('-----BEGIN PGP MESSAGE-----');
+				expect(outputTextarea).toHaveTextContent('-----BEGIN PGP MESSAGE-----');
 			},
 			{ timeout: 5000 }
 		);
@@ -71,7 +70,7 @@ describe('PGPWorkflow', () => {
 
 		// Wait for key to be parsed and recognized as private
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
-		await within(mainArea).findByText('Private Key', { selector: '.card-header-title' });
+		await within(mainArea).findByText('Private Key');
 
 		// Unlock
 		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
@@ -93,7 +92,7 @@ describe('PGPWorkflow', () => {
 		const outputTextarea = await screen.findByLabelText(/Decrypted Output/i);
 
 		await waitFor(() => {
-			expect(outputTextarea).toHaveValue(secretMessage);
+			expect(outputTextarea).toHaveTextContent(secretMessage);
 		});
 	});
 
@@ -105,7 +104,7 @@ describe('PGPWorkflow', () => {
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
 
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
-		await within(mainArea).findByText('Private Key', { selector: '.card-header-title' });
+		await within(mainArea).findByText('Private Key');
 
 		// Switch to Public Key
 		const switchButton = screen.getByRole('button', { name: /Switch to Public Key/i });
@@ -114,7 +113,7 @@ describe('PGPWorkflow', () => {
 		// Should now be in Encrypt mode (Public Key)
 		expect(screen.getByLabelText(/Input Message/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/Encrypted Output/i)).toBeInTheDocument();
-		expect(screen.getByText('Public Key', { selector: '.card-header-title' })).toBeInTheDocument();
+		expect(screen.getByText('Public Key')).toBeInTheDocument();
 	});
 
 	it('automatically switches to private key (decrypt mode) when pasting encrypted message', async () => {
@@ -132,7 +131,7 @@ describe('PGPWorkflow', () => {
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
 
 		const mainAreaDecrypt = screen.getByRole('main', { name: 'PGP Workflow' });
-		await within(mainAreaDecrypt).findByText('Private Key', { selector: '.card-header-title' });
+		await within(mainAreaDecrypt).findByText('Private Key');
 
 		// Unlock
 		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
@@ -165,7 +164,7 @@ describe('PGPWorkflow', () => {
 		// And it should decrypt
 		const outputTextarea = screen.getByLabelText(/Decrypted Output/i);
 		await waitFor(() => {
-			expect(outputTextarea).toHaveValue(secretMessage);
+			expect(outputTextarea).toHaveTextContent(secretMessage);
 		});
 	});
 
@@ -174,9 +173,9 @@ describe('PGPWorkflow', () => {
 		render(PGPPage);
 
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
-		const keyTextarea = within(mainArea).getByLabelText(/Public Key/i);
+		const keyTextarea = within(mainArea).getByLabelText(/Key/i);
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
-		await within(mainArea).findByText('Private Key', { selector: '.card-header-title' });
+		await within(mainArea).findByText('Private Key');
 
 		// Unlock
 		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
