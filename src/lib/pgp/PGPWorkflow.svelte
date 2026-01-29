@@ -156,16 +156,16 @@
 	});
 </script>
 
-<div class="container mx-auto max-w-4xl">
+<div class="container mx-auto max-w-4xl space-y-6">
 	<form class="space-y-6">
 		<fieldset class="fieldset">
-			<legend class="fieldset-legend">
+			<fieldset-legend class="fieldset-legend">
 				{#if isPrivate}
 					Private Key
 				{:else}
 					Public Key
 				{/if}
-			</legend>
+			</fieldset-legend>
 			{#if keyWrapper}
 				<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper />
 			{:else}
@@ -222,7 +222,7 @@
 				{/if}
 			{/if}
 			<fieldset class="fieldset">
-				<legend class="fieldset-legend"> Input Message </legend>
+				<fieldset-legend class="fieldset-legend"> Input Message </fieldset-legend>
 				<CopyableTextarea
 					bind:value={message}
 					placeholder={isPrivate
@@ -232,30 +232,26 @@
 					selectAllOnFocus={false}
 					fixed={currentOperation == OperationType.Verify}
 					{error}
-					buttons={true}
 				/>
 			</fieldset>
 			{#if !isPrivate}
 				{#if currentOperation !== OperationType.Verify}
 					<fieldset class="fieldset mt-4">
-						<legend class="fieldset-legend">Encrypted Output</legend>
+						<fieldset-legend class="fieldset-legend">Encrypted Output</fieldset-legend>
 						<CopyableTextarea
 							value={output}
 							readonly={true}
 							fixed={true}
 							placeholder="Encrypted output will appear here..."
 							label="Encrypted Output"
-							buttons={true}
 						/>
 					</fieldset>
 				{/if}
 			{:else}
 				<fieldset class="fieldset mt-4">
-					<legend class="fieldset-legend"
-						>{currentOperation === OperationType.Decrypt
-							? 'Decrypted Output'
-							: 'Signed Message'}</legend
-					>
+					<fieldset-legend class="fieldset-legend">
+						{currentOperation === OperationType.Decrypt ? 'Decrypted Output' : 'Signed Message'}
+					</fieldset-legend>
 					<CopyableTextarea
 						value={output}
 						readonly={true}
@@ -264,7 +260,6 @@
 						label={currentOperation === OperationType.Decrypt
 							? 'Decrypted Output'
 							: 'Signed Message'}
-						buttons={true}
 					/>
 				</fieldset>
 			{/if}
