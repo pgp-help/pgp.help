@@ -7,6 +7,7 @@
 	import { type KeyWrapper } from './keyStore.svelte.js';
 	import { type CryptoKey, KeyType } from './crypto';
 	import { untrack } from 'svelte';
+	import CardWithHeader from '../ui/CardWithHeader.svelte';
 
 	const OperationType = {
 		Encrypt: 'encrypt',
@@ -157,6 +158,30 @@
 </script>
 
 <div class="container mx-auto max-w-4xl space-y-6">
+	<!-- INPUT EXAMPLE -->
+	<CardWithHeader title="Input Message" class="w-full shadow-sm">
+		<!-- Define the actions snippet -->
+		{#snippet actions()}
+			<button class="btn btn-ghost btn-xs text-primary"> Share </button>
+		{/snippet}
+
+		<!-- Main Content (children) -->
+		<textarea
+			bind:value={message}
+			class="textarea textarea-ghost h-32 w-full resize-y border-none focus:outline-none focus:bg-transparent"
+			placeholder="Type here..."
+		></textarea>
+	</CardWithHeader>
+
+	<!-- OUTPUT EXAMPLE -->
+	<CardWithHeader title="Encrypted Block" readonly={true} class="mt-8">
+		{#snippet actions()}
+			<button class="btn btn-ghost btn-xs">Copy</button>
+		{/snippet}
+
+		<div class="p-4 font-mono text-xs opacity-75">-----BEGIN PGP MESSAGE-----...</div>
+	</CardWithHeader>
+
 	<form class="space-y-6">
 		<fieldset class="fieldset">
 			<fieldset-legend class="fieldset-legend">
