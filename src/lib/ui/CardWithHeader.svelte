@@ -34,7 +34,7 @@
 >
 	<!-- HEADER -->
 	<div
-		class="flex items-center justify-between border-b px-4 py-2 bg-base-200
+		class="flex items-center justify-between border-b px-4 h-8 bg-base-200
 		{hasError ? 'border-error/20' : 'border-base-300'}"
 	>
 		<div class="flex-1 min-w-0">

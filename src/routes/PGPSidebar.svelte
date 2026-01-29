@@ -41,12 +41,12 @@
 	<div class="space-y-4">
 		<div class="space-y-4">
 			<button class="btn btn-primary w-full" onclick={handleImportKey}>
-				<PlusIcon className="h-5 w-5 mr-2" />
+				<PlusIcon class="h-5 w-5 mr-2" />
 				Import Key
 			</button>
 
 			<button class="btn btn-outline w-full" onclick={handleGenerateKey}>
-				<KeyIcon className="h-5 w-5 mr-2" />
+				<KeyIcon class="h-5 w-5 mr-2" />
 				Generate Private Key
 			</button>
 		</div>

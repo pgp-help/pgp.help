@@ -1,17 +1,9 @@
 <script lang="ts">
-	export let size: string = 'w-8 h-8'; // Default size
-	export let width: string | undefined = undefined;
-	export let height: string | undefined = undefined;
+	// Allow any HTML SVG attributes (class, width, height, etc.)
+	let { ...props } = $props();
 </script>
 
-<svg
-	class={size}
-	{width}
-	{height}
-	viewBox="0 0 512 512"
-	fill="none"
-	xmlns="http://www.w3.org/2000/svg"
->
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 512 512" {...props}>
 	<!-- The Speech Bubble Outline - Uses a thick stroke (40px) - Fill is set to none (transparent) - Maximizes the bounding box -->
 	<g transform="translate(-20, 5)">
 		<path

@@ -49,29 +49,29 @@
 {#if value}
 	<div class="dropdown dropdown-end">
 		<div tabindex="0" role="button" class="btn btn-ghost btn-xs text-primary">
-			<ShareIcon />
+			<ShareIcon class="w-4 h-4" />
 			<span>Share</span>
 		</div>
 		<ul
-			tabindex="0"
+			tabindex="-1"
 			class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 border border-base-300 p-2 shadow-sm"
 		>
 			<li>
 				<button onclick={copyToClipboard}>
-					<CopyIcon />
+					<CopyIcon class="w-4 h-4" />
 					<span>Copy</span>
 				</button>
 			</li>
 			<li>
 				<button onclick={copyToClipboardReddit}>
-					<MarkdownIcon />
+					<MarkdownIcon class="w-4 h-4" />
 					<span>Copy (Markdown)</span>
 				</button>
 			</li>
 			{#if isPublicKey}
 				<li>
 					<button onclick={copyLink}>
-						<LinkIcon />
+						<LinkIcon class="w-4 h-4" />
 						<span>Copy Link</span>
 					</button>
 				</li>
