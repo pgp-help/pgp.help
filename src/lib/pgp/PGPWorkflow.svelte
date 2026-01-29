@@ -232,7 +232,6 @@
 					selectAllOnFocus={false}
 					fixed={currentOperation == OperationType.Verify}
 					{error}
-					buttons={true}
 				/>
 			</fieldset>
 			{#if !isPrivate}
@@ -245,7 +244,6 @@
 							fixed={true}
 							placeholder="Encrypted output will appear here..."
 							label="Encrypted Output"
-							buttons={true}
 						/>
 					</fieldset>
 				{/if}
@@ -262,60 +260,9 @@
 						label={currentOperation === OperationType.Decrypt
 							? 'Decrypted Output'
 							: 'Signed Message'}
-						buttons={true}
 					/>
 				</fieldset>
 			{/if}
-		</div>
-
-		<!-- Message Input and Output -->
-		<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-			<!-- Input Column (takes 2 cols on large screens) -->
-			<div class="lg:col-span-2 flex flex-col gap-3">
-				<label class="text-sm font-semibold text-base-content flex items-center gap-2">
-					<i class="fa-regular fa-file-lines text-primary"></i> Message
-				</label>
-				<CopyableTextarea
-					bind:value={message}
-					placeholder={isPrivate
-						? 'Type message to sign...\n or Paste encrypted message to decrypt...'
-						: 'Type your secret message...\n or Paste signed message to verify...'}
-					label=""
-					selectAllOnFocus={false}
-					fixed={currentOperation == OperationType.Verify}
-					{error}
-					buttons={true}
-					class="flex-1 min-h-96 rounded-xl p-4 font-mono text-sm text-base-content resize-none focus:outline-none placeholder:text-base-content/50"
-				/>
-			</div>
-
-			<!-- Output Column (fixed width on large screens) -->
-			<div class="lg:col-span-1 flex flex-col gap-3">
-				<label class="text-sm font-semibold text-base-content flex items-center gap-2">
-					<i class="fa-solid fa-lock text-success"></i> Output
-				</label>
-				<div
-					class="flex-1 min-h-96 card-panel rounded-xl overflow-hidden flex flex-col bg-base-200"
-				>
-					<!-- Toolbar -->
-					<div
-						class="h-10 bg-base-300 border-b border-base-300 flex items-center justify-between px-3"
-					>
-						<span class="text-xs font-mono text-base-content/60">RESULT</span>
-						<button
-							class="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium"
-						>
-							<i class="fa-regular fa-copy"></i> Copy
-						</button>
-					</div>
-					<!-- Output Content -->
-					<div class="flex-1 p-4 overflow-auto">
-						<code class="font-mono text-xs text-base-content/70 block whitespace-pre-wrap break-all"
-							>{output}</code
-						>
-					</div>
-				</div>
-			</div>
 		</div>
 	</form>
 </div>

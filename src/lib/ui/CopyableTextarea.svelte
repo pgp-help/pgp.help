@@ -4,7 +4,6 @@
 	// making it easier for users to copy the content manually if needed.
 
 	const BASE_PATH = import.meta.env.BASE_URL || '/';
-	import MiniActionButton from './MiniActionButton.svelte';
 	import CopyIcon from './icons/CopyIcon.svelte';
 	import MarkdownIcon from './icons/MarkdownIcon.svelte';
 	import ShareIcon from './icons/ShareIcon.svelte';
@@ -23,7 +22,7 @@
 		error = '',
 		rows = 8,
 		class: className = '',
-		buttons = false
+		compact = false
 	} = $props<{
 		value?: string;
 		readonly?: boolean;
@@ -35,15 +34,19 @@
 		error?: string;
 		rows?: number;
 		class?: string;
-		buttons?: boolean;
+		compact?: boolean;
 	}>();
 
 	let errorId = $derived(error ? `${id || 'textarea'}-error` : undefined);
 
 	let textareaElement = $state<HTMLTextAreaElement>();
+	let codeElement = $state<HTMLElement>();
+
+	// Track if user has already interacted with the code element
+	let hasInteracted = $state(false);
 
 	let cols = $derived(
-		fixed && value ? Math.max(...value.split('\n').map((l) => l.length)) + 0 : undefined
+		!fixed && value ? Math.max(...value.split('\n').map((l) => l.length)) + 0 : undefined
 	);
 
 	let isPublicKey = $derived(
@@ -52,6 +55,12 @@
 				(isAGEKeyString(value) && value.startsWith('age1')))
 	);
 
+	let isPrivateKey = $derived(value && value.includes('-----BEGIN PGP PRIVATE KEY BLOCK-----'));
+
+	let isKey = $derived(isPublicKey || isPrivateKey);
+
+	let headerText = $derived(isKey ? 'KEY' : value ? 'MESSAGE' : 'RESULT');
+
 	async function copyToClipboard() {
 		try {
 			await navigator.clipboard.writeText(value || '');
@@ -59,16 +68,6 @@
 			console.error('Failed to copy text: ', err);
 		}
 	}
-
-	// Basic markdown is easy enough to hand-crank, it's reddit markdown that's a pain. So focus on that.
-	// async function copyToClipboardMarkdown() {
-	// 	const markdownValue = '```\n' + (value || '') + '\n```';
-	// 	try {
-	// 		await navigator.clipboard.writeText(markdownValue);
-	// 	} catch (err) {
-	// 		console.error('Failed to copy text: ', err);
-	// 	}
-	// }
 
 	async function copyToClipboardReddit() {
 		const redditValue = (value || '')
@@ -83,7 +82,7 @@
 	}
 
 	async function copyLink() {
-		const baseUrl = window.location.origin + BASE_PATH; // See also router.svelte.ts
+		const baseUrl = window.location.origin + BASE_PATH;
 		const url = new URL(baseUrl);
 		if (value) url.searchParams.set('key', value);
 		try {
@@ -95,7 +94,7 @@
 
 	$effect(() => {
 		// Watch for visibility changes:
-		if (!fixed || !textareaElement) return;
+		if (fixed || !textareaElement) return;
 
 		const observer = new ResizeObserver(() => {
 			// Fires when:
@@ -111,13 +110,13 @@
 
 	$effect(() => {
 		// Adjust height when value changes:
-		if (!fixed || !textareaElement) return;
+		if (fixed || !textareaElement) return;
 		if (value === undefined) return;
 		adjustHeight();
 	});
 
 	function adjustHeight() {
-		if (!textareaElement) return; //defensive
+		if (!textareaElement) return;
 
 		// Skip if element or any ancestor has display: none
 		if (textareaElement.offsetParent === null) return;
@@ -165,62 +164,144 @@
 			delete textareaElement.dataset.preventMouseUp;
 		}
 	}
+
+	function handleCodeClick() {
+		if (!selectAllOnFocus || !codeElement) return;
+
+		// Only select all on the first click
+		if (hasInteracted) return;
+
+		const selection = window.getSelection();
+		if (selection) {
+			const range = document.createRange();
+			range.selectNodeContents(codeElement);
+			selection.removeAllRanges();
+			selection.addRange(range);
+			hasInteracted = true;
+		}
+	}
+
+	// Reset interaction state when value changes
+	$effect(() => {
+		void value;
+		hasInteracted = false;
+	});
 </script>
 
 <div class="relative w-full">
-	<textarea
-		{id}
-		bind:this={textareaElement}
-		bind:value
-		{cols}
-		{rows}
-		{readonly}
-		{placeholder}
-		class="textarea textarea-code w-full whitespace-nowrap {fixed
-			? 'resize-none'
-			: ''} {className} {error ? 'border-error' : ''}"
-		style={fixed ? 'height: auto; overflow-y: hidden;' : ''}
-		aria-label={label}
-		aria-invalid={error ? 'true' : undefined}
-		aria-describedby={errorId}
-		onfocus={handleFocus}
-		onmousedown={handleMouseDown}
-		onmouseup={handleMouseUp}
-	></textarea>
+	{#if fixed}
+		<div class="card-panel rounded-xl overflow-hidden flex flex-col bg-base-200">
+			<!-- Toolbar -->
+			<div class="h-10 bg-base-300 border-b border-base-300 flex items-center justify-between px-3">
+				{#if !compact}
+					<span class="text-xs font-mono text-base-content/60">{headerText}</span>
+				{/if}
+				{#if value}
+					<div class="dropdown dropdown-end">
+						<div
+							tabindex="0"
+							role="button"
+							class="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium cursor-pointer"
+						>
+							<ShareIcon /> Share
+						</div>
+						<ul tabindex="-1" class="menu dropdown-content p-2 shadow bg-base-100 rounded-box w-52">
+							<li>
+								<a onclick={copyToClipboard}>
+									<CopyIcon /> Copy
+								</a>
+							</li>
+							<li>
+								<a onclick={copyToClipboardReddit}>
+									<MarkdownIcon /> Copy (Markdown)
+								</a>
+							</li>
+							{#if isPublicKey}
+								<li>
+									<a onclick={copyLink}>
+										<LinkIcon /> Copy Link
+									</a>
+								</li>
+							{/if}
+						</ul>
+					</div>
+				{/if}
+			</div>
+			<!-- Code Content -->
+			<div class="flex-1 p-4 overflow-auto">
+				<code
+					bind:this={codeElement}
+					class="font-mono text-xs text-base-content/70 block whitespace-pre break-all cursor-text {className}"
+					onclick={handleCodeClick}
+				>
+					{value}
+				</code>
+			</div>
+		</div>
+	{:else}
+		<div class="card-panel rounded-xl overflow-hidden flex flex-col bg-base-200">
+			<!-- Toolbar -->
+			<div class="h-10 bg-base-300 border-b border-base-300 flex items-center justify-between px-3">
+				{#if !compact}
+					<span class="text-xs font-mono text-base-content/60">{headerText}</span>
+				{/if}
+				{#if value}
+					<div class="dropdown dropdown-end">
+						<div
+							tabindex="0"
+							role="button"
+							class="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-medium cursor-pointer"
+						>
+							<ShareIcon /> Share
+						</div>
+						<ul tabindex="-1" class="menu dropdown-content p-2 shadow bg-base-100 rounded-box w-52">
+							<li>
+								<a onclick={copyToClipboard}>
+									<CopyIcon /> Copy
+								</a>
+							</li>
+							<li>
+								<a onclick={copyToClipboardReddit}>
+									<MarkdownIcon /> Copy (Markdown)
+								</a>
+							</li>
+							{#if isPublicKey}
+								<li>
+									<a onclick={copyLink}>
+										<LinkIcon /> Copy Link
+									</a>
+								</li>
+							{/if}
+						</ul>
+					</div>
+				{/if}
+			</div>
+			<!-- Textarea Content -->
+			<div class="flex-1 p-4 overflow-auto">
+				<textarea
+					{id}
+					bind:this={textareaElement}
+					bind:value
+					{cols}
+					{rows}
+					{readonly}
+					{placeholder}
+					class="textarea textarea-code w-full whitespace-pre-wrap bg-base-100 {className} {error
+						? 'border-error'
+						: ''}"
+					aria-label={label}
+					aria-invalid={error ? 'true' : undefined}
+					aria-describedby={errorId}
+					onfocus={handleFocus}
+					onmousedown={handleMouseDown}
+					onmouseup={handleMouseUp}
+				></textarea>
+			</div>
+		</div>
+	{/if}
 	{#if error}
 		<div class="label">
 			<span id={errorId} class="label-text-alt text-error">{error}</span>
-		</div>
-	{/if}
-	{#if buttons && value}
-		<div class="fab fab-down absolute">
-			<!-- a focusable div with tabindex is necessary to work on all browsers. role="button" is necessary for accessibility -->
-			<div tabindex="0" role="button" class="btn btn-mini" title="Share"><ShareIcon /></div>
-
-			<!-- buttons that show up when FAB is open -->
-			<div>
-				<MiniActionButton secondary label="Copy" feedback="Copied!" onclick={copyToClipboard}>
-					<CopyIcon />
-				</MiniActionButton>
-			</div>
-			<div>
-				<MiniActionButton
-					secondary
-					label="Copy (Markdown)"
-					feedback="Copied!"
-					onclick={copyToClipboardReddit}
-				>
-					<MarkdownIcon />
-				</MiniActionButton>
-				<!-- I did consider having a separate markdown / reddit-markdown button, but it's too much clutter -->
-			</div>
-			{#if isPublicKey}
-				<div>
-					<MiniActionButton secondary label="Copy Link" feedback="Copied!" onclick={copyLink}>
-						<LinkIcon />
-					</MiniActionButton>
-				</div>
-			{/if}
 		</div>
 	{/if}
 </div>
