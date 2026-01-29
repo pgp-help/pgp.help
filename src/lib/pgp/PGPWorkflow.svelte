@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { encryptMessage, decryptMessage, signMessage, verifySignature } from './crypto';
 	import { isAGEEncryptedMessage } from './crypto';
-	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import KeyDetails from './KeyDetails.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
 	import { type KeyWrapper } from './keyStore.svelte.js';
 	import { type CryptoKey, KeyType } from './crypto';
 	import { untrack } from 'svelte';
 	import CardWithHeader from '../ui/CardWithHeader.svelte';
+	import ShareMenu from '../ui/ShareMenu.svelte';
 
 	const OperationType = {
 		Encrypt: 'encrypt',
@@ -158,30 +158,6 @@
 </script>
 
 <div class="container mx-auto max-w-4xl space-y-6">
-	<!-- INPUT EXAMPLE -->
-	<CardWithHeader title="Input Message" class="w-full shadow-sm">
-		<!-- Define the actions snippet -->
-		{#snippet actions()}
-			<button class="btn btn-ghost btn-xs text-primary"> Share </button>
-		{/snippet}
-
-		<!-- Main Content (children) -->
-		<textarea
-			bind:value={message}
-			class="textarea textarea-ghost h-32 w-full resize-y border-none focus:outline-none focus:bg-transparent"
-			placeholder="Type here..."
-		></textarea>
-	</CardWithHeader>
-
-	<!-- OUTPUT EXAMPLE -->
-	<CardWithHeader title="Encrypted Block" readonly={true} class="mt-8">
-		{#snippet actions()}
-			<button class="btn btn-ghost btn-xs">Copy</button>
-		{/snippet}
-
-		<div class="p-4 font-mono text-xs opacity-75">-----BEGIN PGP MESSAGE-----...</div>
-	</CardWithHeader>
-
 	<form class="space-y-6">
 		<fieldset class="fieldset">
 			<fieldset-legend class="fieldset-legend">
@@ -248,30 +224,42 @@
 			{/if}
 			<fieldset class="fieldset">
 				<fieldset-legend class="fieldset-legend"> Input Message </fieldset-legend>
-				<CopyableTextarea
-					bind:value={message}
-					placeholder={isPrivate
-						? 'Type message to sign...\n or Paste encrypted message to decrypt...'
-						: 'Type your secret message...\n or Paste signed message to verify...'}
-					label="Input Message"
-					selectAllOnFocus={false}
-					fixed={currentOperation == OperationType.Verify}
-					{error}
-					buttons={true}
-				/>
+				<CardWithHeader title="Input Message" class="w-full shadow-sm">
+					{#snippet actions()}
+						<ShareMenu value={message} />
+					{/snippet}
+
+					<textarea
+						bind:value={message}
+						class="textarea textarea-ghost h-32 w-full resize-y border-none focus:outline-none focus:bg-transparent"
+						placeholder={isPrivate
+							? 'Type message to sign...\n or Paste encrypted message to decrypt...'
+							: 'Type your secret message...\n or Paste signed message to verify...'}
+					></textarea>
+				</CardWithHeader>
+				{#if error}
+					<div class="label">
+						<span class="label-text-alt text-error">{error}</span>
+					</div>
+				{/if}
 			</fieldset>
 			{#if !isPrivate}
 				{#if currentOperation !== OperationType.Verify}
 					<fieldset class="fieldset mt-4">
 						<fieldset-legend class="fieldset-legend">Encrypted Output</fieldset-legend>
-						<CopyableTextarea
-							value={output}
-							readonly={true}
-							fixed={true}
-							placeholder="Encrypted output will appear here..."
-							label="Encrypted Output"
-							buttons={true}
-						/>
+						<CardWithHeader title="Encrypted Output" readonly={true} class="w-full shadow-sm">
+							{#snippet actions()}
+								<ShareMenu value={message} />
+							{/snippet}
+
+							<div class="p-4 font-mono text-xs whitespace-pre-wrap opacity-75">
+								{#if output}
+									{output}
+								{:else}
+									Encrypted output will appear here...
+								{/if}
+							</div>
+						</CardWithHeader>
 					</fieldset>
 				{/if}
 			{:else}
@@ -279,16 +267,25 @@
 					<fieldset-legend class="fieldset-legend">
 						{currentOperation === OperationType.Decrypt ? 'Decrypted Output' : 'Signed Message'}
 					</fieldset-legend>
-					<CopyableTextarea
-						value={output}
-						readonly={true}
-						fixed={true}
-						placeholder="Signed / Decrypted message will appear here..."
-						label={currentOperation === OperationType.Decrypt
+					<CardWithHeader
+						title={currentOperation === OperationType.Decrypt
 							? 'Decrypted Output'
 							: 'Signed Message'}
-						buttons={true}
-					/>
+						readonly={true}
+						class="w-full shadow-sm"
+					>
+						{#snippet actions()}
+							<ShareMenu value={message} />
+						{/snippet}
+
+						<div class="p-4 font-mono text-xs whitespace-pre-wrap opacity-75">
+							{#if output}
+								{output}
+							{:else}
+								Signed / Decrypted message will appear here...
+							{/if}
+						</div>
+					</CardWithHeader>
 				</fieldset>
 			{/if}
 		</div>
