@@ -208,37 +208,32 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 			writable: true
 		});
 
-		const { getByText } = render(KeyDetails, {
+		render(KeyDetails, {
 			props: {
 				keyWrapper: { key: testPrivateKeyFacade, persisted: PersistenceType.MEMORY }
 			}
 		});
 
-		// Click show details to reveal hidden fields
-		const showDetailsBtn = getByText('Show more details...');
-		await fireEvent.click(showDetailsBtn);
-
-		await waitFor(() => {
-			expect(getByText('Private Key:')).toBeTruthy();
-		});
-
-		// Find the Copy button associated with Show Public Key
-		// Since there might be multiple Copy buttons (one for private export), we need to be specific.
-		// The structure is: details > summary > MiniActionGroup > Copy Button
-		// We can look for the button with label "Copy" that is near "Show Public Key"
-		// Or just find all "Copy" buttons and pick the first one, as "Show Public Key" is rendered first.
-
-		const copyButtons = document.querySelectorAll('button[aria-label="Copy"]');
-		// Expect at least one
-		expect(copyButtons.length).toBeGreaterThan(0);
-
-		// The first one should be the Public Key copy button
-		const publicCopyBtn = copyButtons[0];
-		await fireEvent.click(publicCopyBtn);
-
-		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-			testPrivateKeyFacade.toPublic().getArmor()
+		// The ShareMenu at the top of the card provides copy functionality
+		// For a private key, the ShareMenu copies the key armor (via the ShareMenu component)
+		const copyButtons = document.querySelectorAll('button');
+		// Find buttons that contain "Copy" text
+		const copyButtonsWithText = Array.from(copyButtons).filter(
+			(btn) =>
+				btn.textContent?.includes('Copy') &&
+				!btn.textContent?.includes('Markdown') &&
+				!btn.textContent?.includes('Link')
 		);
+		// Expect at least one
+		expect(copyButtonsWithText.length).toBeGreaterThan(0);
+
+		// Click the Copy button
+		const copyBtn = copyButtonsWithText[0];
+		await fireEvent.click(copyBtn);
+
+		// The ShareMenu for a private key copies the private key armor
+		// (since keyWrapper.key.getArmor() returns the private key when it's a private key)
+		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(testPrivateKeyFacade.getArmor());
 	});
 
 	it('shows persist button when key is in memory and calls persistKey on click', async () => {

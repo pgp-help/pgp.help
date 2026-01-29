@@ -4,6 +4,7 @@
 	import SaveIcon from '../ui/icons/SaveIcon.svelte';
 	import TrashIcon from '../ui/icons/TrashIcon.svelte';
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
+	import ShareMenu from '../ui/ShareMenu.svelte';
 
 	let { keyWrapper, class: className = '' } = $props<{
 		keyWrapper: KeyWrapper;
@@ -46,18 +47,37 @@
 	tabindex="-1"
 	role="group"
 >
-	{#if keyWrapper.persisted === PersistenceType.MEMORY}
-		<div class="tooltip ${tooltipClasses}" data-tip="Save key">
-			<button type="button" class="${buttonClasses}" onclick={handleSave} aria-label="Save key">
-				<SaveIcon />
-			</button>
-		</div>
-	{:else}
-		<div class="tooltip ${tooltipClasses}" data-tip="Delete key">
-			<button type="button" class="${buttonClasses}" onclick={handleDelete} aria-label="Delete key">
-				<TrashIcon />
-			</button>
-		</div>
+	{#if keyWrapper?.key?.isPrivate()}
+		<!-- Private key: show save/delete and share menu -->
+		{#if keyWrapper.persisted === PersistenceType.MEMORY}
+			<div class="tooltip {tooltipClasses}" data-tip="Save key">
+				<button type="button" class={buttonClasses} onclick={handleSave} aria-label="Save key">
+					<SaveIcon />
+				</button>
+			</div>
+		{:else}
+			<div class="tooltip {tooltipClasses}" data-tip="Delete key">
+				<button type="button" class={buttonClasses} onclick={handleDelete} aria-label="Delete key">
+					<TrashIcon />
+				</button>
+			</div>
+		{/if}
+		<ShareMenu value={keyWrapper.key.getArmor()} />
+	{:else if keyWrapper?.key}
+		<!-- Public key: show save/delete only -->
+		{#if keyWrapper.persisted === PersistenceType.MEMORY}
+			<div class="tooltip {tooltipClasses}" data-tip="Save key">
+				<button type="button" class={buttonClasses} onclick={handleSave} aria-label="Save key">
+					<SaveIcon />
+				</button>
+			</div>
+		{:else}
+			<div class="tooltip {tooltipClasses}" data-tip="Delete key">
+				<button type="button" class={buttonClasses} onclick={handleDelete} aria-label="Delete key">
+					<TrashIcon />
+				</button>
+			</div>
+		{/if}
 	{/if}
 </div>
 
@@ -66,11 +86,11 @@
 		<h3 class="font-bold text-lg">Delete Key</h3>
 		<p class="py-4">
 			Are you sure you want to delete the key for <span class="font-semibold"
-				>{getKeyName(keyWrapper)}</span
+				>{keyWrapper ? getKeyName(keyWrapper) : 'Unknown'}</span
 			>?
 		</p>
 
-		{#if keyWrapper.key.isPrivate()}
+		{#if keyWrapper?.key?.isPrivate()}
 			<div role="alert" class="alert alert-warning mb-4">
 				<WarningIcon />
 				<span>

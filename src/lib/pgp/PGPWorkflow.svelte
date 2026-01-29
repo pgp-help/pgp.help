@@ -158,27 +158,15 @@
 </script>
 
 <div class="container mx-auto max-w-4xl space-y-6">
-	<form class="space-y-6">
-		<fieldset class="fieldset">
-			<fieldset-legend class="fieldset-legend">
-				{#if isPrivate}
-					Private Key
-				{:else}
-					Public Key
-				{/if}
-			</fieldset-legend>
-			{#if keyWrapper}
-				<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper />
-			{:else}
-				<RawKeyInput
-					bind:value={keyValue}
-					label={isPrivate ? 'Private Key' : 'Public Key'}
-					placeholder="Paste PGP Key (Armored)..."
-					{onKeyParsed}
-				/>
-			{/if}
-		</fieldset>
+	<div class="space-y-6">
+		<!-- Key Section -->
+		{#if keyWrapper}
+			<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper />
+		{:else}
+			<RawKeyInput {keyValue} {onKeyParsed} />
+		{/if}
 
+		<!-- IO Fields -->
 		<div data-testid="io_fields">
 			{#if !isPrivate}
 				{#if currentOperation === OperationType.Verify}
@@ -222,51 +210,57 @@
 					{/if}
 				{/if}
 			{/if}
-			<fieldset class="fieldset">
-				<fieldset-legend class="fieldset-legend"> Input Message </fieldset-legend>
-				<CardWithHeader title="Input Message" class="w-full shadow-sm">
+
+			<!-- Input Message -->
+			<div class="mt-4">
+				<CardWithHeader title="Input Message" class="w-full shadow-sm" {error}>
 					{#snippet actions()}
 						<ShareMenu value={message} />
 					{/snippet}
 
-					<textarea
-						bind:value={message}
-						class="textarea textarea-ghost h-32 w-full resize-y border-none focus:outline-none focus:bg-transparent"
-						placeholder={isPrivate
-							? 'Type message to sign...\n or Paste encrypted message to decrypt...'
-							: 'Type your secret message...\n or Paste signed message to verify...'}
-					></textarea>
+					{#snippet children(uid)}
+						<textarea
+							id={uid}
+							bind:value={message}
+							aria-label="Input Message"
+							class="textarea textarea-ghost h-32 w-full resize-y border-none focus:outline-none focus:bg-transparent"
+							placeholder={isPrivate
+								? 'Type message to sign...\n or Paste encrypted message to decrypt...'
+								: 'Type your secret message...\n or Paste signed message to verify...'}
+						></textarea>
+					{/snippet}
 				</CardWithHeader>
-				{#if error}
-					<div class="label">
-						<span class="label-text-alt text-error">{error}</span>
-					</div>
-				{/if}
-			</fieldset>
+			</div>
+
+			<!-- Output Section -->
 			{#if !isPrivate}
 				{#if currentOperation !== OperationType.Verify}
-					<fieldset class="fieldset mt-4">
-						<fieldset-legend class="fieldset-legend">Encrypted Output</fieldset-legend>
+					<div class="mt-4">
 						<CardWithHeader title="Encrypted Output" readonly={true} class="w-full shadow-sm">
 							{#snippet actions()}
-								<ShareMenu value={message} />
+								<ShareMenu value={output} />
 							{/snippet}
 
-							<div class="p-4 font-mono text-xs whitespace-pre-wrap opacity-75">
-								{#if output}
-									{output}
-								{:else}
-									Encrypted output will appear here...
-								{/if}
-							</div>
+							{#snippet children(uid)}
+								<div
+									id={uid}
+									aria-label="Encrypted Output"
+									class="p-4 font-mono text-xs whitespace-pre-wrap opacity-75"
+									role="textbox"
+									aria-readonly="true"
+								>
+									{#if output}
+										{output}
+									{:else}
+										Encrypted output will appear here...
+									{/if}
+								</div>
+							{/snippet}
 						</CardWithHeader>
-					</fieldset>
+					</div>
 				{/if}
 			{:else}
-				<fieldset class="fieldset mt-4">
-					<fieldset-legend class="fieldset-legend">
-						{currentOperation === OperationType.Decrypt ? 'Decrypted Output' : 'Signed Message'}
-					</fieldset-legend>
+				<div class="mt-4">
 					<CardWithHeader
 						title={currentOperation === OperationType.Decrypt
 							? 'Decrypted Output'
@@ -275,19 +269,29 @@
 						class="w-full shadow-sm"
 					>
 						{#snippet actions()}
-							<ShareMenu value={message} />
+							<ShareMenu value={output} />
 						{/snippet}
 
-						<div class="p-4 font-mono text-xs whitespace-pre-wrap opacity-75">
-							{#if output}
-								{output}
-							{:else}
-								Signed / Decrypted message will appear here...
-							{/if}
-						</div>
+						{#snippet children(uid)}
+							<div
+								id={uid}
+								aria-label={currentOperation === OperationType.Decrypt
+									? 'Decrypted Output'
+									: 'Signed Message'}
+								class="p-4 font-mono text-xs whitespace-pre-wrap opacity-75"
+								role="textbox"
+								aria-readonly="true"
+							>
+								{#if output}
+									{output}
+								{:else}
+									Signed / Decrypted message will appear here...
+								{/if}
+							</div>
+						{/snippet}
 					</CardWithHeader>
-				</fieldset>
+				</div>
 			{/if}
 		</div>
-	</form>
+	</div>
 </div>

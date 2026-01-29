@@ -35,7 +35,8 @@ describe('PGPWorkflow Sign/Verify', () => {
 		const keyTextarea = screen.getByLabelText(/Public Key/i);
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
 
-		await screen.findByText('Private Key', { selector: 'fieldset-legend' });
+		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
+		await within(mainArea).findByText('Private Key', { selector: '.card-header-title' });
 
 		// Unlock
 		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
