@@ -215,7 +215,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		});
 
 		// The ShareMenu at the top of the card provides copy functionality
-		// For a private key, the ShareMenu copies the key armor (via the ShareMenu component)
+		// For a private key, the ShareMenu copies the public key armor (via the ShareMenu component)
 		const copyButtons = document.querySelectorAll('button');
 		// Find buttons that contain "Copy" text
 		const copyButtonsWithText = Array.from(copyButtons).filter(
@@ -231,16 +231,18 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		const copyBtn = copyButtonsWithText[0];
 		await fireEvent.click(copyBtn);
 
-		// The ShareMenu for a private key copies the private key armor
-		// (since keyWrapper.key.getArmor() returns the private key when it's a private key)
-		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(testPrivateKeyFacade.getArmor());
+		// The ShareMenu for a private key copies the public key armor
+		// (since KeyActions.svelte uses keyWrapper.key.toPublic().getArmor())
+		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+			testPrivateKeyFacade.toPublic().getArmor()
+		);
 	});
 
 	it('shows persist button when key is in memory and calls persistKey on click', async () => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
 
-		const { getByLabelText, getByRole } = render(KeyDetails, {
+		const { getByText, getByRole } = render(KeyDetails, {
 			props: {
 				keyWrapper: { key: testKeyFacade, persisted: PersistenceType.MEMORY }
 			}
@@ -250,7 +252,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 			expect(getByRole('heading', { name: 'Pgp Help <hello@pgp.help>' })).toBeTruthy();
 		});
 
-		const persistBtn = getByLabelText('Save key');
+		const persistBtn = getByText('Save');
 		expect(persistBtn).toBeTruthy();
 
 		await fireEvent.click(persistBtn);

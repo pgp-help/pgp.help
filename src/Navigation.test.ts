@@ -29,11 +29,8 @@ describe('Navigation', () => {
 		render(App);
 
 		// 1. Enter private key 1
-		// Initially the form asks for "Private Key" or "Public Key" depending on state,
-		// but usually starts with "Public Key" label or generic "PGP Key" if we changed it.
-		// In PGPWorkflow.svelte: label={isPrivate ? 'Private Key' : 'Public Key'}
-		// Initially isPrivate is false.
-		const keyTextarea = screen.getByLabelText(/^Key$/i);
+		// Initially the form asks for "Import Key"
+		const keyTextarea = screen.getByLabelText(/^Import Key$/i);
 		await fireEvent.input(keyTextarea, { target: { value: key1.privateKey } });
 
 		// Verify it appears in sidebar
@@ -51,7 +48,7 @@ describe('Navigation', () => {
 
 		// Verify form is cleared.
 		// The main view should revert to textarea.
-		const keyTextarea2 = await screen.findByLabelText(/^Key$/i);
+		const keyTextarea2 = await screen.findByLabelText(/^Import Key$/i);
 		expect(keyTextarea2).toBeInTheDocument();
 		expect((keyTextarea2 as HTMLTextAreaElement).value).toBe('');
 

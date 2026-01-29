@@ -44,7 +44,7 @@ describe('App', () => {
 		const user = userEvent.setup();
 		render(App);
 
-		const keyTextarea = screen.getByLabelText(/^Key$/i);
+		const keyTextarea = screen.getByLabelText(/^Import Key$/i);
 		const messageTextarea = screen.getByLabelText(/Message/i);
 		const outputTextarea = screen.getByLabelText(/Encrypted Output/i);
 
@@ -78,7 +78,7 @@ describe('App', () => {
 			encryptionKeys: await openpgp.readKey({ armoredKey: validPublicKey })
 		})) as string;
 
-		const keyTextarea = await screen.findByLabelText(/^Key$/i);
+		const keyTextarea = await screen.findByLabelText(/^Import Key$/i);
 
 		// Paste private key
 		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
