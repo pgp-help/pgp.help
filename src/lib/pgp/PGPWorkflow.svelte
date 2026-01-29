@@ -232,6 +232,7 @@
 					selectAllOnFocus={false}
 					fixed={currentOperation == OperationType.Verify}
 					{error}
+					buttons={true}
 				/>
 			</fieldset>
 			{#if !isPrivate}
@@ -244,6 +245,7 @@
 							fixed={true}
 							placeholder="Encrypted output will appear here..."
 							label="Encrypted Output"
+							buttons={true}
 						/>
 					</fieldset>
 				{/if}
@@ -260,6 +262,7 @@
 						label={currentOperation === OperationType.Decrypt
 							? 'Decrypted Output'
 							: 'Signed Message'}
+						buttons={true}
 					/>
 				</fieldset>
 			{/if}
