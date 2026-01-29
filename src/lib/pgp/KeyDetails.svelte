@@ -7,7 +7,6 @@
 	import KeyActions from './KeyActions.svelte';
 	import Avatar from '../ui/Avatar.svelte';
 	import CardWithHeader from '../ui/CardWithHeader.svelte';
-	import ShareMenu from '../ui/ShareMenu.svelte';
 	import { type CryptoKey, wrapPGPKey, isPGPKey } from './crypto';
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
@@ -182,14 +181,7 @@
 
 <CardWithHeader title={cardTitle} class="w-full shadow-sm">
 	{#snippet actions()}
-		<div class="flex items-center gap-2">
-			<KeyActions {keyWrapper} />
-			{#if keyWrapper?.masterKey}
-				<ShareMenu value={keyWrapper.masterKey.key.getArmor()} />
-			{:else if keyWrapper?.key}
-				<ShareMenu value={keyWrapper.key.getArmor()} />
-			{/if}
-		</div>
+		<KeyActions {keyWrapper} />
 	{/snippet}
 
 	<div class="p-3 sm:p-4">

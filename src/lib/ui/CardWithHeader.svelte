@@ -2,7 +2,7 @@
 	let {
 		title,
 		children,
-		actions,
+		actions = null,
 		readonly = false,
 		error = $bindable(null), // Bindable: parent can set it or clear it
 		...rest

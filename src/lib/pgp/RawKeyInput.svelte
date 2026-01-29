@@ -5,7 +5,7 @@
 
 	let {
 		value = $bindable(''),
-		label = 'Key',
+		label = 'Import Key',
 		placeholder = 'Paste PGP or AGE Key...',
 		onKeyParsed
 	} = $props<{

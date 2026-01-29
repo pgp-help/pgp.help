@@ -33,6 +33,15 @@
 		}
 	});
 
+	// Flush output when key changes
+	$effect(() => {
+		void keyObject;
+		output = '';
+		error = '';
+		verificationStatus = null;
+		signerIdentity = null;
+	});
+
 	// Reference to the KeyDetails component instance (for calling methods like nudgeForDecryption)
 	let pgpKeyComponent = $state<KeyDetails | null>(null);
 	// The input message to be encrypted or decrypted
@@ -212,6 +221,7 @@
 			{/if}
 
 			<!-- Input Message -->
+
 			<div class="mt-4">
 				<CardWithHeader title="Input Message" class="w-full shadow-sm" {error}>
 					{#snippet actions()}
@@ -219,55 +229,32 @@
 					{/snippet}
 
 					{#snippet children({ uid })}
+						{@const inputPlaceholder = isPrivate
+							? 'Type message to sign...\n or Paste encrypted message to decrypt...'
+							: 'Type your secret message...\n or Paste signed message to verify...'}
 						<textarea
 							id={uid}
 							bind:value={message}
 							aria-label="Input Message"
-							class="textarea textarea-ghost h-32 w-full resize-y border-none focus:outline-none focus:bg-transparent"
-							placeholder={isPrivate
-								? 'Type message to sign...\n or Paste encrypted message to decrypt...'
-								: 'Type your secret message...\n or Paste signed message to verify...'}
+							class="textarea textarea-ghost h-32 w-full resize-y font-mono border-none focus:outline-none focus:bg-transparent"
+							placeholder={inputPlaceholder}
 						></textarea>
 					{/snippet}
 				</CardWithHeader>
 			</div>
 
 			<!-- Output Section -->
-			{#if !isPrivate}
-				{#if currentOperation !== OperationType.Verify}
-					<div class="mt-4">
-						<CardWithHeader title="Encrypted Output" readonly={true} class="w-full shadow-sm">
-							{#snippet actions()}
-								<ShareMenu value={output} />
-							{/snippet}
-
-							{#snippet children({ uid })}
-								<div
-									id={uid}
-									aria-label="Encrypted Output"
-									class="p-4 font-mono text-xs whitespace-pre-wrap opacity-75"
-									role="textbox"
-									aria-readonly="true"
-								>
-									{#if output}
-										{output}
-									{:else}
-										Encrypted output will appear here...
-									{/if}
-								</div>
-							{/snippet}
-						</CardWithHeader>
-					</div>
-				{/if}
-			{:else}
+			{#if currentOperation !== OperationType.Verify}
+				{@const outputTitle = isPrivate
+					? currentOperation === OperationType.Decrypt
+						? 'Decrypted Output'
+						: 'Signed Message'
+					: 'Encrypted Output'}
+				{@const outputPlaceholder = isPrivate
+					? 'Signed / Decrypted message will appear here...'
+					: 'Encrypted output will appear here...'}
 				<div class="mt-4">
-					<CardWithHeader
-						title={currentOperation === OperationType.Decrypt
-							? 'Decrypted Output'
-							: 'Signed Message'}
-						readonly={true}
-						class="w-full shadow-sm"
-					>
+					<CardWithHeader title={outputTitle} readonly={true} class="w-full shadow-sm">
 						{#snippet actions()}
 							<ShareMenu value={output} />
 						{/snippet}
@@ -275,17 +262,15 @@
 						{#snippet children({ uid })}
 							<div
 								id={uid}
-								aria-label={currentOperation === OperationType.Decrypt
-									? 'Decrypted Output'
-									: 'Signed Message'}
-								class="p-4 font-mono text-xs whitespace-pre-wrap opacity-75"
+								aria-label={outputTitle}
+								class="p-4 font-mono text-xs whitespace-pre-wrap"
 								role="textbox"
 								aria-readonly="true"
 							>
 								{#if output}
 									{output}
 								{:else}
-									Signed / Decrypted message will appear here...
+									<span class="text-base-content/40">{outputPlaceholder}</span>
 								{/if}
 							</div>
 						{/snippet}
