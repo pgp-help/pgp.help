@@ -150,7 +150,7 @@ body {
 
 	.card-field:hover[data-selectable='true'],
 	.card-field:focus-visible[data-selectable='true'] {
-		transform: scale(1.05);
+		transform: scale(1.03);
 		outline: 2px solid hsl(var(--bc) / 0.25);
 		outline-offset: 2px;
 	}

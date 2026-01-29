@@ -181,7 +181,7 @@
 	</details>
 {/snippet}
 
-<CardWithHeader title={cardTitle} class="w-full shadow-sm" onfocusout={handleFocusOut}>
+<CardWithHeader title={cardTitle} class="w-full shadow-sm" onfocusout={handleFocusOut} tabindex="0">
 	{#snippet actions()}
 		<KeyActions {keyWrapper} />
 	{/snippet}
