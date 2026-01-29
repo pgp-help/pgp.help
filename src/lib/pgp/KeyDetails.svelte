@@ -6,7 +6,7 @@
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
 	import KeyActions from './KeyActions.svelte';
 	import Avatar from '../ui/Avatar.svelte';
-	import { type CryptoKey, KeyType, wrapPGPKey, isPGPKey } from './crypto';
+	import { type CryptoKey, wrapPGPKey, isPGPKey } from './crypto';
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
 	// parent component to see the updated value.
@@ -15,7 +15,6 @@
 	}>();
 
 	let key = $derived<CryptoKey>(keyWrapper.key);
-	let isPGP = $derived(key.type === KeyType.PGP);
 
 	let publicKey = $derived.by(() => {
 		if (key.isPrivate()) {
@@ -53,6 +52,7 @@
 	$effect(() => {
 		if (isPGPKey(key)) {
 			// Access detailed properties through the underlying OpenPGP key
+
 			const openPGPKey = key.getOpenPGPKey();
 			openPGPKey.getExpirationTime().then((t) => {
 				expirationTime = t as Date | null;
@@ -91,7 +91,7 @@
 
 	let properties = $derived.by(
 		(): Array<{ label: string; value: string; tooltip: string; hidden?: boolean }> => {
-			if (isPGP && isPGPKey(key)) {
+			if (isPGPKey(key)) {
 				// Access creation time through underlying OpenPGP key
 				const openPGPKey = key.getOpenPGPKey();
 				const created = formatDate(openPGPKey.getCreationTime() as Date);
@@ -134,7 +134,7 @@
 				// AGE key
 				const props = [
 					{
-						label: 'ID',
+						label: 'Public Key',
 						value: key.getFingerprint(), // Use generic getID
 						tooltip: 'The short identifier for this key'
 					}
@@ -158,6 +158,22 @@
 		}
 	}
 </script>
+
+{#snippet privateKeySnippet()}
+	<details class="mt-2" bind:open={privateKeyOpen}>
+		<summary class={KEY_PROPERTY_CLASS}>
+			Private Key:
+			<span class="opacity-60 cursor-pointer">[click to export]</span>
+		</summary>
+		<div class="mt-2 ml-0">
+			<div class="alert alert-warning text-xs py-2 mb-2">
+				<WarningIcon class="h-4 w-4" />
+				<span>Warning: For backup only. Never share your private key!</span>
+			</div>
+			<CopyableTextarea value={key.getArmor()} class="text-xs" fixed readonly buttons={true} />
+		</div>
+	</details>
+{/snippet}
 
 <div
 	class="card card-border border-base-300 group/key-actions w-full max-w-full relative"
@@ -183,6 +199,7 @@
 				</div>
 			</div>
 
+			<!-- PGP Keys: Show properties with showDetails toggle -->
 			{#each properties as prop (prop.label)}
 				{#if !prop.hidden || showDetails}
 					<div class={KEY_PROPERTY_CLASS}>
@@ -193,69 +210,54 @@
 					</div>
 				{/if}
 			{/each}
+			{#if isPGPKey(key)}
+				{#if key.getUserIDs().length > 1 && showDetails}
+					<div class="mt-2 text-xs opacity-60">
+						+{key.getUserIDs().length - 1} other ID(s)
+					</div>
+				{/if}
 
-			{#if key.getUserIDs().length > 1 && showDetails}
-				<div class="mt-2 text-xs opacity-60">
-					+{key.getUserIDs().length - 1} other ID(s)
-				</div>
-			{/if}
-
-			{#if showDetails}
-				<div class="mt-2">
-					<details class="mt-1" bind:open={publicKeyOpen}>
-						<summary class={KEY_PROPERTY_CLASS}>
-							Public Key:
-							<span class="opacity-60 cursor-pointer">[click to show]</span>
-						</summary>
-						<div class="mt-2 ml-0">
-							<CopyableTextarea
-								value={publicKey?.getArmor ? publicKey.getArmor() : ''}
-								class="text-xs"
-								fixed
-								readonly
-								buttons
-							/>
-						</div>
-					</details>
-
-					{#if key.isPrivate()}
-						<details class="mt-1" bind:open={privateKeyOpen}>
+				{#if showDetails}
+					<div class="mt-2">
+						<details class="mt-1" bind:open={publicKeyOpen}>
 							<summary class={KEY_PROPERTY_CLASS}>
-								Private Key:
-								<span class="opacity-60 cursor-pointer">[click to export]</span>
+								Public Key:
+								<span class="opacity-60 cursor-pointer">[click to show]</span>
 							</summary>
 							<div class="mt-2 ml-0">
-								<div class="alert alert-warning text-xs py-2 mb-2">
-									<WarningIcon class="h-4 w-4" />
-									<span>Warning: For backup only. Never share your private key!</span>
-								</div>
 								<CopyableTextarea
-									value={key.getArmor()}
+									value={publicKey?.getArmor ? publicKey.getArmor() : ''}
 									class="text-xs"
 									fixed
 									readonly
-									buttons={true}
+									buttons
 								/>
 							</div>
 						</details>
-					{/if}
-				</div>
-			{/if}
 
-			{#if !showDetails}
-				<button
-					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
-					onclick={() => (showDetails = true)}
-				>
-					Show more details...
-				</button>
-			{:else}
-				<button
-					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
-					onclick={() => (showDetails = false)}
-				>
-					Show less details
-				</button>
+						{#if key.isPrivate()}
+							{@render privateKeySnippet()}
+						{/if}
+					</div>
+				{/if}
+
+				{#if !showDetails}
+					<button
+						class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
+						onclick={() => (showDetails = true)}
+					>
+						Show more details...
+					</button>
+				{:else}
+					<button
+						class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
+						onclick={() => (showDetails = false)}
+					>
+						Show less details
+					</button>
+				{/if}
+			{:else if key.isPrivate()}
+				{@render privateKeySnippet()}
 			{/if}
 
 			{#if key.isPrivate()}
