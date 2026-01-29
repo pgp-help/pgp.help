@@ -16,22 +16,7 @@
 	let hasError = $derived(!!error);
 </script>
 
-<div
-	role="group"
-	{...rest}
-	class="
-		card overflow-hidden border bg-base-100 rounded-box transition-colors duration-200
-		
-		/* CONDITIONAL BORDER LOGIC */
-		/* If Error: Red Border + Red Ring on Focus */
-		/* If Normal: Gray Border + Blue Ring on Focus */
-		{hasError
-		? 'border-error focus-within:border-error focus-within:ring-1 focus-within:ring-error'
-		: 'border-base-300 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary'}
-
-		{rest.class}
-	"
->
+<div role="group" {...rest} class="card-field overflow-hidden" data-invalid={hasError}>
 	<!-- HEADER -->
 	<div
 		class="flex items-center justify-between border-b px-4 h-8 bg-base-200

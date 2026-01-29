@@ -111,24 +111,48 @@ body {
 }
 
 @layer components {
-	/* Used in the key list */
-
-	.card-selectable {
-		@apply card card-border border-base-300 bg-base-100 transition;
-		cursor: pointer;
+	/* Base card (shared by both) */
+	.card-field {
+		@apply card card-border rounded-box border transition-colors duration-200;
+		@apply bg-base-100 border-base-300;
 	}
 
-	.card-selectable:hover,
-	.card-selectable:focus-within {
-		@apply bg-primary/10 shadow-sm;
+	/* Error (sticky) */
+	.card-field[data-invalid='true'] {
+		@apply border-error;
 	}
 
-	.card-selectable:focus-within {
-		box-shadow: 0 0 0 2px hsl(var(--p) / 0.35);
+	/* Focus or Selected = Primary emphasis */
+	.card-field:focus-within,
+	.card-field[data-selected='true'] {
+		@apply border-primary;
+		@apply border-2;
+		box-shadow: 0 0 0 2px hsl(var(--p) / 0.45);
 	}
 
-	.card-selectable.card-selected {
-		@apply border-primary bg-primary/10;
+	/* Focus + Error wins */
+	.card-field[data-invalid='true']:focus-within {
+		@apply border-error;
+		box-shadow: 0 0 0 2px hsl(var(--er) / 0.45);
+	}
+
+	/* Selected + Error (rare) — treat like error focus */
+	.card-field[data-selected='true'][data-invalid='true'] {
+		@apply border-error;
+		box-shadow: 0 0 0 2px hsl(var(--er) / 0.45);
+	}
+
+	/* Hover/keyboard cue (NO background shading) */
+	.card-field {
+		@apply transition-transform duration-150 ease-out;
+		transform-origin: center;
+	}
+
+	.card-field:hover[data-selectable='true'],
+	.card-field:focus-visible[data-selectable='true'] {
+		transform: scale(1.05);
+		outline: 2px solid hsl(var(--bc) / 0.25);
+		outline-offset: 2px;
 	}
 }
 
