@@ -47,13 +47,8 @@
 
 	<!-- BODY -->
 	<div class:bg-base-200={readonly}>
-		<!-- 
-             Pass 3 things to the child: 
-             1. fieldId (for <textarea id>)
-             2. hasError (for <textarea aria-invalid>)
-             3. errorId (for <textarea aria-errormessage>)
-        -->
-		{@render children({ uid: fieldId, isInvalid: hasError, errId: errorId })}
+		<!-- pass the uid, so we can use `for` above for accessibilty -->
+		{@render children({ uid: fieldId })}
 	</div>
 
 	<!-- ERROR FOOTER (Optional, but best practice) -->

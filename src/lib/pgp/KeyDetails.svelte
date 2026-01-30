@@ -5,7 +5,7 @@
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
 	import KeyActions from './KeyActions.svelte';
 	import Avatar from '../ui/Avatar.svelte';
-	import CardWithHeader from '../ui/CardWithHeader.svelte';
+
 	import { type CryptoKey, wrapPGPKey, isPGPKey } from './crypto';
 	import SelectableText from '../ui/SelectableText.svelte';
 
@@ -207,12 +207,21 @@
 	</details>
 {/snippet}
 
-<CardWithHeader title={cardTitle} class="w-full shadow-sm" onfocusout={handleFocusOut} tabindex="0">
-	{#snippet actions()}
-		<KeyActions {keyWrapper} />
-	{/snippet}
+<!-- Wrapper -->
+<!-- This is a hack so that if you expand the keys and focous out (but still within the card) it 
+ keeps the keys open. This makes it feel a bit less flakey -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<div class="card-field w-full shadow-sm" tabindex="0" onfocusout={handleFocusOut}>
+	<!-- Header -->
+	<div class="card-field-header">
+		<h3>{cardTitle}</h3>
 
-	<div class="p-3 sm:p-4">
+		<!-- Actions (Flexbox pushes this to the right) -->
+		<KeyActions {keyWrapper} />
+	</div>
+
+	<!-- Body -->
+	<div class="card-field-body p-3 sm:p-4">
 		<div class="flex flex-wrap items-center gap-3 mb-1">
 			<Avatar cryptoKey={key} size={64} />
 			<div class="flex-1 min-w-0">
@@ -337,7 +346,7 @@
 			</div>
 		{/if}
 	</div>
-</CardWithHeader>
+</div>
 
 <style>
 	.shake {

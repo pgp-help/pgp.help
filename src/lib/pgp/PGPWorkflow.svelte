@@ -6,7 +6,6 @@
 	import { type KeyWrapper } from './keyStore.svelte.js';
 	import { type CryptoKey, KeyType } from './crypto';
 	import { untrack } from 'svelte';
-	import CardWithHeader from '../ui/CardWithHeader.svelte';
 	import ShareMenu from '../ui/ShareMenu.svelte';
 	import SelectableText from '../ui/SelectableText.svelte';
 
@@ -222,22 +221,33 @@
 			{/if}
 
 			<!-- Input Message -->
-
 			<div class="mt-4">
-				<CardWithHeader title="Input Message" class="w-full shadow-sm" {error}>
-					{#snippet children({ uid })}
-						{@const inputPlaceholder = isPrivate
-							? 'Type message to sign...\n or Paste encrypted message to decrypt...'
-							: 'Type your secret message...\n or Paste signed message to verify...'}
+				<div class="card-field w-full shadow-sm" data-state={error ? 'error' : ''}>
+					<div class="card-field-header">
+						<!-- Connect label to input manually -->
+						<label for="input-message">Input Message</label>
+					</div>
+
+					<div class="card-field-body">
 						<textarea
-							id={uid}
+							id="input-message"
 							bind:value={message}
 							aria-label="Input Message"
+							aria-invalid={!!error}
+							aria-errormessage={error ? 'input-error' : undefined}
 							class="textarea textarea-ghost h-32 w-full resize-y font-mono border-none focus:outline-none focus:bg-transparent"
-							placeholder={inputPlaceholder}
+							placeholder={isPrivate
+								? 'Type message to sign...\n or Paste encrypted message to decrypt...'
+								: 'Type your secret message...\n or Paste signed message to verify...'}
 						></textarea>
-					{/snippet}
-				</CardWithHeader>
+					</div>
+
+					{#if error}
+						<div id="input-error" class="card-field-footer">
+							{error}
+						</div>
+					{/if}
+				</div>
 			</div>
 
 			<!-- Output Section -->
@@ -250,21 +260,24 @@
 				{@const outputPlaceholder = isPrivate
 					? 'Signed / Decrypted message will appear here...'
 					: 'Encrypted output will appear here...'}
-				<div class="mt-4">
-					<CardWithHeader title={outputTitle} readonly={true} class="w-full shadow-sm">
-						{#snippet actions()}
-							<ShareMenu value={output} />
-						{/snippet}
 
-						{#snippet children({ uid })}
+				<div class="mt-4">
+					<div class="card-field w-full shadow-sm">
+						<div class="card-field-header">
+							<label for="output-message">{outputTitle}</label>
+							<!-- Actions just sit in the header flex container -->
+							<ShareMenu value={output} />
+						</div>
+
+						<div class="card-field-body" data-readonly="true">
 							<SelectableText
-								id={uid}
+								id="output-message"
 								aria-label={outputTitle}
 								value={output}
 								placeholder={outputPlaceholder}
 							/>
-						{/snippet}
-					</CardWithHeader>
+						</div>
+					</div>
 				</div>
 			{/if}
 		</div>
