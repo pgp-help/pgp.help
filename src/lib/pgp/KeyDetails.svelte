@@ -183,7 +183,7 @@
 </script>
 
 {#snippet privateKeySnippet()}
-	<details class="mt-2" bind:open={privateKeyOpen} data-private-key>
+	<details class="mt-2" bind:open={privateKeyOpen}>
 		<summary class={KEY_PROPERTY_CLASS}>
 			Private Key:
 			<span class="opacity-60 cursor-pointer">[click to export]</span>
@@ -198,9 +198,9 @@
 				</span>
 			</div>
 			<SelectableText
-				class="rounded-box bg-base-200 border {isNewKey
-					? 'border-warning'
-					: 'border-base-300'} w-fit"
+				class="rounded-box bg-base-200 border 
+				{isNewKey ? 'border-warning' : 'border-base-300'} 
+				w-fit"
 				value={key.getArmor()}
 			/>
 		</div>
