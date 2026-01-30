@@ -45,7 +45,9 @@
 
 		<div transition:slide={{ duration: 200 }}>
 			<div
-				class="card card-selectable p-3 {isSelected ? 'card-selected' : ''}"
+				class="card-field p-3"
+				data-selected={isSelected}
+				data-selectable="true"
 				role="button"
 				tabindex="0"
 				onclick={() => (selectedWrapper = wrapper)}

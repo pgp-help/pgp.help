@@ -25,7 +25,7 @@ describe('PGPPage', () => {
 		// Wait for async operations
 		await vi.waitFor(() => {
 			// PGPPage should show "Private Key", and the newly generated key: "Test <test@test.com>"
-			expect(screen.getByText('Private Key')).toBeInTheDocument();
+			expect(screen.getAllByText('Private Key').length).toBeGreaterThan(0);
 			//NTH: getByRole would probably be better here...
 			expect(screen.getAllByText('Test <test@test.com>').length).toBeGreaterThan(0);
 

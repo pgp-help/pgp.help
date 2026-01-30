@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { encryptMessage, decryptMessage, signMessage, verifySignature } from './crypto';
 	import { isAGEEncryptedMessage } from './crypto';
-	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import KeyDetails from './KeyDetails.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
 	import { type KeyWrapper } from './keyStore.svelte.js';
 	import { type CryptoKey, KeyType } from './crypto';
 	import { untrack } from 'svelte';
+	import CardWithHeader from '../ui/CardWithHeader.svelte';
+	import ShareMenu from '../ui/ShareMenu.svelte';
+	import SelectableText from '../ui/SelectableText.svelte';
 
 	const OperationType = {
 		Encrypt: 'encrypt',
@@ -30,6 +32,15 @@
 		if (keyWrapper) {
 			keyValue = '';
 		}
+	});
+
+	// Flush output when key changes
+	$effect(() => {
+		void keyObject;
+		output = '';
+		error = '';
+		verificationStatus = null;
+		signerIdentity = null;
 	});
 
 	// Reference to the KeyDetails component instance (for calling methods like nudgeForDecryption)
@@ -157,27 +168,15 @@
 </script>
 
 <div class="container mx-auto max-w-4xl space-y-6">
-	<form class="space-y-6">
-		<fieldset class="fieldset">
-			<fieldset-legend class="fieldset-legend">
-				{#if isPrivate}
-					Private Key
-				{:else}
-					Public Key
-				{/if}
-			</fieldset-legend>
-			{#if keyWrapper}
-				<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper />
-			{:else}
-				<RawKeyInput
-					bind:value={keyValue}
-					label={isPrivate ? 'Private Key' : 'Public Key'}
-					placeholder="Paste PGP Key (Armored)..."
-					{onKeyParsed}
-				/>
-			{/if}
-		</fieldset>
+	<div class="space-y-6">
+		<!-- Key Section -->
+		{#if keyWrapper}
+			<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper />
+		{:else}
+			<RawKeyInput value={keyValue} {onKeyParsed} />
+		{/if}
 
+		<!-- IO Fields -->
 		<div data-testid="io_fields">
 			{#if !isPrivate}
 				{#if currentOperation === OperationType.Verify}
@@ -221,51 +220,53 @@
 					{/if}
 				{/if}
 			{/if}
-			<fieldset class="fieldset">
-				<fieldset-legend class="fieldset-legend"> Input Message </fieldset-legend>
-				<CopyableTextarea
-					bind:value={message}
-					placeholder={isPrivate
-						? 'Type message to sign...\n or Paste encrypted message to decrypt...'
-						: 'Type your secret message...\n or Paste signed message to verify...'}
-					label="Input Message"
-					selectAllOnFocus={false}
-					fixed={currentOperation == OperationType.Verify}
-					{error}
-					buttons={true}
-				/>
-			</fieldset>
-			{#if !isPrivate}
-				{#if currentOperation !== OperationType.Verify}
-					<fieldset class="fieldset mt-4">
-						<fieldset-legend class="fieldset-legend">Encrypted Output</fieldset-legend>
-						<CopyableTextarea
-							value={output}
-							readonly={true}
-							fixed={true}
-							placeholder="Encrypted output will appear here..."
-							label="Encrypted Output"
-							buttons={true}
-						/>
-					</fieldset>
-				{/if}
-			{:else}
-				<fieldset class="fieldset mt-4">
-					<fieldset-legend class="fieldset-legend">
-						{currentOperation === OperationType.Decrypt ? 'Decrypted Output' : 'Signed Message'}
-					</fieldset-legend>
-					<CopyableTextarea
-						value={output}
-						readonly={true}
-						fixed={true}
-						placeholder="Signed / Decrypted message will appear here..."
-						label={currentOperation === OperationType.Decrypt
-							? 'Decrypted Output'
-							: 'Signed Message'}
-						buttons={true}
-					/>
-				</fieldset>
+
+			<!-- Input Message -->
+
+			<div class="mt-4">
+				<CardWithHeader title="Input Message" class="w-full shadow-sm" {error}>
+					{#snippet children({ uid })}
+						{@const inputPlaceholder = isPrivate
+							? 'Type message to sign...\n or Paste encrypted message to decrypt...'
+							: 'Type your secret message...\n or Paste signed message to verify...'}
+						<textarea
+							id={uid}
+							bind:value={message}
+							aria-label="Input Message"
+							class="textarea textarea-ghost h-32 w-full resize-y font-mono border-none focus:outline-none focus:bg-transparent"
+							placeholder={inputPlaceholder}
+						></textarea>
+					{/snippet}
+				</CardWithHeader>
+			</div>
+
+			<!-- Output Section -->
+			{#if currentOperation !== OperationType.Verify}
+				{@const outputTitle = isPrivate
+					? currentOperation === OperationType.Decrypt
+						? 'Decrypted Output'
+						: 'Signed Message'
+					: 'Encrypted Output'}
+				{@const outputPlaceholder = isPrivate
+					? 'Signed / Decrypted message will appear here...'
+					: 'Encrypted output will appear here...'}
+				<div class="mt-4">
+					<CardWithHeader title={outputTitle} readonly={true} class="w-full shadow-sm">
+						{#snippet actions()}
+							<ShareMenu value={output} />
+						{/snippet}
+
+						{#snippet children({ uid })}
+							<SelectableText
+								id={uid}
+								aria-label={outputTitle}
+								value={output}
+								placeholder={outputPlaceholder}
+							/>
+						{/snippet}
+					</CardWithHeader>
+				</div>
 			{/if}
 		</div>
-	</form>
+	</div>
 </div>

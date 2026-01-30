@@ -23,7 +23,7 @@
 		onclick={() => router.openHome()}
 		aria-label="pgp.help"
 	>
-		<AppIcon />
+		<AppIcon class="w-8 h-8" />
 		<div class="text-lg font-bold">
 			pgp.<span class="text-primary">help</span>
 		</div>

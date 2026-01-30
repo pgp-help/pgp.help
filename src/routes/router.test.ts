@@ -120,18 +120,18 @@ describe('Routing', () => {
 		render(App);
 
 		// Initially on PGP Workflow page
-		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();
-		expect(screen.queryByText('What is PGP?')).not.toBeInTheDocument();
+		expect(screen.getByPlaceholderText(/Paste PGP or AGE Key/i)).toBeInTheDocument();
+		expect(screen.queryByText(/What is PGP\?/i)).not.toBeInTheDocument();
 
 		// Click Guide button (it's a button now, not a link)
 		const guideButton = screen.getByRole('button', { name: 'Guide' });
 		await fireEvent.click(guideButton);
 
 		// Should now be on Guide page
-		expect(screen.getByText('What is PGP?')).toBeInTheDocument();
+		expect(screen.getByText(/What is PGP\?/i)).toBeInTheDocument();
 		// The PGP Workflow components should be gone
 		// The "Public Key" label is dynamic based on isPrivate, but "Paste PGP Key (Armored)..." placeholder is constant in RawKeyInput
-		expect(screen.queryByPlaceholderText('Paste PGP Key (Armored)...')).not.toBeInTheDocument();
+		expect(screen.queryByPlaceholderText(/Paste PGP or AGE Key/i)).not.toBeInTheDocument();
 		expect(window.location.pathname).toBe('/Guide');
 	});
 
@@ -141,7 +141,7 @@ describe('Routing', () => {
 		render(App);
 
 		// Verify we are on Guide page
-		expect(screen.getByText('Get Started with PGP')).toBeInTheDocument();
+		expect(screen.getByText(/Get Started with PGP/i)).toBeInTheDocument();
 
 		// Click Home button (it's a button now, not a link)
 		// There are multiple buttons with name 'pgp.help' (one in navbar, one in mobile)
@@ -151,8 +151,8 @@ describe('Routing', () => {
 		await fireEvent.click(navbarHomeButton);
 
 		// Should now be on PGP Workflow page
-		expect(screen.getByPlaceholderText(/Paste PGP Key/i)).toBeInTheDocument();
-		expect(screen.queryByText('Get Started with PGP')).not.toBeInTheDocument();
+		expect(screen.getByPlaceholderText(/Paste PGP or AGE Key/i)).toBeInTheDocument();
+		expect(screen.queryByText(/Get Started with PGP/i)).not.toBeInTheDocument();
 		expect(window.location.pathname).toBe('/');
 	});
 });

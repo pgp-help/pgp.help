@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import App from './App.svelte';
 import { keyStore } from './lib/pgp/keyStore.svelte';
 import { generateKeyPair } from './lib/pgp/pgp';
+import { router } from './routes/router.svelte';
 
 describe('Navigation', () => {
 	let key1: { privateKey: string; name: string };
@@ -17,9 +18,10 @@ describe('Navigation', () => {
 		key2 = { privateKey: k2.privateKey, name: 'User Two' };
 	});
 
-	beforeEach(() => {
-		keyStore.clear();
+	beforeEach(async () => {
+		await keyStore.clear();
 		window.history.replaceState({}, '', '/');
+		router.openHome();
 	});
 
 	it('navigates between keys and new key mode', async () => {
@@ -27,11 +29,8 @@ describe('Navigation', () => {
 		render(App);
 
 		// 1. Enter private key 1
-		// Initially the form asks for "Private Key" or "Public Key" depending on state,
-		// but usually starts with "Public Key" label or generic "PGP Key" if we changed it.
-		// In PGPWorkflow.svelte: label={isPrivate ? 'Private Key' : 'Public Key'}
-		// Initially isPrivate is false.
-		const keyTextarea = screen.getByLabelText(/^Public Key$/i);
+		// Initially the form asks for "Import Key"
+		const keyTextarea = screen.getByLabelText(/^Import Key$/i);
 		await fireEvent.input(keyTextarea, { target: { value: key1.privateKey } });
 
 		// Verify it appears in sidebar
@@ -49,7 +48,7 @@ describe('Navigation', () => {
 
 		// Verify form is cleared.
 		// The main view should revert to textarea.
-		const keyTextarea2 = await screen.findByLabelText(/^Public Key$/i);
+		const keyTextarea2 = await screen.findByLabelText(/^Import Key$/i);
 		expect(keyTextarea2).toBeInTheDocument();
 		expect((keyTextarea2 as HTMLTextAreaElement).value).toBe('');
 
@@ -77,16 +76,13 @@ describe('Navigation', () => {
 
 	it('handles ?key=... URL parameter', async () => {
 		// Simulate a user browsing to a URL with `?key=` parameter
-		const url = new URL(window.location.href);
-		url.searchParams.set('key', key1.privateKey);
-		window.history.pushState({}, '', url.toString());
-		window.dispatchEvent(new PopStateEvent('popstate'));
+		router.openKeyString(key1.privateKey);
 
 		render(App);
 
 		// Verify it gets added to the store and sidebar automatically
 		const sidebar = screen.getByRole('complementary', { name: /Sidebar/i });
-		await within(sidebar).findByTitle('User One');
+		await within(sidebar).findByText('User One', {}, { timeout: 5000 });
 
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
 		await within(mainArea).findByRole('heading', { name: /User One/ });

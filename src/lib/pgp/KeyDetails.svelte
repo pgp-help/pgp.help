@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { decryptPrivateKey } from './pgp';
 	import { type KeyWrapper, asPublicKeyWrapper } from './keyStore.svelte.js';
-	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
 	import KeyActions from './KeyActions.svelte';
 	import Avatar from '../ui/Avatar.svelte';
+	import CardWithHeader from '../ui/CardWithHeader.svelte';
 	import { type CryptoKey, wrapPGPKey, isPGPKey } from './crypto';
+	import SelectableText from '../ui/SelectableText.svelte';
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
 	// parent component to see the updated value.
@@ -157,6 +158,8 @@
 			privateKeyOpen = false;
 		}
 	}
+
+	let cardTitle = $derived(key.isPrivate() ? 'Private Key' : 'Public Key');
 </script>
 
 {#snippet privateKeySnippet()}
@@ -170,159 +173,145 @@
 				<WarningIcon class="h-4 w-4" />
 				<span>Warning: For backup only. Never share your private key!</span>
 			</div>
-			<CopyableTextarea value={key.getArmor()} class="text-xs" fixed readonly buttons={true} />
+			<SelectableText
+				class="rounded-box bg-base-200 border border-base-300 w-fit"
+				value={key.getArmor()}
+			/>
 		</div>
 	</details>
 {/snippet}
 
-<div
-	class="card card-border border-base-300 group/key-actions w-full max-w-full relative"
-	onfocusout={handleFocusOut}
->
-	<div class="card-body p-3 sm:p-4">
-		<!-- KeyActions positioned in top-right corner -->
-		<div class="absolute top-3 right-3 z-10">
-			<KeyActions {keyWrapper} />
-		</div>
+<CardWithHeader title={cardTitle} class="w-full shadow-sm" onfocusout={handleFocusOut} tabindex="0">
+	{#snippet actions()}
+		<KeyActions {keyWrapper} />
+	{/snippet}
 
-		<div>
-			<!-- to force card-body to treat this as a single item -->
-			<div class="flex flex-wrap items-center gap-3 mb-1">
-				<Avatar cryptoKey={key} size={64} />
-				<div class="flex-1 min-w-0">
-					<h4 class="font-bold text-lg break-all">{key.getUserIDs()[0] || 'Unknown User'}</h4>
-					<div class="flex items-center gap-2 mt-1">
-						<div class="flex gap-1 shrink-0">
-							<PGPKeyBadges {keyWrapper} />
-						</div>
+	<div class="p-3 sm:p-4">
+		<div class="flex flex-wrap items-center gap-3 mb-1">
+			<Avatar cryptoKey={key} size={64} />
+			<div class="flex-1 min-w-0">
+				<h4 class="font-bold text-lg break-all">{key.getUserIDs()[0] || 'Unknown User'}</h4>
+				<div class="flex items-center gap-2 mt-1">
+					<div class="flex gap-1 shrink-0">
+						<PGPKeyBadges {keyWrapper} />
 					</div>
 				</div>
 			</div>
+		</div>
 
-			<!-- PGP Keys: Show properties with showDetails toggle -->
-			{#each properties as prop (prop.label)}
-				{#if !prop.hidden || showDetails}
-					<div class={KEY_PROPERTY_CLASS}>
-						<div class="tooltip tooltip-right" data-tip={prop.tooltip}>
-							<span class="cursor-help">{prop.label}</span>:
+		<!-- PGP Keys: Show properties with showDetails toggle -->
+		{#each properties as prop (prop.label)}
+			{#if !prop.hidden || showDetails}
+				<div class={KEY_PROPERTY_CLASS}>
+					<div class="tooltip tooltip-right" data-tip={prop.tooltip}>
+						<span class="cursor-help">{prop.label}</span>:
+					</div>
+					<span class="break-all">{prop.value}</span>
+				</div>
+			{/if}
+		{/each}
+		{#if isPGPKey(key)}
+			{#if key.getUserIDs().length > 1 && showDetails}
+				<div class="mt-2 text-xs opacity-60">
+					+{key.getUserIDs().length - 1} other ID(s)
+				</div>
+			{/if}
+
+			{#if showDetails}
+				<div class="mt-2">
+					<details class="mt-1" bind:open={publicKeyOpen}>
+						<summary class={KEY_PROPERTY_CLASS}>
+							Public Key:
+							<span class="opacity-60 cursor-pointer">[click to show]</span>
+						</summary>
+						<div class="mt-2 ml-0">
+							<SelectableText
+								class="rounded-box bg-base-200 border border-base-300 w-fit"
+								value={publicKey.getArmor()}
+							/>
 						</div>
-						<span class="break-all">{prop.value}</span>
-					</div>
-				{/if}
-			{/each}
-			{#if isPGPKey(key)}
-				{#if key.getUserIDs().length > 1 && showDetails}
-					<div class="mt-2 text-xs opacity-60">
-						+{key.getUserIDs().length - 1} other ID(s)
-					</div>
-				{/if}
+					</details>
 
-				{#if showDetails}
-					<div class="mt-2">
-						<details class="mt-1" bind:open={publicKeyOpen}>
-							<summary class={KEY_PROPERTY_CLASS}>
-								Public Key:
-								<span class="opacity-60 cursor-pointer">[click to show]</span>
-							</summary>
-							<div class="mt-2 ml-0">
-								<CopyableTextarea
-									value={publicKey?.getArmor ? publicKey.getArmor() : ''}
-									class="text-xs"
-									fixed
-									readonly
-									buttons
-								/>
-							</div>
-						</details>
-
-						{#if key.isPrivate()}
-							{@render privateKeySnippet()}
-						{/if}
-					</div>
-				{/if}
-
-				{#if !showDetails}
-					<button
-						class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
-						onclick={() => (showDetails = true)}
-					>
-						Show more details...
-					</button>
-				{:else}
-					<button
-						class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
-						onclick={() => (showDetails = false)}
-					>
-						Show less details
-					</button>
-				{/if}
-			{:else if key.isPrivate()}
-				{@render privateKeySnippet()}
-			{/if}
-
-			{#if key.isPrivate()}
-				<div class="mt-2">
-					<button class="btn btn-xs btn-outline" onclick={switchToPublic}>
-						Switch to Public Key
-					</button>
-				</div>
-			{:else if keyWrapper.masterKey}
-				<div class="mt-2">
-					<button class="btn btn-xs btn-outline" onclick={switchToPrivate}>
-						Switch to Private Key
-					</button>
-				</div>
-			{/if}
-			<!--
-				{#if keyWrapper.persisted === PersistenceType.MEMORY}
-				<div class="mt-2">
-					<button class="btn btn-xs btn-outline" onclick={persistKey}>Save To Browser</button>
-				</div>
-				{/if}
-				-->
-
-			{#if key.isPrivate() && !key.isDecrypted()}
-				<div class="divider my-2"></div>
-				<div class="form-control w-full max-w-xs {shaking ? 'shake' : ''}">
-					<label class="label" for="passphrase">
-						<span class="label-text">Unlock Private Key</span>
-					</label>
-					<div class="join">
-						<input
-							type="password"
-							id="passphrase"
-							placeholder="Passphrase"
-							class="input input-bordered input-sm w-full join-item
-									{decryptError ? 'input-error' : ''}"
-							oninput={() => {
-								decryptError = '';
-							}}
-							onkeydown={(e) => {
-								if (e.key === 'Enter') {
-									e.preventDefault();
-									handleDecrypt(e.currentTarget.value);
-								}
-							}}
-						/>
-						<button
-							type="button"
-							class="btn btn-sm btn-primary join-item"
-							onclick={(e) => {
-								const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-								handleDecrypt(input.value);
-							}}
-						>
-							Unlock
-						</button>
-					</div>
-					{#if decryptError}
-						<div class="text-error text-xs mt-1">{decryptError}</div>
+					{#if key.isPrivate()}
+						{@render privateKeySnippet()}
 					{/if}
 				</div>
 			{/if}
-		</div>
+
+			{#if !showDetails}
+				<button
+					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
+					onclick={() => (showDetails = true)}
+				>
+					Show more details...
+				</button>
+			{:else}
+				<button
+					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
+					onclick={() => (showDetails = false)}
+				>
+					Show less details
+				</button>
+			{/if}
+		{:else if key.isPrivate()}
+			{@render privateKeySnippet()}
+		{/if}
+
+		{#if key.isPrivate()}
+			<div class="mt-2">
+				<button class="btn btn-xs btn-outline" onclick={switchToPublic}>
+					Switch to Public Key
+				</button>
+			</div>
+		{:else if keyWrapper.masterKey}
+			<div class="mt-2">
+				<button class="btn btn-xs btn-outline" onclick={switchToPrivate}>
+					Switch to Private Key
+				</button>
+			</div>
+		{/if}
+
+		{#if key.isPrivate() && !key.isDecrypted()}
+			<div class="divider my-2"></div>
+			<div class="form-control w-full max-w-xs {shaking ? 'shake' : ''}">
+				<label class="label" for="passphrase">
+					<span class="label-text">Unlock Private Key</span>
+				</label>
+				<div class="join">
+					<input
+						type="password"
+						id="passphrase"
+						placeholder="Passphrase"
+						class="input input-bordered input-sm w-full join-item
+								{decryptError ? 'input-error' : ''}"
+						oninput={() => {
+							decryptError = '';
+						}}
+						onkeydown={(e) => {
+							if (e.key === 'Enter') {
+								e.preventDefault();
+								handleDecrypt(e.currentTarget.value);
+							}
+						}}
+					/>
+					<button
+						type="button"
+						class="btn btn-sm btn-primary join-item"
+						onclick={(e) => {
+							const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+							handleDecrypt(input.value);
+						}}
+					>
+						Unlock
+					</button>
+				</div>
+				{#if decryptError}
+					<div class="text-error text-xs mt-1">{decryptError}</div>
+				{/if}
+			</div>
+		{/if}
 	</div>
-</div>
+</CardWithHeader>
 
 <style>
 	.shake {

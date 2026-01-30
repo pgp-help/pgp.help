@@ -208,34 +208,31 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 			writable: true
 		});
 
-		const { getByText } = render(KeyDetails, {
+		render(KeyDetails, {
 			props: {
 				keyWrapper: { key: testPrivateKeyFacade, persisted: PersistenceType.MEMORY }
 			}
 		});
 
-		// Click show details to reveal hidden fields
-		const showDetailsBtn = getByText('Show more details...');
-		await fireEvent.click(showDetailsBtn);
-
-		await waitFor(() => {
-			expect(getByText('Private Key:')).toBeTruthy();
-		});
-
-		// Find the Copy button associated with Show Public Key
-		// Since there might be multiple Copy buttons (one for private export), we need to be specific.
-		// The structure is: details > summary > MiniActionGroup > Copy Button
-		// We can look for the button with label "Copy" that is near "Show Public Key"
-		// Or just find all "Copy" buttons and pick the first one, as "Show Public Key" is rendered first.
-
-		const copyButtons = document.querySelectorAll('button[aria-label="Copy"]');
+		// The ShareMenu at the top of the card provides copy functionality
+		// For a private key, the ShareMenu copies the public key armor (via the ShareMenu component)
+		const copyButtons = document.querySelectorAll('button');
+		// Find buttons that contain "Copy" text
+		const copyButtonsWithText = Array.from(copyButtons).filter(
+			(btn) =>
+				btn.textContent?.includes('Copy') &&
+				!btn.textContent?.includes('Markdown') &&
+				!btn.textContent?.includes('Link')
+		);
 		// Expect at least one
-		expect(copyButtons.length).toBeGreaterThan(0);
+		expect(copyButtonsWithText.length).toBeGreaterThan(0);
 
-		// The first one should be the Public Key copy button
-		const publicCopyBtn = copyButtons[0];
-		await fireEvent.click(publicCopyBtn);
+		// Click the Copy button
+		const copyBtn = copyButtonsWithText[0];
+		await fireEvent.click(copyBtn);
 
+		// The ShareMenu for a private key copies the public key armor
+		// (since KeyActions.svelte uses keyWrapper.key.toPublic().getArmor())
 		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
 			testPrivateKeyFacade.toPublic().getArmor()
 		);
@@ -245,7 +242,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
 
-		const { getByLabelText, getByRole } = render(KeyDetails, {
+		const { getByText, getByRole } = render(KeyDetails, {
 			props: {
 				keyWrapper: { key: testKeyFacade, persisted: PersistenceType.MEMORY }
 			}
@@ -255,7 +252,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 			expect(getByRole('heading', { name: 'Pgp Help <hello@pgp.help>' })).toBeTruthy();
 		});
 
-		const persistBtn = getByLabelText('Save key');
+		const persistBtn = getByText('Save');
 		expect(persistBtn).toBeTruthy();
 
 		await fireEvent.click(persistBtn);

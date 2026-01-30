@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { parseKey, type CryptoKey } from './keyStore.svelte.js';
-	import CopyableTextarea from '../ui/CopyableTextarea.svelte';
+
+	import CardWithHeader from '../ui/CardWithHeader.svelte';
 
 	let {
 		value = $bindable(''),
-		label = 'Key',
+		label = 'Import Key',
 		placeholder = 'Paste PGP or AGE Key...',
 		onKeyParsed
 	} = $props<{
@@ -35,12 +36,14 @@
 	});
 </script>
 
-<CopyableTextarea
-	bind:value
-	{label}
-	{placeholder}
-	readonly={false}
-	selectAllOnFocus={false}
-	{error}
-	buttons={false}
-/>
+<CardWithHeader title={label} {error}>
+	{#snippet children({ uid })}
+		<textarea
+			id={uid}
+			bind:value
+			aria-label={label}
+			class="textarea textarea-ghost h-32 w-full resize-y border-none focus:outline-none focus:bg-transparent"
+			{placeholder}
+		></textarea>
+	{/snippet}
+</CardWithHeader>
