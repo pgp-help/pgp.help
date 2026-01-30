@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	let {
 		title,
 		children,
@@ -8,9 +9,14 @@
 		...rest
 	} = $props();
 
-	// 1. Generate IDs for the Field (Label) and the Error Message
-	const fieldId = 'field-' + Math.random().toString(36).substring(2, 9);
-	const errorId = 'error-' + fieldId;
+	let fieldId = $state('field-init');
+
+	onMount(() => {
+		// Only generate a randomID (once; client-side) for link to label
+		fieldId = 'field-' + crypto.randomUUID().slice(0, 8);
+	});
+
+	const errorId = $derived('error-' + fieldId);
 
 	// 2. Helper to check if error is active
 	let hasError = $derived(!!error);
