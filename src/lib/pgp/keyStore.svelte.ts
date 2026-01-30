@@ -82,6 +82,7 @@ export interface KeyWrapper {
 	key: CryptoKey;
 	persisted: PersistenceType;
 	hasNoPassword?: boolean;
+	isNew?: boolean; //missing implies false
 	// Sometimes we represent a public key for which we have the private key.
 	masterKey?: KeyWrapper;
 }

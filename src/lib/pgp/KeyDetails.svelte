@@ -145,9 +145,28 @@
 		}
 	);
 
+	// Auto-expand private key section for new keys
+	$effect(() => {
+		const keyIsNew = keyWrapper.isNew ?? false;
+
+		if (keyIsNew && key.isPrivate()) {
+			privateKeyOpen = true;
+			showDetails = true;
+			isNewKey = true;
+		}
+	});
+
+	// Mark key as no longer new when private key is viewed
+	$effect(() => {
+		if (privateKeyOpen && (keyWrapper.isNew ?? false)) {
+			keyWrapper.isNew = false;
+		}
+	});
+
 	let showDetails = $state(false);
 	let publicKeyOpen = $state(false);
 	let privateKeyOpen = $state(false);
+	let isNewKey = $state(false);
 
 	function handleFocusOut(event: FocusEvent) {
 		const currentTarget = event.currentTarget as HTMLElement;
@@ -156,6 +175,7 @@
 		if (!currentTarget.contains(relatedTarget)) {
 			publicKeyOpen = false;
 			privateKeyOpen = false;
+			isNewKey = false;
 		}
 	}
 
@@ -163,18 +183,24 @@
 </script>
 
 {#snippet privateKeySnippet()}
-	<details class="mt-2" bind:open={privateKeyOpen}>
+	<details class="mt-2" bind:open={privateKeyOpen} data-private-key>
 		<summary class={KEY_PROPERTY_CLASS}>
 			Private Key:
 			<span class="opacity-60 cursor-pointer">[click to export]</span>
 		</summary>
 		<div class="mt-2 ml-0">
-			<div class="alert alert-warning text-xs py-2 mb-2">
+			<div class="alert alert-warning text-xs py-2 mb-2 {isNewKey ? 'shake' : ''}">
 				<WarningIcon class="h-4 w-4" />
-				<span>Warning: For backup only. Never share your private key!</span>
+				<span>
+					{isNewKey
+						? 'IMPORTANT: This is your newly generated private key. Save it securely - you cannot recover it if lost!'
+						: 'Warning: For backup only. Never share your private key!'}
+				</span>
 			</div>
 			<SelectableText
-				class="rounded-box bg-base-200 border border-base-300 w-fit"
+				class="rounded-box bg-base-200 border {isNewKey
+					? 'border-warning'
+					: 'border-base-300'} w-fit"
 				value={key.getArmor()}
 			/>
 		</div>

@@ -32,7 +32,7 @@
 	});
 
 	function handleNewKey(key: CryptoKey) {
-		keyStore.addKey({ key, persisted: PersistenceType.DEFAULT }).then(() => {
+		keyStore.addKey({ key, persisted: PersistenceType.DEFAULT, isNew: true }).then(() => {
 			router.openKey(key);
 		});
 	}
