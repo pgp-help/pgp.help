@@ -208,7 +208,7 @@
 {/snippet}
 
 <!-- Wrapper -->
-<!-- This is a hack so that if you expand the keys and focous out (but still within the card) it 
+<!-- `tabindex="0" is a hack so that if you expand the keys and focous out (but still within the card) it 
  keeps the keys open. This makes it feel a bit less flakey -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div class="card-field w-full shadow-sm" tabindex="0" onfocusout={handleFocusOut}>
