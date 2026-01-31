@@ -51,10 +51,27 @@
 			</button>
 		</div>
 		<div class="border-t border-base-300 my-4"></div>
-		<div class="my-2">Your Keyring</div>
 		<div>
-			<div class="space-y-2">
-				<KeyList keys={keyStore.keys} bind:selectedWrapper={selectedKeyWrapper} />
+			<div class="space-y-4">
+				<!-- Contacts (Public Keys) Section -->
+				{#if keyStore.publicKeys.length > 0}
+					<div>
+						<h3 class="mb-3">Contacts</h3>
+						<div class="space-y-2">
+							<KeyList keys={keyStore.publicKeys} bind:selectedWrapper={selectedKeyWrapper} />
+						</div>
+					</div>
+				{/if}
+
+				<!-- Identities (Private Keys) Section -->
+				{#if keyStore.privateKeys.length > 0}
+					<div>
+						<h3 class="mb-3">Identities</h3>
+						<div class="space-y-2">
+							<KeyList keys={keyStore.privateKeys} bind:selectedWrapper={selectedKeyWrapper} />
+						</div>
+					</div>
+				{/if}
 			</div>
 		</div>
 
@@ -86,7 +103,7 @@
 		</div>
 		<div class="border-t border-base-300 my-4"></div>
 		<div class="">
-			<div class="my-2">Getting Started</div>
+			<h3 class="my-2">Getting Started</h3>
 			<div class="card card-border border-base-300 bg-base-100">
 				<div class="card-body">
 					<p>
