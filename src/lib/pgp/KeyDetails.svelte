@@ -305,21 +305,12 @@
 				</div>
 			{/if}
 
-			{#if !showDetails}
-				<button
-					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
-					onclick={() => (showDetails = true)}
-				>
-					Show more details...
-				</button>
-			{:else}
-				<button
-					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
-					onclick={() => (showDetails = false)}
-				>
-					Show less details
-				</button>
-			{/if}
+			<button
+				class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
+				onclick={() => (showDetails = !showDetails)}
+			>
+				{showDetails ? 'Show less details' : 'Show more details...'}
+			</button>
 		{:else if key.isPrivate()}
 			{@render privateKeySnippet()}
 		{/if}
@@ -366,7 +357,7 @@
 	</div>
 
 	{#if keyHasFocus}
-		<div class="card-field-footer">
+		<div class="card-field-footer transition:slide">
 			{#if key.isPrivate()}
 				<div class="">
 					<button class="btn btn-xs btn-outline" onclick={() => switchKey(false)}>

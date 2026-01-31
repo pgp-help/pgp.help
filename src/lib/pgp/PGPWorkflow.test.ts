@@ -109,11 +109,11 @@ describe('PGPWorkflow', () => {
 		// Focus on the key card to make the switch button visible
 		const keyCard = mainArea.querySelector('.card-field');
 		if (keyCard) {
-			fireEvent.focus(keyCard);
+			fireEvent.focusIn(keyCard);
 		}
 
-		// Switch to Public Key
-		const switchButton = screen.getByRole('button', { name: /Switch to Public Key/i });
+		// Wait for the switch button to appear
+		const switchButton = await screen.findByRole('button', { name: /Switch to Public Key/i });
 		await user.click(switchButton);
 
 		// Should now be in Encrypt mode (Public Key)
@@ -239,5 +239,64 @@ El/w
 			expect(messageTextarea).toHaveAttribute('aria-errormessage', 'input-error');
 			expect(document.getElementById('input-error')).toBeInTheDocument();
 		});
+	});
+
+	it('switches between public and private keys', async () => {
+		const user = userEvent.setup();
+		render(PGPPage);
+
+		const keyTextarea = screen.getByLabelText(/Key/i);
+		await fireEvent.input(keyTextarea, { target: { value: validPrivateKey } });
+
+		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
+		await within(mainArea).findByText('Private Key');
+
+		// Unlock
+		const passwordInput = await screen.findByLabelText(/Unlock Private Key/i);
+		const unlockButton = screen.getByRole('button', { name: /Unlock/i });
+		await user.type(passwordInput, passphrase);
+		await user.click(unlockButton);
+
+		// Wait for the unlockButton to go away
+		await vi.waitFor(() => {
+			expect(unlockButton).not.toBeInTheDocument();
+		});
+
+		// Should be in sign/decrypt mode (private key with no message)
+		// Check the input placeholder which indicates sign/decrypt mode
+		const inputMessage = screen.getByLabelText(/Input Message/i);
+		expect(inputMessage.getAttribute('placeholder')).toMatch(/Type message to sign/);
+
+		// Focus on the key card to make the switch button visible
+		const keyCard = mainArea.querySelector('.card-field');
+		if (keyCard) {
+			fireEvent.focus(keyCard);
+		}
+
+		// Switch to Public Key
+		const switchToPublicButton = await screen.findByRole('button', {
+			name: /Switch to Public Key/i
+		});
+		await user.click(switchToPublicButton);
+
+		// Should now be in Encrypt mode (Public Key)
+		// Check the input placeholder which indicates encrypt/verify mode
+		expect(inputMessage.getAttribute('placeholder')).toMatch(/Type your secret message/);
+		expect(screen.getByText('Public Key')).toBeInTheDocument();
+
+		// Focus on the key card again to make the switch button visible
+		if (keyCard) {
+			fireEvent.focus(keyCard);
+		}
+
+		// Switch to Private Key
+		const switchToPrivateButton = await screen.findByRole('button', {
+			name: /Switch to Private Key/i
+		});
+		await user.click(switchToPrivateButton);
+
+		// Should be back in sign/decrypt mode (private key with no message)
+		expect(inputMessage.getAttribute('placeholder')).toMatch(/Type message to sign/);
+		expect(screen.getByText('Private Key')).toBeInTheDocument();
 	});
 });
