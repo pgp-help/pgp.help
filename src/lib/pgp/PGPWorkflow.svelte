@@ -193,7 +193,7 @@
 							aria-label="Input Message"
 							aria-invalid={!!error}
 							aria-errormessage={error ? 'input-error' : undefined}
-							class="textarea textarea-ghost h-32 w-full resize-y font-mono border-none focus:outline-none focus:bg-transparent"
+							class="textarea textarea-ghost h-[30vh] w-full resize-y font-mono border-none focus:outline-none focus:bg-transparent"
 							placeholder={isPrivate
 								? 'Type message to sign...\n or Paste encrypted message to decrypt...'
 								: 'Type your secret message...\n or Paste signed message to verify...'}
@@ -231,7 +231,7 @@
 							<ShareMenu value={output} />
 						</div>
 
-						<div class="card-field-body" data-readonly="true">
+						<div class="card-field-body max-h-[30vh] overflow-y-auto" data-readonly="true">
 							<SelectableText
 								id="output-message"
 								aria-label={outputTitle}
