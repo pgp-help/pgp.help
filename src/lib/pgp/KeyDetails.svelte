@@ -147,14 +147,24 @@
 	);
 
 	// Auto-expand private key section for new keys
+	let isNewKey = $state(false);
+	let previousKeyWrapperFp = null;
 	$effect(() => {
 		const keyIsNew = keyWrapper.isNew ?? false;
+
+		if (keyWrapper.key?.getFingerprint() !== previousKeyWrapperFp) {
+			isNewKey = false;
+			privateKeyOpen = false;
+			publicKeyOpen = false;
+		}
 
 		if (keyIsNew && key.isPrivate()) {
 			privateKeyOpen = true;
 			showDetails = true;
 			isNewKey = true;
 		}
+
+		previousKeyWrapperFp = keyWrapper.key?.getFingerprint();
 	});
 
 	// Mark key as no longer new when private key is viewed
@@ -167,7 +177,6 @@
 	let showDetails = $state(false);
 	let publicKeyOpen = $state(false);
 	let privateKeyOpen = $state(false);
-	let isNewKey = $state(false);
 
 	function handleFocusOut(event: FocusEvent) {
 		const currentTarget = event.currentTarget as HTMLElement;
