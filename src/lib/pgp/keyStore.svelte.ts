@@ -280,6 +280,14 @@ export class KeyStore {
 		}
 		return wrapper;
 	}
+
+	get privateKeys(): KeyWrapper[] {
+		return this.keys.filter((k) => k.key.isPrivate());
+	}
+
+	get publicKeys(): KeyWrapper[] {
+		return this.keys.filter((k) => !k.key.isPrivate());
+	}
 }
 
 export const keyStore = new KeyStore();
