@@ -6,16 +6,17 @@
 	import KeyActions from './KeyActions.svelte';
 	import Avatar from '../ui/Avatar.svelte';
 
-	import { type CryptoKey, wrapPGPKey, isPGPKey, OperationType } from './crypto';
+	import { type CryptoKey, wrapPGPKey, isPGPKey } from './crypto';
 	import SelectableText from '../ui/SelectableText.svelte';
+	import CopyButtons from '../ui/CopyButtons.svelte';
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
 	// parent component to see the updated value.
-	let { keyWrapper = $bindable(), currentOperation } = $props<{
+	let { keyWrapper = $bindable() } = $props<{
 		keyWrapper: KeyWrapper;
-		currentOperation?: OperationType;
 	}>();
 
+	let box; //This html div component
 	let key = $derived<CryptoKey>(keyWrapper.key);
 
 	let publicKey = $derived.by(() => {
@@ -39,13 +40,14 @@
 		}, 820); // 0.82s matches the animation duration
 	}
 
-	function switchToPublic() {
-		keyWrapper = asPublicKeyWrapper(keyWrapper);
-	}
-
-	function switchToPrivate() {
-		if (keyWrapper.masterKey) {
-			keyWrapper = keyWrapper.masterKey;
+	function switchKey(toPrivate: boolean) {
+		console.log('switchKey', toPrivate ? 'private' : 'public');
+		if (toPrivate) {
+			if (keyWrapper.masterKey) {
+				keyWrapper = keyWrapper.masterKey;
+			}
+		} else {
+			keyWrapper = asPublicKeyWrapper(keyWrapper);
 		}
 	}
 
@@ -177,40 +179,35 @@
 	let showDetails = $state(false);
 	let publicKeyOpen = $state(false);
 	let privateKeyOpen = $state(false);
+	let keyHasFocus = $state(false);
+
+	function handleFocusIn() {
+		keyHasFocus = true;
+	}
 
 	function handleFocusOut(event: FocusEvent) {
-		const currentTarget = event.currentTarget as HTMLElement;
-		const relatedTarget = event.relatedTarget as Node | null;
+		// e.relatedTarget is the element that is about to receive focus
+		const next = event.relatedTarget;
 
-		if (!currentTarget.contains(relatedTarget)) {
+		if (!box.contains(next)) {
 			publicKeyOpen = false;
 			privateKeyOpen = false;
 			isNewKey = false;
+			keyHasFocus = false;
 		}
+
+		// const currentTarget = event.currentTarget as HTMLElement;
+		// const relatedTarget = event.relatedTarget as Node | null;
+
+		// if (!currentTarget.contains(relatedTarget)) {
+		// 	publicKeyOpen = false;
+		// 	privateKeyOpen = false;
+		// 	isNewKey = false;
+
+		// }
 	}
 
 	let cardTitle = $derived(key.isPrivate() ? 'Private Key' : 'Public Key');
-
-	let operationMessage = $derived.by(() => {
-		if (!currentOperation) {
-			const ret = key.isPrivate()
-				? 'Will Encrypt or Verify with Public Key'
-				: 'Will Decrypt or Sign with Private Key';
-			return ret;
-		}
-		switch (currentOperation) {
-			case OperationType.Encrypt:
-				return 'Encrypting with Public Key';
-			case OperationType.Decrypt:
-				return 'Decyrpting with Private Key';
-			case OperationType.Sign:
-				return 'Singing with Private Key';
-			case OperationType.Verify:
-				return 'Verifying Signature with Public Key';
-			default:
-				return '';
-		}
-	});
 </script>
 
 {#snippet privateKeySnippet()}
@@ -242,13 +239,17 @@
 <!-- `tabindex="0" is a hack so that if you expand the keys and focous out (but still within the card) it 
  keeps the keys open. This makes it feel a bit less flakey -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-<div class="card-field w-full shadow-sm" tabindex="0" onfocusout={handleFocusOut}>
+<div
+	bind:this={box}
+	class="card-field w-full shadow-sm"
+	tabindex="0"
+	onfocusin={handleFocusIn}
+	onfocusout={handleFocusOut}
+>
 	<!-- Header -->
 	<div class="card-field-header">
 		<h3>{cardTitle}</h3>
-
-		<!-- Actions (Flexbox pushes this to the right) -->
-		<KeyActions {keyWrapper} />
+		<CopyButtons value={keyWrapper.key.toPublic().getArmor()} showLink={true} />
 	</div>
 
 	<!-- Body -->
@@ -304,21 +305,12 @@
 				</div>
 			{/if}
 
-			{#if !showDetails}
-				<button
-					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
-					onclick={() => (showDetails = true)}
-				>
-					Show more details...
-				</button>
-			{:else}
-				<button
-					class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
-					onclick={() => (showDetails = false)}
-				>
-					Show less details
-				</button>
-			{/if}
+			<button
+				class="btn btn-xs btn-link p-0 h-auto min-h-0 text-xs opacity-60 hover:opacity-100 no-underline"
+				onclick={() => (showDetails = !showDetails)}
+			>
+				{showDetails ? 'Show less details' : 'Show more details...'}
+			</button>
 		{:else if key.isPrivate()}
 			{@render privateKeySnippet()}
 		{/if}
@@ -364,23 +356,28 @@
 		{/if}
 	</div>
 
-	<div class="card-field-footer">
-		<span>{operationMessage}</span>
+	{#if keyHasFocus}
+		<div class="card-field-footer transition:slide">
+			{#if key.isPrivate()}
+				<div class="">
+					<button class="btn btn-xs btn-outline" onclick={() => switchKey(false)}>
+						Switch to Public Key
+					</button>
+				</div>
+			{:else if keyWrapper.masterKey}
+				<div class="">
+					<button class="btn btn-xs btn-outline" onclick={() => switchKey(true)}>
+						Switch to Private Key
+					</button>
+				</div>
+			{:else}
+				<!-- empty div to force buttons to the right -->
+				<div></div>
+			{/if}
 
-		{#if key.isPrivate()}
-			<div class="">
-				<button class="btn btn-xs btn-outline" onclick={switchToPublic}>
-					Switch to Public Key
-				</button>
-			</div>
-		{:else if keyWrapper.masterKey}
-			<div class="">
-				<button class="btn btn-xs btn-outline" onclick={switchToPrivate}>
-					Switch to Private Key
-				</button>
-			</div>
-		{/if}
-	</div>
+			<KeyActions {keyWrapper} />
+		</div>
+	{/if}
 </div>
 
 <style>

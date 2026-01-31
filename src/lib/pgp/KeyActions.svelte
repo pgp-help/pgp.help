@@ -5,7 +5,6 @@
 	import SaveIcon from '../ui/icons/SaveIcon.svelte';
 	import TrashIcon from '../ui/icons/TrashIcon.svelte';
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
-	import ShareMenu from '../ui/ShareMenu.svelte';
 
 	let { keyWrapper } = $props<{
 		keyWrapper: KeyWrapper;
@@ -44,18 +43,16 @@
 -->
 <div class="flex items-center gap-2 overflow-visible">
 	{#if keyWrapper.persisted === PersistenceType.MEMORY}
-		<button type="button" class="btn btn-ghost btn-sm text-primary" onclick={handleSave}>
+		<button type="button" class="btn btn-xs btn-sm text-primary" onclick={handleSave}>
 			<SaveIcon class="w-4 h-4" />
 			<span>Save</span>
 		</button>
 	{:else}
-		<button type="button" class="btn btn-ghost btn-sm text-error" onclick={handleDelete}>
+		<button type="button" class="btn btn-xs btn-sm text-error" onclick={handleDelete}>
 			<TrashIcon class="w-4 h-4" />
 			<span>Delete</span>
 		</button>
 	{/if}
-
-	<ShareMenu value={keyWrapper.key.toPublic().getArmor()} />
 </div>
 
 <!-- Modal remains mostly the same, just handling click bubbling on the modal itself -->

@@ -6,7 +6,7 @@
 	import { type KeyWrapper } from './keyStore.svelte.js';
 	import { type CryptoKey, KeyType, OperationType } from './crypto';
 	import { untrack } from 'svelte';
-	import ShareMenu from '../ui/ShareMenu.svelte';
+	import CopyButtons from '../ui/CopyButtons.svelte';
 	import SelectableText from '../ui/SelectableText.svelte';
 
 	interface Props {
@@ -58,6 +58,37 @@
 		message.trim().startsWith('-----BEGIN PGP MESSAGE-----') || isAGEEncryptedMessage(message)
 	);
 	let isSignedMessage = $derived(message.trim().startsWith('-----BEGIN PGP SIGNED MESSAGE-----'));
+
+	let operationMessage = $derived.by(() => {
+		if (!currentOperation) {
+			const ret = isPrivate
+				? 'Will Encrypt or Verify with Public Key'
+				: 'Will Decrypt or Sign with Private Key';
+			return ret;
+		}
+		switch (currentOperation) {
+			case OperationType.Encrypt:
+				return 'Encrypting with Public Key';
+			case OperationType.Decrypt:
+				return 'Decrypting with Private Key';
+			case OperationType.Sign:
+				return 'Signing with Private Key';
+			case OperationType.Verify:
+				return 'Verifying Signature with Public Key';
+			default:
+				return '';
+		}
+	});
+
+	let intentionMessage = $derived.by(() => {
+		if (!keyObject) {
+			const ret = isPrivate
+				? 'Will Decrypt or Sign with Private Key'
+				: 'Will Encrypt or Verify with Public Key';
+			return ret;
+		}
+		return operationMessage;
+	});
 
 	let currentOperation = $derived.by(() => {
 		if (message.trim() === '') return null;
@@ -171,7 +202,7 @@
 	<div class="space-y-6">
 		<!-- Key Section -->
 		{#if keyWrapper}
-			<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper {currentOperation} />
+			<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper />
 		{:else}
 			<RawKeyInput value={keyValue} {onKeyParsed} />
 		{/if}
@@ -217,6 +248,14 @@
 						<div data-state="error" id="input-error" class="card-field-footer">
 							Signature verified!
 						</div>
+					{:else if currentOperation}
+						<div class="card-field-footer">
+							{operationMessage}
+						</div>
+					{:else}
+						<div class="card-field-footer">
+							{intentionMessage}
+						</div>
 					{/if}
 				</div>
 			</div>
@@ -237,7 +276,7 @@
 						<div class="card-field-header">
 							<label for="output-message">{outputTitle}</label>
 							<!-- Actions just sit in the header flex container -->
-							<ShareMenu value={output} />
+							<CopyButtons value={output} />
 						</div>
 
 						<div class="card-field-body max-h-[30vh] overflow-y-auto" data-readonly="true">
