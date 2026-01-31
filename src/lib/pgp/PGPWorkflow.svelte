@@ -6,7 +6,7 @@
 	import { type KeyWrapper } from './keyStore.svelte.js';
 	import { type CryptoKey, KeyType, OperationType } from './crypto';
 	import { untrack } from 'svelte';
-	import ShareMenu from '../ui/ShareMenu.svelte';
+	import CopyButtons from '../ui/CopyButtons.svelte';
 	import SelectableText from '../ui/SelectableText.svelte';
 
 	interface Props {
@@ -237,7 +237,7 @@
 						<div class="card-field-header">
 							<label for="output-message">{outputTitle}</label>
 							<!-- Actions just sit in the header flex container -->
-							<ShareMenu value={output} />
+							<CopyButtons value={output} />
 						</div>
 
 						<div class="card-field-body max-h-[30vh] overflow-y-auto" data-readonly="true">

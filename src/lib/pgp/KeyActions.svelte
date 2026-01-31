@@ -5,7 +5,7 @@
 	import SaveIcon from '../ui/icons/SaveIcon.svelte';
 	import TrashIcon from '../ui/icons/TrashIcon.svelte';
 	import WarningIcon from '../ui/icons/WarningIcon.svelte';
-	import ShareMenu from '../ui/ShareMenu.svelte';
+	import CopyButtons from '../ui/CopyButtons.svelte';
 
 	let { keyWrapper } = $props<{
 		keyWrapper: KeyWrapper;
@@ -55,7 +55,7 @@
 		</button>
 	{/if}
 
-	<ShareMenu value={keyWrapper.key.toPublic().getArmor()} />
+	<CopyButtons value={keyWrapper.key.toPublic().getArmor()} showLink={true} />
 </div>
 
 <!-- Modal remains mostly the same, just handling click bubbling on the modal itself -->
