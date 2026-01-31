@@ -80,16 +80,6 @@
 		}
 	});
 
-	let intentionMessage = $derived.by(() => {
-		if (!keyObject) {
-			const ret = isPrivate
-				? 'Will Decrypt or Sign with Private Key'
-				: 'Will Encrypt or Verify with Public Key';
-			return ret;
-		}
-		return operationMessage;
-	});
-
 	let currentOperation = $derived.by(() => {
 		if (message.trim() === '') return null;
 
@@ -248,13 +238,9 @@
 						<div data-state="error" id="input-error" class="card-field-footer">
 							Signature verified!
 						</div>
-					{:else if currentOperation}
+					{:else if keyWrapper != null}
 						<div class="card-field-footer">
 							{operationMessage}
-						</div>
-					{:else}
-						<div class="card-field-footer">
-							{intentionMessage}
 						</div>
 					{/if}
 				</div>
