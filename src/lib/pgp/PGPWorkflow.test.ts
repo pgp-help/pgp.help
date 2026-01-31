@@ -106,6 +106,12 @@ describe('PGPWorkflow', () => {
 		const mainArea = screen.getByRole('main', { name: 'PGP Workflow' });
 		await within(mainArea).findByText('Private Key');
 
+		// Focus on the key card to make the switch button visible
+		const keyCard = mainArea.querySelector('.card-field');
+		if (keyCard) {
+			fireEvent.focus(keyCard);
+		}
+
 		// Switch to Public Key
 		const switchButton = screen.getByRole('button', { name: /Switch to Public Key/i });
 		await user.click(switchButton);
@@ -143,6 +149,12 @@ describe('PGPWorkflow', () => {
 		await vi.waitFor(() => {
 			expect(unlockButton).not.toBeInTheDocument();
 		});
+
+		// Focus on the key card to make the switch button visible
+		const keyCard = mainAreaDecrypt.querySelector('.card-field');
+		if (keyCard) {
+			fireEvent.focus(keyCard);
+		}
 
 		// Switch to Public Key manually to test auto-switch back
 		const switchButton = screen.getByRole('button', { name: /Switch to Public Key/i });
@@ -185,6 +197,12 @@ describe('PGPWorkflow', () => {
 		await vi.waitFor(() => {
 			expect(unlockButton).not.toBeInTheDocument();
 		});
+
+		// Focus on the key card to make the switch button visible
+		const keyCard = mainArea.querySelector('.card-field');
+		if (keyCard) {
+			fireEvent.focus(keyCard);
+		}
 
 		// Switch to Public Key manually to test auto-switch back
 		const switchButton = screen.getByRole('button', { name: /Switch to Public Key/i });

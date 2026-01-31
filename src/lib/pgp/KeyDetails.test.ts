@@ -242,7 +242,7 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		vi.mocked(pgp.getKeyDetails).mockResolvedValue(testKey as any);
 
-		const { getByText, getByRole } = render(KeyDetails, {
+		const { getByText, getByRole, container } = render(KeyDetails, {
 			props: {
 				keyWrapper: { key: testKeyFacade, persisted: PersistenceType.MEMORY }
 			}
@@ -251,6 +251,12 @@ o5UiH3ZFHQMBFp+BblN8b3twYNOhiOP/UqewrelrXOEnrFAs2skIZxk1Az7J
 		await waitFor(() => {
 			expect(getByRole('heading', { name: 'Pgp Help <hello@pgp.help>' })).toBeTruthy();
 		});
+
+		// Focus on the key card to make the footer visible
+		const keyCard = container.querySelector('.card-field');
+		if (keyCard) {
+			fireEvent.focus(keyCard);
+		}
 
 		const persistBtn = getByText('Save');
 		expect(persistBtn).toBeTruthy();
