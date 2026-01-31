@@ -31,6 +31,13 @@ export enum KeyType {
 	AGE = 'age'
 }
 
+export enum OperationType {
+	Encrypt = 'encrypt',
+	Decrypt = 'decrypt',
+	Sign = 'sign',
+	Verify = 'verify'
+}
+
 /**
  * Common interface for cryptographic keys (PGP and AGE)
  * This abstraction allows the UI to work with both key types transparently

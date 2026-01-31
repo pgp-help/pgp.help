@@ -84,7 +84,9 @@ describe('PGPWorkflow Sign/Verify', () => {
 		// Should show verification banner
 		// We look for success text or class
 		await waitFor(() => {
-			expect(within(io_fields).getByText(/Signature Verified/i)).toBeInTheDocument();
+			const verifiedElements = within(io_fields).getAllByText(/Signature Verified/i);
+			// At time of writing this appears twice. Once in the input ffooter and once in the signature widget.
+			expect(verifiedElements.length).toBeGreaterThan(0);
 		});
 	});
 });

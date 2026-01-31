@@ -5,14 +5,15 @@
 	import PGPKeyBadges from './PGPKeyBadges.svelte';
 	import KeyActions from './KeyActions.svelte';
 	import Avatar from '../ui/Avatar.svelte';
-	import CardWithHeader from '../ui/CardWithHeader.svelte';
-	import { type CryptoKey, wrapPGPKey, isPGPKey } from './crypto';
+
+	import { type CryptoKey, wrapPGPKey, isPGPKey, OperationType } from './crypto';
 	import SelectableText from '../ui/SelectableText.svelte';
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
 	// parent component to see the updated value.
-	let { keyWrapper = $bindable() } = $props<{
+	let { keyWrapper = $bindable(), currentOperation } = $props<{
 		keyWrapper: KeyWrapper;
+		currentOperation?: OperationType;
 	}>();
 
 	let key = $derived<CryptoKey>(keyWrapper.key);
@@ -180,6 +181,27 @@
 	}
 
 	let cardTitle = $derived(key.isPrivate() ? 'Private Key' : 'Public Key');
+
+	let operationMessage = $derived.by(() => {
+		if (!currentOperation) {
+			const ret = key.isPrivate()
+				? 'Will Encrypt or Verify with Public Key'
+				: 'Will Decrypt or Sign with Private Key';
+			return ret;
+		}
+		switch (currentOperation) {
+			case OperationType.Encrypt:
+				return 'Encrypting with Public Key';
+			case OperationType.Decrypt:
+				return 'Decyrpting with Private Key';
+			case OperationType.Sign:
+				return 'Singing with Private Key';
+			case OperationType.Verify:
+				return 'Verifying Signature with Public Key';
+			default:
+				return '';
+		}
+	});
 </script>
 
 {#snippet privateKeySnippet()}
@@ -207,12 +229,21 @@
 	</details>
 {/snippet}
 
-<CardWithHeader title={cardTitle} class="w-full shadow-sm" onfocusout={handleFocusOut} tabindex="0">
-	{#snippet actions()}
-		<KeyActions {keyWrapper} />
-	{/snippet}
+<!-- Wrapper -->
+<!-- `tabindex="0" is a hack so that if you expand the keys and focous out (but still within the card) it 
+ keeps the keys open. This makes it feel a bit less flakey -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<div class="card-field w-full shadow-sm" tabindex="0" onfocusout={handleFocusOut}>
+	<!-- Header -->
+	<div class="card-field-header">
+		<h3>{cardTitle}</h3>
 
-	<div class="p-3 sm:p-4">
+		<!-- Actions (Flexbox pushes this to the right) -->
+		<KeyActions {keyWrapper} />
+	</div>
+
+	<!-- Body -->
+	<div class="card-field-body p-3 sm:p-4">
 		<div class="flex flex-wrap items-center gap-3 mb-1">
 			<Avatar cryptoKey={key} size={64} />
 			<div class="flex-1 min-w-0">
@@ -283,20 +314,6 @@
 			{@render privateKeySnippet()}
 		{/if}
 
-		{#if key.isPrivate()}
-			<div class="mt-2">
-				<button class="btn btn-xs btn-outline" onclick={switchToPublic}>
-					Switch to Public Key
-				</button>
-			</div>
-		{:else if keyWrapper.masterKey}
-			<div class="mt-2">
-				<button class="btn btn-xs btn-outline" onclick={switchToPrivate}>
-					Switch to Private Key
-				</button>
-			</div>
-		{/if}
-
 		{#if key.isPrivate() && !key.isDecrypted()}
 			<div class="divider my-2"></div>
 			<div class="form-control w-full max-w-xs {shaking ? 'shake' : ''}">
@@ -337,7 +354,25 @@
 			</div>
 		{/if}
 	</div>
-</CardWithHeader>
+
+	<div class="card-field-footer">
+		<span>{operationMessage}</span>
+
+		{#if key.isPrivate()}
+			<div class="">
+				<button class="btn btn-xs btn-outline" onclick={switchToPublic}>
+					Switch to Public Key
+				</button>
+			</div>
+		{:else if keyWrapper.masterKey}
+			<div class="">
+				<button class="btn btn-xs btn-outline" onclick={switchToPrivate}>
+					Switch to Private Key
+				</button>
+			</div>
+		{/if}
+	</div>
+</div>
 
 <style>
 	.shake {

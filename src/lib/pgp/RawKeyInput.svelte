@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { parseKey, type CryptoKey } from './keyStore.svelte.js';
 
-	import CardWithHeader from '../ui/CardWithHeader.svelte';
-
 	let {
 		value = $bindable(''),
 		label = 'Import Key',
@@ -36,14 +34,19 @@
 	});
 </script>
 
-<CardWithHeader title={label} {error}>
-	{#snippet children({ uid })}
+<div class="card-field" data-state={error ? 'error' : ''}>
+	<div class="card-field-header"><label for="raw-input">Import Key</label></div>
+	<div class="card-field-body">
 		<textarea
-			id={uid}
 			bind:value
 			aria-label={label}
+			aria-errormessage={error ? 'raw-input-error' : undefined}
+			aria-invalid={!!error}
 			class="textarea textarea-ghost h-32 w-full resize-y border-none focus:outline-none focus:bg-transparent"
 			{placeholder}
 		></textarea>
-	{/snippet}
-</CardWithHeader>
+	</div>
+	{#if error}
+		<div class="card-field-footer" id="raw-input-error">{error}</div>
+	{/if}
+</div>

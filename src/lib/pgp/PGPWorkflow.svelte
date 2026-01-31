@@ -4,20 +4,10 @@
 	import KeyDetails from './KeyDetails.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
 	import { type KeyWrapper } from './keyStore.svelte.js';
-	import { type CryptoKey, KeyType } from './crypto';
+	import { type CryptoKey, KeyType, OperationType } from './crypto';
 	import { untrack } from 'svelte';
-	import CardWithHeader from '../ui/CardWithHeader.svelte';
 	import ShareMenu from '../ui/ShareMenu.svelte';
 	import SelectableText from '../ui/SelectableText.svelte';
-
-	const OperationType = {
-		Encrypt: 'encrypt',
-		Decrypt: 'decrypt',
-		Sign: 'sign',
-		Verify: 'verify'
-	} as const;
-
-	type OperationType = (typeof OperationType)[keyof typeof OperationType];
 
 	interface Props {
 		keyWrapper: KeyWrapper | null;
@@ -62,6 +52,8 @@
 	let isSignedMessage = $derived(message.trim().startsWith('-----BEGIN PGP SIGNED MESSAGE-----'));
 
 	let currentOperation = $derived.by(() => {
+		if (message.trim() === '') return null;
+
 		if (isPrivate) {
 			// Private Key: Decrypt or Sign
 			if (isAGE) {
@@ -171,100 +163,120 @@
 	<div class="space-y-6">
 		<!-- Key Section -->
 		{#if keyWrapper}
-			<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper />
+			<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper {currentOperation} />
 		{:else}
 			<RawKeyInput value={keyValue} {onKeyParsed} />
 		{/if}
 
 		<!-- IO Fields -->
 		<div data-testid="io_fields">
-			{#if !isPrivate}
-				{#if currentOperation === OperationType.Verify}
-					{#if verificationStatus === 'valid'}
-						<div role="alert" class="alert alert-success mt-4">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="stroke-current shrink-0 h-6 w-6"
-								fill="none"
-								viewBox="0 0 24 24"
-								><path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-								/></svg
-							>
-							<div class="flex flex-col">
-								<span class="font-bold">Signature Verified!</span>
-								{#if signerIdentity}
-									<span class="text-sm opacity-80">Signed by: {signerIdentity}</span>
-								{/if}
-							</div>
-						</div>
-					{:else if verificationStatus === 'invalid'}
-						<div role="alert" class="alert alert-error mt-4">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="stroke-current shrink-0 h-6 w-6"
-								fill="none"
-								viewBox="0 0 24 24"
-								><path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-								/></svg
-							>
-							<span>Verification Failed: {error}</span>
-						</div>
-					{/if}
-				{/if}
-			{/if}
-
 			<!-- Input Message -->
-
 			<div class="mt-4">
-				<CardWithHeader title="Input Message" class="w-full shadow-sm" {error}>
-					{#snippet children({ uid })}
-						{@const inputPlaceholder = isPrivate
-							? 'Type message to sign...\n or Paste encrypted message to decrypt...'
-							: 'Type your secret message...\n or Paste signed message to verify...'}
+				<div
+					class="card-field w-full shadow-sm"
+					data-state={error
+						? 'error'
+						: verificationStatus === 'valid'
+							? 'success'
+							: //EverificationStatus === 'invalid' is basically error.
+								undefined}
+				>
+					<div class="card-field-header">
+						<!-- Connect label to input manually -->
+						<label for="input-message">Input Message</label>
+					</div>
+
+					<div class="card-field-body">
 						<textarea
-							id={uid}
+							id="input-message"
 							bind:value={message}
 							aria-label="Input Message"
-							class="textarea textarea-ghost h-32 w-full resize-y font-mono border-none focus:outline-none focus:bg-transparent"
-							placeholder={inputPlaceholder}
+							aria-invalid={!!error}
+							aria-errormessage={error ? 'input-error' : undefined}
+							class="textarea textarea-ghost h-[30vh] w-full resize-y font-mono border-none focus:outline-none focus:bg-transparent"
+							placeholder={isPrivate
+								? 'Type message to sign...\n or Paste encrypted message to decrypt...'
+								: 'Type your secret message...\n or Paste signed message to verify...'}
 						></textarea>
-					{/snippet}
-				</CardWithHeader>
+					</div>
+
+					{#if error}
+						<div id="input-error" class="card-field-footer">
+							{error}
+						</div>
+					{:else if verificationStatus === 'valid'}
+						<div data-state="error" id="input-error" class="card-field-footer">
+							Signature verified!
+						</div>
+					{/if}
+				</div>
 			</div>
 
 			<!-- Output Section -->
 			{#if currentOperation !== OperationType.Verify}
 				{@const outputTitle = isPrivate
-					? currentOperation === OperationType.Decrypt
+					? currentOperation !== OperationType.Sign
 						? 'Decrypted Output'
 						: 'Signed Message'
 					: 'Encrypted Output'}
 				{@const outputPlaceholder = isPrivate
 					? 'Signed / Decrypted message will appear here...'
 					: 'Encrypted output will appear here...'}
-				<div class="mt-4">
-					<CardWithHeader title={outputTitle} readonly={true} class="w-full shadow-sm">
-						{#snippet actions()}
-							<ShareMenu value={output} />
-						{/snippet}
 
-						{#snippet children({ uid })}
+				<div class="mt-4">
+					<div class="card-field w-full shadow-sm">
+						<div class="card-field-header">
+							<label for="output-message">{outputTitle}</label>
+							<!-- Actions just sit in the header flex container -->
+							<ShareMenu value={output} />
+						</div>
+
+						<div class="card-field-body max-h-[30vh] overflow-y-auto" data-readonly="true">
 							<SelectableText
-								id={uid}
+								id="output-message"
 								aria-label={outputTitle}
 								value={output}
 								placeholder={outputPlaceholder}
 							/>
-						{/snippet}
-					</CardWithHeader>
+						</div>
+					</div>
+				</div>
+			{:else if verificationStatus === 'valid'}
+				<div role="alert" class="alert alert-success mt-4">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="stroke-current shrink-0 h-6 w-6"
+						fill="none"
+						viewBox="0 0 24 24"
+						><path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+						/></svg
+					>
+					<div class="flex flex-col">
+						<span class="font-bold">Signature Verified!</span>
+						{#if signerIdentity}
+							<span class="text-sm opacity-80">Signed by: {signerIdentity}</span>
+						{/if}
+					</div>
+				</div>
+			{:else if verificationStatus === 'invalid'}
+				<div role="alert" class="alert alert-error mt-4">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="stroke-current shrink-0 h-6 w-6"
+						fill="none"
+						viewBox="0 0 24 24"
+						><path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+						/></svg
+					>
+					<span>Verification Failed: {error}</span>
 				</div>
 			{/if}
 		</div>

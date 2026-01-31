@@ -215,13 +215,11 @@ El/w
 
 		// Should show error because decryption will fail (bad data)
 		// Note: The error message might take a moment
-		await waitFor(
-			() => {
-				// The CopyableTextarea displays error in a label with class text-error
-				const errorLabel = mainArea.querySelector('.text-error');
-				expect(errorLabel).toBeInTheDocument();
-			},
-			{ timeout: 5000 }
-		);
+		await waitFor(() => {
+			expect(messageTextarea).toBeInvalid();
+
+			expect(messageTextarea).toHaveAttribute('aria-errormessage', 'input-error');
+			expect(document.getElementById('input-error')).toBeInTheDocument();
+		});
 	});
 });
