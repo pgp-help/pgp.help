@@ -6,13 +6,14 @@
 	import KeyActions from './KeyActions.svelte';
 	import Avatar from '../ui/Avatar.svelte';
 
-	import { type CryptoKey, wrapPGPKey, isPGPKey } from './crypto';
+	import { type CryptoKey, wrapPGPKey, isPGPKey, OperationType } from './crypto';
 	import SelectableText from '../ui/SelectableText.svelte';
 
 	// Bindable because when we decrypt the key we modify it in place and expect the
 	// parent component to see the updated value.
-	let { keyWrapper = $bindable() } = $props<{
+	let { keyWrapper = $bindable(), currentOperation } = $props<{
 		keyWrapper: KeyWrapper;
+		currentOperation?: OperationType;
 	}>();
 
 	let key = $derived<CryptoKey>(keyWrapper.key);
@@ -180,6 +181,27 @@
 	}
 
 	let cardTitle = $derived(key.isPrivate() ? 'Private Key' : 'Public Key');
+
+	let operationMessage = $derived.by(() => {
+		if (!currentOperation) {
+			const ret = key.isPrivate()
+				? 'Will Encrypt or Verify with Public Key'
+				: 'Will Decrypt or Sign with Private Key';
+			return ret;
+		}
+		switch (currentOperation) {
+			case OperationType.Encrypt:
+				return 'Encrypting with Public Key';
+			case OperationType.Decrypt:
+				return 'Decyrpting with Private Key';
+			case OperationType.Sign:
+				return 'Singing with Private Key';
+			case OperationType.Verify:
+				return 'Verifying Signature with Public Key';
+			default:
+				return '';
+		}
+	});
 </script>
 
 {#snippet privateKeySnippet()}
@@ -292,20 +314,6 @@
 			{@render privateKeySnippet()}
 		{/if}
 
-		{#if key.isPrivate()}
-			<div class="mt-2">
-				<button class="btn btn-xs btn-outline" onclick={switchToPublic}>
-					Switch to Public Key
-				</button>
-			</div>
-		{:else if keyWrapper.masterKey}
-			<div class="mt-2">
-				<button class="btn btn-xs btn-outline" onclick={switchToPrivate}>
-					Switch to Private Key
-				</button>
-			</div>
-		{/if}
-
 		{#if key.isPrivate() && !key.isDecrypted()}
 			<div class="divider my-2"></div>
 			<div class="form-control w-full max-w-xs {shaking ? 'shake' : ''}">
@@ -343,6 +351,24 @@
 				{#if decryptError}
 					<div class="text-error text-xs mt-1">{decryptError}</div>
 				{/if}
+			</div>
+		{/if}
+	</div>
+
+	<div class="card-field-footer">
+		<span>{operationMessage}</span>
+
+		{#if key.isPrivate()}
+			<div class="">
+				<button class="btn btn-xs btn-outline" onclick={switchToPublic}>
+					Switch to Public Key
+				</button>
+			</div>
+		{:else if keyWrapper.masterKey}
+			<div class="">
+				<button class="btn btn-xs btn-outline" onclick={switchToPrivate}>
+					Switch to Private Key
+				</button>
 			</div>
 		{/if}
 	</div>

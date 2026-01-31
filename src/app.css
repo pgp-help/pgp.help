@@ -127,6 +127,12 @@ body {
     We ONLY update border, ring, and footer variables.
   */
 
+	.card-field[data-state],
+	.card-field[data-invalid='true'] {
+		/* CSS-fu: by default we want the absolute colour, but if we have a state-colour then mix it. */
+		--bg-strength: 10%;
+	}
+
 	/* ERROR */
 	.card-field[data-invalid='true'],
 	.card-field[data-state='error'] {
@@ -216,7 +222,11 @@ body {
 		@apply rounded-b-[inherit];
 
 		/* Dynamic BG Tint */
-		background-color: color-mix(in srgb, var(--footer-bg) 10%, var(--color-base-100));
+		background-color: color-mix(
+			in srgb,
+			var(--footer-bg) var(--bg-strength, 100%),
+			var(--color-base-100)
+		);
 
 		/* Dynamic Border */
 		border-color: color-mix(in srgb, var(--state-border) 30%, transparent);

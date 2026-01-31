@@ -4,19 +4,10 @@
 	import KeyDetails from './KeyDetails.svelte';
 	import RawKeyInput from './RawKeyInput.svelte';
 	import { type KeyWrapper } from './keyStore.svelte.js';
-	import { type CryptoKey, KeyType } from './crypto';
+	import { type CryptoKey, KeyType, OperationType } from './crypto';
 	import { untrack } from 'svelte';
 	import ShareMenu from '../ui/ShareMenu.svelte';
 	import SelectableText from '../ui/SelectableText.svelte';
-
-	const OperationType = {
-		Encrypt: 'encrypt',
-		Decrypt: 'decrypt',
-		Sign: 'sign',
-		Verify: 'verify'
-	} as const;
-
-	type OperationType = (typeof OperationType)[keyof typeof OperationType];
 
 	interface Props {
 		keyWrapper: KeyWrapper | null;
@@ -61,6 +52,8 @@
 	let isSignedMessage = $derived(message.trim().startsWith('-----BEGIN PGP SIGNED MESSAGE-----'));
 
 	let currentOperation = $derived.by(() => {
+		if (message.trim() === '') return null;
+
 		if (isPrivate) {
 			// Private Key: Decrypt or Sign
 			if (isAGE) {
@@ -170,59 +163,24 @@
 	<div class="space-y-6">
 		<!-- Key Section -->
 		{#if keyWrapper}
-			<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper />
+			<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper {currentOperation} />
 		{:else}
 			<RawKeyInput value={keyValue} {onKeyParsed} />
 		{/if}
 
 		<!-- IO Fields -->
 		<div data-testid="io_fields">
-			{#if !isPrivate}
-				{#if currentOperation === OperationType.Verify}
-					{#if verificationStatus === 'valid'}
-						<div role="alert" class="alert alert-success mt-4">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="stroke-current shrink-0 h-6 w-6"
-								fill="none"
-								viewBox="0 0 24 24"
-								><path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-								/></svg
-							>
-							<div class="flex flex-col">
-								<span class="font-bold">Signature Verified!</span>
-								{#if signerIdentity}
-									<span class="text-sm opacity-80">Signed by: {signerIdentity}</span>
-								{/if}
-							</div>
-						</div>
-					{:else if verificationStatus === 'invalid'}
-						<div role="alert" class="alert alert-error mt-4">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="stroke-current shrink-0 h-6 w-6"
-								fill="none"
-								viewBox="0 0 24 24"
-								><path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-								/></svg
-							>
-							<span>Verification Failed: {error}</span>
-						</div>
-					{/if}
-				{/if}
-			{/if}
-
 			<!-- Input Message -->
 			<div class="mt-4">
-				<div class="card-field w-full shadow-sm" data-state={error ? 'error' : ''}>
+				<div
+					class="card-field w-full shadow-sm"
+					data-state={error
+						? 'error'
+						: verificationStatus === 'valid'
+							? 'success'
+							: //EverificationStatus === 'invalid' is basically error.
+								undefined}
+				>
 					<div class="card-field-header">
 						<!-- Connect label to input manually -->
 						<label for="input-message">Input Message</label>
@@ -246,6 +204,10 @@
 						<div id="input-error" class="card-field-footer">
 							{error}
 						</div>
+					{:else if verificationStatus === 'valid'}
+						<div data-state="error" id="input-error" class="card-field-footer">
+							Signature verified!
+						</div>
 					{/if}
 				</div>
 			</div>
@@ -253,7 +215,7 @@
 			<!-- Output Section -->
 			{#if currentOperation !== OperationType.Verify}
 				{@const outputTitle = isPrivate
-					? currentOperation === OperationType.Decrypt
+					? currentOperation !== OperationType.Sign
 						? 'Decrypted Output'
 						: 'Signed Message'
 					: 'Encrypted Output'}
@@ -278,6 +240,43 @@
 							/>
 						</div>
 					</div>
+				</div>
+			{:else if verificationStatus === 'valid'}
+				<div role="alert" class="alert alert-success mt-4">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="stroke-current shrink-0 h-6 w-6"
+						fill="none"
+						viewBox="0 0 24 24"
+						><path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+						/></svg
+					>
+					<div class="flex flex-col">
+						<span class="font-bold">Signature Verified!</span>
+						{#if signerIdentity}
+							<span class="text-sm opacity-80">Signed by: {signerIdentity}</span>
+						{/if}
+					</div>
+				</div>
+			{:else if verificationStatus === 'invalid'}
+				<div role="alert" class="alert alert-error mt-4">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="stroke-current shrink-0 h-6 w-6"
+						fill="none"
+						viewBox="0 0 24 24"
+						><path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+						/></svg
+					>
+					<span>Verification Failed: {error}</span>
 				</div>
 			{/if}
 		</div>
