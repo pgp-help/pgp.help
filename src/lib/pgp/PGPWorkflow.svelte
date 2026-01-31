@@ -18,6 +18,21 @@
 
 	let keyObject = $derived(keyWrapper?.key ?? null);
 
+	// Reference to the KeyDetails component instance (for calling methods like nudgeForDecryption)
+	let pgpKeyComponent = $state<KeyDetails | null>(null);
+	// Reference to the RawKeyInput component instance (for calling focus method)
+	let rawKeyInputComponent = $state<RawKeyInput | null>(null);
+	// Reference to the input message textarea
+	let inputMessageRef = $state<HTMLTextAreaElement | null>(null);
+	// The input message to be encrypted or decrypted
+	let message = $state('');
+	// The result of the encryption or decryption operation
+	let output = $state('');
+	// Any error message from the operation (e.g. decryption failure)
+	let error = $state('');
+	let verificationStatus = $state<'valid' | 'invalid' | null>(null);
+	let signerIdentity = $state<string | null>(null);
+
 	$effect(() => {
 		if (keyWrapper) {
 			keyValue = '';
@@ -35,22 +50,12 @@
 
 	// Focus input message when key changes
 	$effect(() => {
-		void keyObject;
-		inputMessageRef?.focus();
+		if (keyObject) {
+			inputMessageRef?.focus();
+		} else {
+			rawKeyInputComponent?.focus();
+		}
 	});
-
-	// Reference to the KeyDetails component instance (for calling methods like nudgeForDecryption)
-	let pgpKeyComponent = $state<KeyDetails | null>(null);
-	// Reference to the input message textarea
-	let inputMessageRef = $state<HTMLTextAreaElement | null>(null);
-	// The input message to be encrypted or decrypted
-	let message = $state('');
-	// The result of the encryption or decryption operation
-	let output = $state('');
-	// Any error message from the operation (e.g. decryption failure)
-	let error = $state('');
-	let verificationStatus = $state<'valid' | 'invalid' | null>(null);
-	let signerIdentity = $state<string | null>(null);
 
 	let isPrivate = $derived(keyObject?.isPrivate() ?? false);
 	let isAGE = $derived(keyObject?.type === KeyType.AGE);
@@ -194,7 +199,7 @@
 		{#if keyWrapper}
 			<KeyDetails bind:this={pgpKeyComponent} bind:keyWrapper />
 		{:else}
-			<RawKeyInput value={keyValue} {onKeyParsed} />
+			<RawKeyInput bind:this={rawKeyInputComponent} value={keyValue} {onKeyParsed} />
 		{/if}
 
 		<!-- IO Fields -->

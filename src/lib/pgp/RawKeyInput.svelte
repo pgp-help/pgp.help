@@ -14,6 +14,10 @@
 	}>();
 
 	let error = $state('');
+	let textareaRef = $state<HTMLTextAreaElement | null>(null);
+
+	// Expose the textarea ref for parent components
+	export const focus = () => textareaRef?.focus();
 
 	$effect(() => {
 		const k = value;
@@ -38,6 +42,7 @@
 	<div class="card-field-header"><label for="raw-input">Import Key</label></div>
 	<div class="card-field-body">
 		<textarea
+			bind:this={textareaRef}
 			bind:value
 			aria-label={label}
 			aria-errormessage={error ? 'raw-input-error' : undefined}
