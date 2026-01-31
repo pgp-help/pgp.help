@@ -33,8 +33,16 @@
 		signerIdentity = null;
 	});
 
+	// Focus input message when key changes
+	$effect(() => {
+		void keyObject;
+		inputMessageRef?.focus();
+	});
+
 	// Reference to the KeyDetails component instance (for calling methods like nudgeForDecryption)
 	let pgpKeyComponent = $state<KeyDetails | null>(null);
+	// Reference to the input message textarea
+	let inputMessageRef = $state<HTMLTextAreaElement | null>(null);
 	// The input message to be encrypted or decrypted
 	let message = $state('');
 	// The result of the encryption or decryption operation
@@ -189,6 +197,7 @@
 					<div class="card-field-body">
 						<textarea
 							id="input-message"
+							bind:this={inputMessageRef}
 							bind:value={message}
 							aria-label="Input Message"
 							aria-invalid={!!error}
