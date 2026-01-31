@@ -1,5 +1,5 @@
 <script lang="ts">
-	import CopyableTextarea from '../lib/ui/CopyableTextarea.svelte';
+	import SelectableText from '../lib/ui/SelectableText.svelte';
 	import LockIcon from '../lib/ui/icons/LockIcon.svelte';
 	import InfoIcon from '../lib/ui/icons/InfoIcon.svelte';
 	import publicKey from '../assets/keys/pgphelp.pem?raw';
@@ -351,13 +351,8 @@
 				<div class="divider">Our Public Key</div>
 
 				<div class="form-control">
-					<CopyableTextarea
-						value={publicKey}
-						readonly={true}
-						fixed={true}
-						label="PGP Public Key - Copy this to encrypt messages for us"
-						buttons={true}
-					/>
+					<p class="text-sm mb-2">PGP Public Key - Copy this to encrypt messages for us</p>
+					<SelectableText value={publicKey} class="bg-base-200 rounded-lg" />
 				</div>
 			</div>
 		</div>
